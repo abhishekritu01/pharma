@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* --background: #0a0a0a;
+    --foreground: #ededed; */
+
+    /* Primary branding colors for consistency across the UI */
+  --PRIMARY-PURPLE:  #E1C4F8; 
+  --SECONDARY-PURPLE: #E5D2F4;
+  /* --PRIMARY-LIGHT: #5c1d8f;
+  --SECONDARY: #9333ea; 
+  --TERTIARY: #a855f7; */
+
+  /* Text colors for improved readability and emphasis */
+  --PRIMARY-GRAY: #433E3F;
+  /* --TEXT-LIGHT: #71717a; 
+  --TEXT-MUTED: #9ca3af; 
+  --TEXT-WHITE: #ffffff;
+  --TEXT-ZINC: #09090b;  */
+
+  /* Button colors for different actions */
+  /* --SAVE-BUTTON: #8b5cf6; 
+  --SAVE-HOVER: #7c3aed; 
+  --DELETE-BUTTON: #dc2626;
+  --DELETE-HOVER: #b91c1c; 
+  --UPDATE-BUTTON: #4f46e5; 
+  --UPDATE-HOVER: #4338ca;  */
+  }
+}
+
+
+@layer base {
+body {
+  /* background: var(--background); */
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+  .bg-primaryPurple {
+    background-color: var(--PRIMARY-PURPLE);
+ 
+}
+
+.bg-hoverPurple {
+  background-color: var(--SECONDARY-PURPLE);
+
+}
+
+.text-gray {
+  color: var(--PRIMARY-GRAY);
+
+}
+}
