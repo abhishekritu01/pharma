@@ -20,10 +20,15 @@
     /* Primary branding colors for consistency across the UI */
   --PRIMARY-PURPLE:  #E1C4F8; 
   --SECONDARY-PURPLE: #E5D2F4;
-  --DARK-PURPLE: #4B0082;
   --TERTIARY-PURPLE: #442060;
+  --DARK-PURPLE: #4B0082;
+  
+
+
   --PRIMARY-GRAY: #433E3F;
   --SECONDARY-GRAY: #B5B3B3;
+  --TERTIARY-GRAY: #CCCBCB;
+
   --PRIMARY-RED: #B30000;
   /* --PRIMARY-LIGHT: #5c1d8f;
   --SECONDARY: #9333ea; 
@@ -74,18 +79,28 @@ body {
 
 }
 
+.bg-gray{
+  background-color: var(--TERTIARY-GRAY);
+
+}
+
 .text-gray {
   color: var(--PRIMARY-GRAY);
 
 }
 
 .text-darkPurple {
-   color: var(--TERTIARY-PURPLE);
+   color: var(--TERTIARY-PURPLE) !important;
 
 }
 
 .border-Gray {
   border-color: var(--SECONDARY-GRAY);
+
+}
+
+.border-Purple {
+  border-color: var(--DARK-PURPLE);
 
 }
 }
