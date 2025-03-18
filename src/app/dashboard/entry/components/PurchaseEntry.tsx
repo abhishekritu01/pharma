@@ -5,57 +5,23 @@ import { ClipboardList, Plus } from "lucide-react";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Table from "@/app/components/common/Table";
 import { PurchaseEntryItem } from "@/app/types/PurchaseEntry";
-import Drawer from "@/app/components/common/Drawer"
+import Drawer from "@/app/components/common/Drawer";
 import AddItem from "../../item/components/AddItem";
 import AddSupplier from "../../supplier/component/AddSupplier";
+import InputField from "@/app/components/common/InputField";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
 }
 
-const InputField: React.FC<{
-  id: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}> = ({ id, label, value, onChange }) => (
-  <div className="relative">
-    <input
-      type="text"
-      id={id}
-      value={value}
-      onChange={onChange}
-      required
-      placeholder=" "
-      className="peer w-72 px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-      data-has-value={value ? "true" : "false"}
-    />
-    <label
-      htmlFor={id}
-      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all 
-        peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
-        peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
-        peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
-    >
-      {label}
-    </label>
-  </div>
-);
+type FormDataType = {
+  [key: string]: string; // ✅ Allows indexing with a string key
+};
 
-
-
-const PurchaseEntry: React.FC<PurchaseEntryProps> = ({setShowPurchaseEntry}) => {
-  
-  const [showDrawer,setShowDrawer] = useState<boolean>(false);
-  const [drawerContent, setDrawerContent] = useState<React.ReactNode>(null);
- 
- 
-  const handlePurchaseList = () => {
-    setShowPurchaseEntry(false);
-  };
-
- 
-
+const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
+  setShowPurchaseEntry,
+}) => {
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const [purchaseRows, setPurchaseRows] = useState<PurchaseEntryItem[]>([
     {
       itemId: 0,
@@ -71,42 +37,16 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({setShowPurchaseEntry}) => 
       store: "",
     },
   ]);
-
-  // Handle Input Change in Rows
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) => {
-    const { name, value } = e.target;
-    const updatedRows = [...purchaseRows];
-    updatedRows[index] = { ...updatedRows[index], [name]: value };
-    setPurchaseRows(updatedRows);
-  };
-
-  // ✅ Corrected Function to Add a New Row
-  const addNewRow = () => {
-    setPurchaseRows([
-      ...purchaseRows,
-      {
-        itemId: 0, 
-        store: "",
-        batchNo: "",
-        packageQuantity: 0, 
-        expiryDate: "", // Assuming expiry date is a string (ISO format)
-        purchasePrice: 0, // ✅ Ensure number type
-        mrpSalePrice: 0, // ✅ Ensure number type
-        gstPercentage: 0, // ✅ Ensure number type
-        gstAmount: 0, // ✅ Ensure number type
-        discount: 0, // ✅ Ensure number type
-        amount: 0, // ✅ Ensure number type
-      },
-    ]);
-  };
-
-  // Delete Row
-  const handleDeleteRow = (index: number) => {
-    setPurchaseRows(purchaseRows.filter((_, i) => i !== index));
-  };
+  const [formData, setFormData] = useState<FormDataType>({
+    orderId: "",
+    storeId: "",
+    billNo: "",
+    billDate: "",
+    creditPeriod: "",
+    paymentDueDate: "",
+    supplier: "",
+    invoiceAmount: "",
+  });
 
   const columns: {
     header: string;
@@ -134,48 +74,90 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({setShowPurchaseEntry}) => 
       ),
     },
   ];
+  const [showSupplier, setShowSupplier] = useState(false);
+  const [showItem, setShowItem] = useState(false);
 
-// Define a type with an index signature
-type FormDataType = {
-  [key: string]: string; // ✅ Allows indexing with a string key
-};
+  // Handle Input Change in Rows
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const { name, value } = e.target;
+    const updatedRows = [...purchaseRows];
+    updatedRows[index] = { ...updatedRows[index], [name]: value };
+    setPurchaseRows(updatedRows);
+  };
 
-// State for input fields
-const [formData, setFormData] = useState<FormDataType>({
-  orderId: "",
-  storeId: "",
-  billNo: "",
-  billDate: "",
-  creditPeriod: "",
-  paymentDueDate: "",
-  supplier: "",
-  invoiceAmount: "",
-});
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
-// Handle input changes
-const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const { id, value } = e.target;
-  setFormData((prev) => ({ ...prev, [id]: value }));
-};
+  // ✅ Corrected Function to Add a New Row
+  const addNewRow = () => {
+    setPurchaseRows([
+      ...purchaseRows,
+      {
+        itemId: 0,
+        store: "",
+        batchNo: "",
+        packageQuantity: 0,
+        expiryDate: "", // Assuming expiry date is a string (ISO format)
+        purchasePrice: 0, // ✅ Ensure number type
+        mrpSalePrice: 0, // ✅ Ensure number type
+        gstPercentage: 0, // ✅ Ensure number type
+        gstAmount: 0, // ✅ Ensure number type
+        discount: 0, // ✅ Ensure number type
+        amount: 0, // ✅ Ensure number type
+      },
+    ]);
+  };
 
-const handleSupplierDrawer =() =>{
-  setDrawerContent(<AddSupplier />);
-  setShowDrawer(true)
- }
+  const handlePurchaseList = () => {
+    setShowPurchaseEntry(false);
+  };
 
- const handleItemDrawer =() =>{
-  setDrawerContent(<AddItem />);
-  setShowDrawer(true)
- }
+  // Delete Row
+  const handleDeleteRow = (index: number) => {
+    setPurchaseRows(purchaseRows.filter((_, i) => i !== index));
+  };
+
+  const handleSupplierDrawer = () => {
+    setShowItem(false);  // ✅ Close Item Drawer
+    setShowSupplier(true);
+    setShowDrawer(true);
+  };
+  
+  const handleItemDrawer = () => {
+    setShowSupplier(false);  // ✅ Close Supplier Drawer
+    setShowItem(true);
+    setShowDrawer(true);
+  };
+  
+
+  const handleCloseDrawer = () => {
+    setShowDrawer(false);
+    setShowItem(false);  // ✅ Ensures the drawer unmounts
+    setShowSupplier(false);  // ✅ Ensures the drawer unmounts
+  };
+  
 
   return (
-    <> 
+    <>
+      {showItem && (
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Add Item"}>
+          <AddItem />
+        </Drawer>
+      )}
 
-     {
-      showDrawer && 
-      <Drawer setShowDrawer={setShowDrawer}>{drawerContent}</Drawer>
+      {showSupplier && (
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Add Supplier"}>
+          <AddSupplier />
+        </Drawer>
+      )}
 
-     }
+
       <main className="space-y-6">
         <div className="flex justify-between">
           <div className="justify-start text-darkPurple text-3xl font-medium leading-10 ">
@@ -193,8 +175,8 @@ const handleSupplierDrawer =() =>{
           </div>
         </div>
 
-<div className="flex">
-        <div>
+        <div className="flex">
+          <div>
             <Button
               onClick={() => handleSupplierDrawer()}
               label="Add Supplier"
@@ -204,7 +186,7 @@ const handleSupplierDrawer =() =>{
             ></Button>
           </div>
 
-        <div>
+          <div>
             <Button
               onClick={() => handleItemDrawer()}
               label="Add Item"
@@ -213,35 +195,45 @@ const handleSupplierDrawer =() =>{
               icon={<ClipboardList size={15} />}
             ></Button>
           </div>
-          </div>
+        </div>
         <div className="border border-Gray max-w-7xl h-64 rounded-lg p-5">
           <div className="justify-start text-black text-lg font-normal leading-7">
             Basic Details
           </div>
 
+          <div className="relative mt-8 grid grid-cols-4 gap-4">
+            {[
+              { id: "orderId", label: "Order ID " },
+              { id: "storeId", label: "Store" },
+              { id: "billNo", label: "Bill No" },
+              { id: "billDate", label: "Bill Date" },
+            ].map(({ id, label }) => (
+              <InputField
+                key={id}
+                id={id}
+                label={label}
+                value={formData[id]}
+                onChange={handleInputChange}
+              />
+            ))}
+          </div>
 
           <div className="relative mt-8 grid grid-cols-4 gap-4">
-          {[
-            { id: "orderId", label: "Order ID " },
-            { id: "storeId", label: "Store" },
-            { id: "billNo", label: "Bill No" },
-            { id: "billDate", label: "Bill Date" },
-          ].map(({ id, label }) => (
-            <InputField key={id} id={id} label={label} value={formData[id]} onChange={handleInputChange} />
-          ))}
-        </div>
-
-
-        <div className="relative mt-8 grid grid-cols-4 gap-4">
-          {[
-            { id: "creditPeriod", label: "Credit Period" },
-            { id: "paymentDueDate", label: "Payment Due Date" },
-            { id: "supplier", label: "Supplier" },
-            { id: "invoiceAmount", label: "Invoice Amount" },
-          ].map(({ id, label }) => (
-            <InputField key={id} id={id} label={label} value={formData[id]} onChange={handleInputChange} />
-          ))}
-        </div>
+            {[
+              { id: "creditPeriod", label: "Credit Period" },
+              { id: "paymentDueDate", label: "Payment Due Date" },
+              { id: "supplier", label: "Supplier" },
+              { id: "invoiceAmount", label: "Invoice Amount" },
+            ].map(({ id, label }) => (
+              <InputField
+                key={id}
+                id={id}
+                label={label}
+                value={formData[id]}
+                onChange={handleInputChange}
+              />
+            ))}
+          </div>
         </div>
 
         <Table
@@ -250,7 +242,6 @@ const handleSupplierDrawer =() =>{
           noDataMessage="No purchase items found"
         />
 
-     
         <div>
           <Button
             onClick={() => addNewRow()}
@@ -271,7 +262,9 @@ const handleSupplierDrawer =() =>{
             <div
               key={index}
               className={`flex justify-between ${
-                isTotal ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg" : ""
+                isTotal
+                  ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg"
+                  : ""
               }`}
             >
               <div>{label}</div>

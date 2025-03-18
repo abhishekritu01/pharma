@@ -32,7 +32,7 @@ import React from "react";
 
 interface ButtonProps {
   type?: "button" | "submit" | "reset";
-  onClick?: (value: string) => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   label: string;
   value: string;
   className?: string;
@@ -44,7 +44,7 @@ const Button: React.FC<ButtonProps> = ({type = "button", onClick, label, value, 
   return (
     <button
       type={type}
-      onClick={() => onClick?.(value)}
+      onClick={onClick}
       className={`flex justify-center items-center gap-2  disabled:cursor-not-allowed  border rounded-3xl border-Gray font-medium text-sm h-11 cursor-pointer ${className}`}
     >
       {icon}
