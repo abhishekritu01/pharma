@@ -1,6 +1,6 @@
 "use client";
 import Button from "@/app/components/common/Button";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Table from "@/app/components/common/Table";
@@ -48,22 +48,107 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     invoiceAmount: "",
   });
 
+  // const columns: {
+  //   header: string;
+  //   accessor:
+  //     | keyof PurchaseEntryItem
+  //     | ((row: PurchaseEntryItem, index: number) => React.ReactNode);
+  // }[] = [
+  //   { header: "Item Name", accessor: "itemId" }, 
+  //   { header: "Batch No", accessor: "batchNo" },
+  //   { header: "Package Qty", accessor: "packageQuantity" },
+  //   { header: "Expiry Date", accessor: "expiryDate" },
+  //   { header: "Purchase Price", accessor: "purchasePrice" },
+  //   { header: "MRP", accessor: "mrpSalePrice" },
+  //   { header: "GST %", accessor: "gstPercentage" },
+  //   { header: "GST", accessor: "gstAmount" },
+  //   { header: "Discount", accessor: "discount" },
+  //   { header: "Amount", accessor: "amount" },
+  //   {
+  //     header: "Action",
+  //     accessor: (row: PurchaseEntryItem, index: number) => (
+  //       <RiDeleteBin6Line
+  //         className="text-red-500 hover:text-red-700 cursor-pointer"
+  //         onClick={() => handleDeleteRow(index)}
+  //       />
+  //     ),
+  //   },
+  // ];
+
+
   const columns: {
     header: string;
     accessor:
       | keyof PurchaseEntryItem
       | ((row: PurchaseEntryItem, index: number) => React.ReactNode);
+    className?: string;
   }[] = [
-    { header: "Item Name", accessor: "itemId" }, // Assuming 'itemId' represents the item name
-    { header: "Batch No", accessor: "batchNo" },
-    { header: "Package Qty", accessor: "packageQuantity" },
-    { header: "Expiry Date", accessor: "expiryDate" },
-    { header: "Purchase Price", accessor: "purchasePrice" },
-    { header: "MRP", accessor: "mrpSalePrice" },
-    { header: "GST %", accessor: "gstPercentage" },
-    { header: "GST", accessor: "gstAmount" },
-    { header: "Discount", accessor: "discount" },
-    { header: "Amount", accessor: "amount" },
+    {
+      header: "Item Name",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <div className="flex items-center gap-x-2"> {/* ✅ Flex to manage spacing */}
+          <input
+            type="text"
+            name="itemId"
+            value={row.itemId}
+            onChange={(e) => handleChange(e, index)}
+            className="border border-Gray p-2 rounded w-full text-left outline-none focus:ring-0 focus:outline-none" // ✅ Consistent width
+          />
+        </div>
+      ),
+      className: "text-left",
+    },
+    {
+      header: "Batch No",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <div className="flex items-center gap-x-2">
+          <input
+            type="text"
+            name="batchNo"
+            value={row.batchNo}
+            onChange={(e) => handleChange(e, index)}
+            className="border border-Gray p-2 rounded w-28 text-left outline-none focus:ring-0 focus:outline-none"
+          />
+        </div>
+      ),
+      className: "text-left",
+    },
+    {
+      header: "Package Qty",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <div className="flex items-center gap-x-2">
+          <input
+            type="number"
+            name="packageQuantity"
+            value={row.packageQuantity}
+            onChange={(e) => handleChange(e, index)}
+            className="border border-Gray p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
+          />
+        </div>
+      ),
+      className: "text-left",
+    },
+    {
+      header: "Expiry Date",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <div className="flex items-center gap-x-2">
+          <input
+            type="date"
+            name="expiryDate"
+            value={row.expiryDate}
+            onChange={(e) => handleChange(e, index)}
+            className="border border-Gray p-2 rounded w-32 text-left outline-none focus:ring-0 focus:outline-none"
+          />
+        </div>
+      ),
+      className: "text-left",
+    },
+    { header: "Purchase Price", accessor: "purchasePrice", className: "text-left" },
+    { header: "MRP", accessor: "mrpSalePrice", className: "text-left" },
+    { header: "GST %", accessor: "gstPercentage", className: "text-left" },
+    { header: "GST", accessor: "gstAmount", className: "text-left" },
+    { header: "Discount", accessor: "discount", className: "text-left" },
+    { header: "Amount", accessor: "amount", className: "text-left" },
     {
       header: "Action",
       accessor: (row: PurchaseEntryItem, index: number) => (
@@ -72,8 +157,11 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           onClick={() => handleDeleteRow(index)}
         />
       ),
+      className: "text-left",
     },
   ];
+  
+
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
 
@@ -84,9 +172,16 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   ) => {
     const { name, value } = e.target;
     const updatedRows = [...purchaseRows];
-    updatedRows[index] = { ...updatedRows[index], [name]: value };
+  
+    // Convert numbers properly
+    updatedRows[index] = {
+      ...updatedRows[index],
+      [name]: name === "packageQuantity" ? Number(value) : value,
+    };
+  
     setPurchaseRows(updatedRows);
   };
+  
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,17 +238,36 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   };
   
 
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      billDate: new Date().toISOString().split("T")[0], // Set today's date
+    }));
+  }, []);
+  
+
+  useEffect(() => {
+    if (formData.creditPeriod && formData.billDate) {
+      const billDate = new Date(formData.billDate);
+      billDate.setDate(billDate.getDate() + parseInt(formData.creditPeriod, 10) || 0);
+      setFormData((prev) => ({
+        ...prev,
+        paymentDueDate: billDate.toISOString().split("T")[0],
+      }));
+    }
+  }, [formData.creditPeriod, formData.billDate]);
+
   return (
     <>
       {showItem && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add Item"}>
-          <AddItem />
+          <AddItem setShowDrawer={handleCloseDrawer}/>
         </Drawer>
       )}
 
       {showSupplier && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add Supplier"}>
-          <AddSupplier />
+          <AddSupplier setShowDrawer={handleCloseDrawer}/>
         </Drawer>
       )}
 
@@ -206,12 +320,13 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               { id: "orderId", label: "Order ID " },
               { id: "storeId", label: "Store" },
               { id: "billNo", label: "Bill No" },
-              { id: "billDate", label: "Bill Date" },
-            ].map(({ id, label }) => (
+              { id: "billDate", label: "Bill Date", type: "date" },
+            ].map(({ id, label,type }) => (
               <InputField
                 key={id}
                 id={id}
                 label={label}
+                type={type}
                 value={formData[id]}
                 onChange={handleInputChange}
               />
@@ -219,21 +334,37 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           </div>
 
           <div className="relative mt-8 grid grid-cols-4 gap-4">
-            {[
-              { id: "creditPeriod", label: "Credit Period" },
-              { id: "paymentDueDate", label: "Payment Due Date" },
-              { id: "supplier", label: "Supplier" },
-              { id: "invoiceAmount", label: "Invoice Amount" },
-            ].map(({ id, label }) => (
-              <InputField
-                key={id}
-                id={id}
-                label={label}
-                value={formData[id]}
-                onChange={handleInputChange}
-              />
-            ))}
-          </div>
+  {[
+    { id: "creditPeriod", label: "Credit Period", type: "number" },
+    { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
+    { id: "supplier", label: "Supplier", type: "text" },
+    { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
+  ].map(({ id, label, type }) => (
+    <InputField
+      key={id}
+      id={id}
+      label={label}
+      type={type}
+      value={
+        id === "paymentDueDate"
+          ? formData.billDate && formData.creditPeriod
+            ? new Date(
+                new Date(formData.billDate).setDate(
+                  new Date(formData.billDate).getDate() + parseInt(formData.creditPeriod, 10) || 0
+                )
+              )
+                .toISOString()
+                .split("T")[0]
+            : ""
+          : formData[id] ?? "" 
+      }
+      onChange={id === "paymentDueDate" ? () => {} : handleInputChange} // No onChange for paymentDueDate
+      readOnly={id === "paymentDueDate"} 
+    />
+  ))}
+</div>
+
+
         </div>
 
         <Table

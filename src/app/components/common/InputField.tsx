@@ -1,17 +1,22 @@
 import React from 'react'
 
 const InputField: React.FC<{
+  type?:string
   id: string;
   name?: string;
+  maxLength?: number;
   label: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ id, name, label, value, onChange }) => (
+  readOnly?: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, name, label, value, onChange, maxLength, readOnly }) => (
   <div className="relative">
     <input
-      type="text"
+      type={type}
       id={id}
       value={value}
       onChange={onChange}
+      maxLength={maxLength}
+      readOnly={readOnly}
       required
       placeholder=" "
       className="peer w-72 px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
