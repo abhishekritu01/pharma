@@ -9,6 +9,8 @@ import Drawer from "@/app/components/common/Drawer";
 import AddItem from "../../item/components/AddItem";
 import AddSupplier from "../../supplier/component/AddSupplier";
 import InputField from "@/app/components/common/InputField";
+import { ItemData } from "@/app/types/ItemData";
+import { getItem } from "@/app/services/ItemService";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -30,8 +32,10 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       expiryDate: "",
       purchasePrice: 0,
       mrpSalePrice: 0,
-      gstPercentage: 0,
-      gstAmount: 0,
+      cgstPercentage: 0,
+      sgstPercentage: 0,
+      cgstAmount: 0,
+      sgstAmount: 0,
       discount: 0,
       amount: 0,
       store: "",
@@ -48,32 +52,36 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     invoiceAmount: "",
   });
 
-  // const columns: {
-  //   header: string;
-  //   accessor:
-  //     | keyof PurchaseEntryItem
-  //     | ((row: PurchaseEntryItem, index: number) => React.ReactNode);
-  // }[] = [
-  //   { header: "Item Name", accessor: "itemId" }, 
-  //   { header: "Batch No", accessor: "batchNo" },
-  //   { header: "Package Qty", accessor: "packageQuantity" },
-  //   { header: "Expiry Date", accessor: "expiryDate" },
-  //   { header: "Purchase Price", accessor: "purchasePrice" },
-  //   { header: "MRP", accessor: "mrpSalePrice" },
-  //   { header: "GST %", accessor: "gstPercentage" },
-  //   { header: "GST", accessor: "gstAmount" },
-  //   { header: "Discount", accessor: "discount" },
-  //   { header: "Amount", accessor: "amount" },
-  //   {
-  //     header: "Action",
-  //     accessor: (row: PurchaseEntryItem, index: number) => (
-  //       <RiDeleteBin6Line
-  //         className="text-red-500 hover:text-red-700 cursor-pointer"
-  //         onClick={() => handleDeleteRow(index)}
-  //       />
-  //     ),
-  //   },
-  // ];
+  const [items, setItems] = useState<ItemData[]>([]);
+
+useEffect(() => {
+  const fetchItems = async () => {
+    try {
+      const data = await getItem();
+      setItems(data); // Store fetched items in state
+    } catch (error) {
+      console.error("Failed to fetch items", error);
+    }
+  };
+
+  fetchItems();
+}, []);
+
+
+
+const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number) => {
+  const selectedItem = items.find(item => item.itemId === Number(e.target.value));
+
+  if (selectedItem) {
+    const updatedRows = [...purchaseRows];
+    updatedRows[index] = {
+      ...updatedRows[index],
+      itemId: selectedItem.itemId ?? 0,
+      itemName: selectedItem.itemName, // ✅ Store itemName in state
+    };
+    setPurchaseRows(updatedRows);
+  }
+};
 
 
   const columns: {
@@ -86,18 +94,22 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     {
       header: "Item Name",
       accessor: (row: PurchaseEntryItem, index: number) => (
-        <div className="flex items-center gap-x-2"> {/* ✅ Flex to manage spacing */}
-          <input
-            type="text"
-            name="itemId"
-            value={row.itemId}
-            onChange={(e) => handleChange(e, index)}
-            className="border border-Gray p-2 rounded w-full text-left outline-none focus:ring-0 focus:outline-none" // ✅ Consistent width
-          />
-        </div>
+        <select
+          value={row.itemId}
+          onChange={(e) => handleItemSelect(e, index)}
+          className="border border-gray-300 p-2 rounded w-full text-left"
+        >
+          <option value="">Select Item</option>
+          {items.map((item) => (
+            <option key={item.itemId} value={item.itemId}>
+              {item.itemName} 
+          </option>
+          ))}
+        </select>
       ),
       className: "text-left",
     },
+  
     {
       header: "Batch No",
       accessor: (row: PurchaseEntryItem, index: number) => (
@@ -145,8 +157,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     },
     { header: "Purchase Price", accessor: "purchasePrice", className: "text-left" },
     { header: "MRP", accessor: "mrpSalePrice", className: "text-left" },
-    { header: "GST %", accessor: "gstPercentage", className: "text-left" },
-    { header: "GST", accessor: "gstAmount", className: "text-left" },
+    { header: "GST %", accessor: "cgstPercentage", className: "text-left" },
+    { header: "GST", accessor: "cgstAmount", className: "text-left" },
     { header: "Discount", accessor: "discount", className: "text-left" },
     { header: "Amount", accessor: "amount", className: "text-left" },
     {
@@ -201,8 +213,10 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         expiryDate: "", // Assuming expiry date is a string (ISO format)
         purchasePrice: 0, // ✅ Ensure number type
         mrpSalePrice: 0, // ✅ Ensure number type
-        gstPercentage: 0, // ✅ Ensure number type
-        gstAmount: 0, // ✅ Ensure number type
+        cgstPercentage: 0,
+        sgstPercentage: 0,
+        cgstAmount: 0, 
+        sgstAmount: 0, 
         discount: 0, // ✅ Ensure number type
         amount: 0, // ✅ Ensure number type
       },

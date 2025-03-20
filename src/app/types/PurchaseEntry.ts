@@ -1,13 +1,16 @@
 
 export interface PurchaseEntryItem {
     itemId: number;
+    itemName?: string;
     batchNo: string;
     packageQuantity: number;
     expiryDate: string;
     purchasePrice: number;
     mrpSalePrice: number;
-    gstPercentage: number;
-    gstAmount: number;
+    cgstPercentage: number;
+    sgstPercentage: number;
+    cgstAmount: number;
+    sgstAmount: number;
     discount: number;
     amount: number;
     store:string;
@@ -27,6 +30,6 @@ export interface PurchaseEntryItem {
     totalDiscount?: number;
     grandTotal: number;
   
-    stockItemDtos: PurchaseEntryItem[]; // Array to handle the one-to-many mapping
+    stockItemDtos: PurchaseEntryItem[]; 
   }
   

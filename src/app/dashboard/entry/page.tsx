@@ -112,28 +112,6 @@ const page = () => {
           <Table
             data={dummyData}
             columns={columns}
-            // actions={(purchase) => (
-            //   <div className="flex space-x-2 ">
-            //     <button className="text-blue-500 hover:text-blue-700">
-            //       <FaEye />
-            //     </button>
-            //     <button
-            //   className="text-green-500 hover:text-green-700"
-            //   onClick={() => {
-            //     setUpdatePatientDetails(patient);
-            //     setIsUpdating(true);
-            //   }}
-            // >
-            //   <FaEdit />
-            // </button>
-            // <button className="text-red-500 hover:text-red-700" onClick={() => handleDelete(patient)}>
-            //   <FaTrash />
-            // </button>
-            //     <button className="text-blue-500 hover:text-blue-700" onClick={() => handleVisits(patient)}>
-            //   Visits
-            // </button>
-            //   </div>
-            // )}
             noDataMessage="No patients found"
           />
         </main>
