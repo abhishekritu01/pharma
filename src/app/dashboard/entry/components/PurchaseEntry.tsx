@@ -4,13 +4,25 @@ import React, { useEffect, useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import Table from "@/app/components/common/Table";
-import { PurchaseEntryItem } from "@/app/types/PurchaseEntry";
+import {
+  PurchaseEntryData,
+  PurchaseEntryItem,
+} from "@/app/types/PurchaseEntry";
 import Drawer from "@/app/components/common/Drawer";
 import AddItem from "../../item/components/AddItem";
 import AddSupplier from "../../supplier/component/AddSupplier";
 import InputField from "@/app/components/common/InputField";
 import { ItemData } from "@/app/types/ItemData";
-import { getItem } from "@/app/services/ItemService";
+import { getItem, getItemById } from "@/app/services/ItemService";
+import {
+  getPurchaseOrder,
+  getPurchaseOrderById,
+} from "@/app/services/PurchaseOrder";
+import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
+import { createPurchase } from "@/app/services/PurchaseEntryService";
+import { getPharmacyById } from "@/app/services/PharmacyService";
+import { PharmacyData } from "@/app/types/PharmacyData";
+import { getSupplierById } from "@/app/services/SupplierService";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -23,6 +35,7 @@ type FormDataType = {
 const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   setShowPurchaseEntry,
 }) => {
+  const [orderPurchase, setOrderPurchase] = useState<PurchaseOrderData[]>([]);
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
   const [purchaseRows, setPurchaseRows] = useState<PurchaseEntryItem[]>([
     {
@@ -33,56 +46,83 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       purchasePrice: 0,
       mrpSalePrice: 0,
       cgstPercentage: 0,
+      purchasePricePerUnit: 0,
+      mrpSalePricePerUnit: 0,
       sgstPercentage: 0,
+      gstPercentage: 0,
       cgstAmount: 0,
       sgstAmount: 0,
+      gstAmount: 0,
       discount: 0,
       amount: 0,
-      store: "",
+      pharmacyId: "",
     },
   ]);
-  const [formData, setFormData] = useState<FormDataType>({
+
+  const [formData, setFormData] = useState<PurchaseEntryData>({
     orderId: "",
-    storeId: "",
-    billNo: "",
-    billDate: "",
-    creditPeriod: "",
-    paymentDueDate: "",
-    supplier: "",
-    invoiceAmount: "",
+    purchaseDate: new Date(), // Default to current date
+    purchaseBillNo: "",
+    creditPeriod: 0,
+    paymentDueDate: new Date(), // Default to current date
+    supplierId: "",
+    invoiceAmount: 0,
+    paymentStatus: "",
+    goodStatus: "",
+    totalAmount: 0,
+    totalCgst: 0,
+    totalSgst: 0,
+    totalDiscount: 0,
+    grandTotal: 0,
+    stockItemDtos: [], // Initially empty array for stock items
   });
 
   const [items, setItems] = useState<ItemData[]>([]);
+  const [subTotal, setSubTotal] = useState(0);
+  const [gstTotal, setGstTotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(0);
 
-useEffect(() => {
-  const fetchItems = async () => {
-    try {
-      const data = await getItem();
-      setItems(data); // Store fetched items in state
-    } catch (error) {
-      console.error("Failed to fetch items", error);
+  const [purchaseOrderData, setPurchaseOrderData] = useState<PurchaseOrderData>(
+    {
+      orderId: "",
+      orderId1: "",
+      pharmacyId: "",
+      pharmacistId: 0,
+      supplierId: 0,
+      orderedDate: new Date(),
+      intendedDeliveryDate: new Date(),
+      totalAmount: 0,
+      totalGst: 0,
+      grandTotal: 0,
+      purchaseOrderItemDtos: [],
     }
-  };
+  );
 
-  fetchItems();
-}, []);
-
-
-
-const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number) => {
-  const selectedItem = items.find(item => item.itemId === Number(e.target.value));
-
-  if (selectedItem) {
-    const updatedRows = [...purchaseRows];
-    updatedRows[index] = {
-      ...updatedRows[index],
-      itemId: selectedItem.itemId ?? 0,
-      itemName: selectedItem.itemName, // ✅ Store itemName in state
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const data = await getItem();
+        setItems(data); // Store fetched items in state
+      } catch (error) {
+        console.error("Failed to fetch items", error);
+      }
     };
-    setPurchaseRows(updatedRows);
-  }
-};
 
+    fetchItems();
+  }, []);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await getPurchaseOrder(); // Fetch data from API
+        setOrderPurchase(data); // Assume API returns an array of objects [{ orderId, orderId1 }]
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const columns: {
     header: string;
@@ -96,20 +136,20 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
       accessor: (row: PurchaseEntryItem, index: number) => (
         <select
           value={row.itemId}
-          onChange={(e) => handleItemSelect(e, index)}
+          onChange={(e) => handleChange(e, index)}
           className="border border-gray-300 p-2 rounded w-full text-left"
         >
           <option value="">Select Item</option>
           {items.map((item) => (
             <option key={item.itemId} value={item.itemId}>
-              {item.itemName} 
-          </option>
+              {item.itemName}
+            </option>
           ))}
         </select>
       ),
       className: "text-left",
     },
-  
+
     {
       header: "Batch No",
       accessor: (row: PurchaseEntryItem, index: number) => (
@@ -155,10 +195,14 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
       ),
       className: "text-left",
     },
-    { header: "Purchase Price", accessor: "purchasePrice", className: "text-left" },
+    {
+      header: "Purchase Price",
+      accessor: "purchasePrice",
+      className: "text-left",
+    },
     { header: "MRP", accessor: "mrpSalePrice", className: "text-left" },
-    { header: "GST %", accessor: "cgstPercentage", className: "text-left" },
-    { header: "GST", accessor: "cgstAmount", className: "text-left" },
+    { header: "GST %", accessor: "gstPercentage", className: "text-left" },
+    { header: "GST", accessor: "gstAmount", className: "text-left" },
     { header: "Discount", accessor: "discount", className: "text-left" },
     { header: "Amount", accessor: "amount", className: "text-left" },
     {
@@ -172,31 +216,61 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
       className: "text-left",
     },
   ];
-  
 
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
 
-  // Handle Input Change in Rows
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     index: number
   ) => {
     const { name, value } = e.target;
     const updatedRows = [...purchaseRows];
-  
-    // Convert numbers properly
+
+    let updatedValue: number | string = value;
+    if (name === "packageQuantity") {
+      updatedValue = Number(value) || 0; // Ensure it's a number
+    }
+
+    // Update the row with the new value
     updatedRows[index] = {
       ...updatedRows[index],
-      [name]: name === "packageQuantity" ? Number(value) : value,
+      [name]: updatedValue,
     };
-  
+
+    // If package quantity is changed, recalculate amount and GST
+    if (name === "packageQuantity") {
+      const packageQuantity = Number(value) || 0;
+      const purchasePrice = updatedRows[index].purchasePrice || 0;
+
+      // ✅ Correct Amount Calculation
+      const amount = packageQuantity * purchasePrice;
+
+      // ✅ Correct GST Calculation
+      const gstPercentage = updatedRows[index].gstPercentage || 0;
+      const gstAmount = (amount * gstPercentage) / 100;
+
+      // ✅ Correct CGST & SGST Calculation
+      const cgstAmount = gstAmount / 2; // Assuming CGST and SGST are equal
+      const sgstAmount = gstAmount / 2;
+
+      // Update the row with new calculated values
+      updatedRows[index] = {
+        ...updatedRows[index],
+        amount,
+        gstAmount,
+        cgstAmount,
+        sgstAmount,
+      };
+    }
+
     setPurchaseRows(updatedRows);
   };
-  
 
   // Handle input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
@@ -207,16 +281,20 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
       ...purchaseRows,
       {
         itemId: 0,
-        store: "",
+        pharmacyId: "",
         batchNo: "",
         packageQuantity: 0,
-        expiryDate: "", // Assuming expiry date is a string (ISO format)
-        purchasePrice: 0, // ✅ Ensure number type
-        mrpSalePrice: 0, // ✅ Ensure number type
+        expiryDate: "",
+        purchasePrice: 0,
+        mrpSalePrice: 0,
+        purchasePricePerUnit: 0,
+        mrpSalePricePerUnit: 0,
         cgstPercentage: 0,
         sgstPercentage: 0,
-        cgstAmount: 0, 
-        sgstAmount: 0, 
+        gstPercentage: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        gstAmount: 0,
         discount: 0, // ✅ Ensure number type
         amount: 0, // ✅ Ensure number type
       },
@@ -233,24 +311,22 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
   };
 
   const handleSupplierDrawer = () => {
-    setShowItem(false);  // ✅ Close Item Drawer
+    setShowItem(false); // ✅ Close Item Drawer
     setShowSupplier(true);
     setShowDrawer(true);
   };
-  
+
   const handleItemDrawer = () => {
-    setShowSupplier(false);  // ✅ Close Supplier Drawer
+    setShowSupplier(false); // ✅ Close Supplier Drawer
     setShowItem(true);
     setShowDrawer(true);
   };
-  
 
   const handleCloseDrawer = () => {
     setShowDrawer(false);
-    setShowItem(false);  // ✅ Ensures the drawer unmounts
-    setShowSupplier(false);  // ✅ Ensures the drawer unmounts
+    setShowItem(false); // ✅ Ensures the drawer unmounts
+    setShowSupplier(false); // ✅ Ensures the drawer unmounts
   };
-  
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -258,33 +334,390 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
       billDate: new Date().toISOString().split("T")[0], // Set today's date
     }));
   }, []);
-  
 
   useEffect(() => {
-    if (formData.creditPeriod && formData.billDate) {
-      const billDate = new Date(formData.billDate);
-      billDate.setDate(billDate.getDate() + parseInt(formData.creditPeriod, 10) || 0);
-      setFormData((prev) => ({
-        ...prev,
-        paymentDueDate: billDate.toISOString().split("T")[0],
-      }));
+    if (formData.creditPeriod && formData.purchaseDate) {
+      const purchaseDate = new Date(formData.purchaseDate); // ✅ Use correct field
+      const creditPeriod = Number(formData.creditPeriod); // ✅ Ensure it's a number
+
+      if (!isNaN(creditPeriod) && !isNaN(purchaseDate.getTime())) {
+        // ✅ Ensure valid inputs
+        const paymentDueDate = new Date(purchaseDate);
+        paymentDueDate.setDate(paymentDueDate.getDate() + creditPeriod); // ✅ Correct calculation
+
+        setFormData((prev) => ({
+          ...prev,
+          paymentDueDate, // ✅ Store as a Date object
+        }));
+      }
     }
-  }, [formData.creditPeriod, formData.billDate]);
+  }, [formData.creditPeriod, formData.purchaseDate]); // ✅ Ensure useEffect runs when creditPeriod or purchaseDate changes
+
+  // const handleOrderSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  //   console.log("Order selection triggered!");
+
+  //   const selectedOrderId = e.target.value.trim(); // Keep it as a string (UUID)
+
+  //   if (!selectedOrderId) {
+  //     console.warn("Order ID is empty or invalid!");
+  //     return;
+  //   }
+
+  //   // Store orderId as a string (UUID)
+  //   setFormData((prev) => ({ ...prev, orderId: selectedOrderId }));
+
+  //   try {
+  //     const purchaseOrder = await getPurchaseOrderById(selectedOrderId); // Fetch using UUID
+
+  //     if (purchaseOrder?.purchaseOrderItemDtos) {
+  //       // Step 1: Prepare the rows with basic order data
+  //       let updatedRows: PurchaseEntryItem[] =
+  //         purchaseOrder.purchaseOrderItemDtos.map(
+  //           (item: any): PurchaseEntryItem => ({
+  //             itemId: item.itemId,
+  //             itemName: item.itemName,
+  //             batchNo: item.batchNo || "",
+  //             packageQuantity: item.packageQuantity || 0,
+  //             expiryDate: item.expiryDate || "",
+  //             purchasePrice: item.purchasePrice || 0,
+  //             mrpSalePrice: item.mrpSalePrice || 0,
+  //             cgstPercentage: item.cgstPercentage || 0,
+  //             sgstPercentage: item.sgstPercentage || 0,
+  //             cgstAmount: item.cgstAmount || 0,
+  //             sgstAmount: item.sgstAmount || 0,
+  //             gstAmount: item.gstAmount || 0,
+  //             discount: item.discount || 0,
+  //             amount: item.amount || 0,
+  //             pharmacyId: item.pharmacyId || "",
+  //             gstPercentage:
+  //               (item.cgstPercentage || 0) + (item.sgstPercentage || 0),
+  //           })
+  //         );
+
+  //       setPurchaseRows(updatedRows);
+
+  //       // Step 2: Fetch additional item details for each row
+  //       updatedRows = await Promise.all(
+  //         updatedRows.map(
+  //           async (row: PurchaseEntryItem): Promise<PurchaseEntryItem> => {
+  //             try {
+  //               const itemDetails = await getItemById(row.itemId.toString());
+
+  //               return {
+  //                 ...row,
+  //                 purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
+  //                 mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
+  //                 cgstPercentage:
+  //                   itemDetails.cgstPercentage ?? row.cgstPercentage,
+  //                 sgstPercentage:
+  //                   itemDetails.sgstPercentage ?? row.sgstPercentage,
+  //                 gstPercentage:
+  //                   (itemDetails.cgstPercentage ?? 0) +
+  //                   (itemDetails.sgstPercentage ?? 0), // ✅ Update GST Percentage
+  //               };
+  //             } catch (error) {
+  //               console.error(
+  //                 "Error fetching item details for itemId:",
+  //                 row.itemId,
+  //                 error
+  //               );
+  //               return row; // Keep the original row if fetching fails
+  //             }
+  //           }
+  //         )
+  //       );
+
+  //       setPurchaseRows(updatedRows); // Update the state with complete data
+
+  //     } else {
+  //       setPurchaseRows([]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching purchase order items:", error);
+  //   }
+  // };
+
+  const handleOrderSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log("Order selection triggered!");
+
+    const selectedOrderId = e.target.value.trim(); // Keep it as a string (UUID)
+
+    if (!selectedOrderId) {
+      console.warn("Order ID is empty or invalid!");
+      return;
+    }
+
+    // Store orderId as a string (UUID)
+    setFormData((prev) => ({ ...prev, orderId: selectedOrderId }));
+
+    try {
+      const purchaseOrder = await getPurchaseOrderById(selectedOrderId); // Fetch using UUID
+
+      if (purchaseOrder?.purchaseOrderItemDtos) {
+        // ✅ Fetch pharmacyId from purchase order
+        const pharmacyId = purchaseOrder.pharmacyId || ""; // ✅ Fix: Define pharmacyId properly
+        const supplierId = purchaseOrder.supplierId || "";
+
+        // Step 1: Prepare the rows with basic order data
+        let updatedRows: PurchaseEntryItem[] =
+          purchaseOrder.purchaseOrderItemDtos.map(
+            (item: any): PurchaseEntryItem => ({
+              itemId: item.itemId,
+              itemName: item.itemName,
+              batchNo: item.batchNo || "",
+              packageQuantity: item.packageQuantity || 0,
+              expiryDate: item.expiryDate || "",
+              purchasePrice: item.purchasePrice || 0,
+              mrpSalePrice: item.mrpSalePrice || 0,
+              purchasePricePerUnit: item.purchasePricePerUnit || 0,
+              mrpSalePricePerUnit: item.mrpSalePricePerUnit || 0,
+              cgstPercentage: item.cgstPercentage || 0,
+              sgstPercentage: item.sgstPercentage || 0,
+              cgstAmount: item.cgstAmount || 0,
+              sgstAmount: item.sgstAmount || 0,
+              gstAmount: item.gstAmount || 0,
+              discount: item.discount || 0,
+              amount: item.amount || 0,
+              pharmacyId,
+              gstPercentage:
+                (item.cgstPercentage || 0) + (item.sgstPercentage || 0),
+            })
+          );
+
+        setPurchaseRows(updatedRows);
+
+        // Step 2: Fetch additional item details for each row
+        updatedRows = await Promise.all(
+          updatedRows.map(
+            async (row: PurchaseEntryItem): Promise<PurchaseEntryItem> => {
+              try {
+                const itemDetails = await getItemById(row.itemId.toString());
+
+                return {
+                  ...row,
+                  purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
+                  mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
+                  cgstPercentage:
+                    itemDetails.cgstPercentage ?? row.cgstPercentage,
+                  sgstPercentage:
+                    itemDetails.sgstPercentage ?? row.sgstPercentage,
+                  gstPercentage:
+                    (itemDetails.cgstPercentage ?? 0) +
+                    (itemDetails.sgstPercentage ?? 0), // ✅ Update GST Percentage
+                };
+              } catch (error) {
+                console.error(
+                  "Error fetching item details for itemId:",
+                  row.itemId,
+                  error
+                );
+                return row; // Keep the original row if fetching fails
+              }
+            }
+          )
+        );
+
+        setPurchaseRows(updatedRows); // Update the state with complete data
+
+        // ✅ Step 3: Fetch Pharmacy Name using pharmacyId
+        if (pharmacyId) {
+          try {
+            console.log(
+              "Fetching pharmacy details for pharmacyId:",
+              pharmacyId
+            );
+
+            const response = await getPharmacyById(pharmacyId);
+            console.log("Pharmacy API Response:", response); // ✅ Debugging Output
+
+            // ✅ Extract the pharmacy data correctly
+            const pharmacy = response?.data; // Extract the `data` object
+
+            setFormData((prev) => ({
+              ...prev,
+              pharmacyId, // ✅ Store pharmacyId
+              pharmacyName: pharmacy?.pharmacyName || "N/A", // ✅ Store pharmacyName correctly
+            }));
+          } catch (error) {
+            console.error(
+              "Error fetching pharmacy details for pharmacyId:",
+              pharmacyId,
+              error
+            );
+            setFormData((prev) => ({
+              ...prev,
+              pharmacyId,
+              pharmacyName: "N/A",
+            }));
+          }
+        }
+
+        if (supplierId) {
+          try {
+            console.log(
+              "Fetching supplier details for supplierId:",
+              supplierId
+            );
+
+            const supplier = await getSupplierById(supplierId); // ✅ No `.data` needed
+            console.log("Supplier API Response:", supplier); // ✅ Debugging Output
+
+            setFormData((prev) => ({
+              ...prev,
+              supplierId, // ✅ Store supplierId
+              supplierName: supplier?.supplierName || "N/A", // ✅ Store supplierName correctly
+            }));
+          } catch (error) {
+            console.error(
+              "Error fetching supplier details for supplierId:",
+              supplierId,
+              error
+            );
+            setFormData((prev) => ({
+              ...prev,
+              supplierId,
+              supplierName: "N/A",
+            }));
+          }
+        }
+      } else {
+        setPurchaseRows([]);
+      }
+    } catch (error) {
+      console.error("Error fetching purchase order items:", error);
+    }
+  };
+
+  useEffect(() => {
+    const newSubTotal = purchaseRows.reduce(
+      (sum, row) => sum + (row.amount || 0),
+      0
+    );
+
+    // ✅ Fix GST Total Calculation
+    const newGstTotal = purchaseRows.reduce(
+      (sum, row) => sum + (row.gstAmount || 0),
+      0
+    );
+
+    const newGrandTotal = newSubTotal + newGstTotal;
+
+    setSubTotal(newSubTotal);
+    setGstTotal(newGstTotal);
+    setGrandTotal(newGrandTotal);
+  }, [purchaseRows]);
+
+  useEffect(() => {
+    const newSubTotal = purchaseRows.reduce(
+      (sum, row) => sum + (row.amount || 0),
+      0
+    );
+
+    // ✅ Fix GST Total Calculation
+    const newGstTotal = purchaseRows.reduce(
+      (sum, row) => sum + (row.gstAmount || 0),
+      0
+    );
+
+    const newGrandTotal = newSubTotal + newGstTotal;
+
+    setSubTotal(newSubTotal);
+    setGstTotal(newGstTotal);
+    setGrandTotal(newGrandTotal);
+  }, [purchaseRows]);
+
+  const addPurchase = async () => {
+    // Ensure there is at least one item to save
+    if (purchaseRows.length === 0) {
+      alert("Please add at least one purchase item before submitting.");
+      return;
+    }
+
+    // Constructing the payload
+    const purchaseData: PurchaseEntryData = {
+      orderId: formData.orderId,
+      purchaseBillNo: formData.purchaseBillNo,
+      purchaseDate: new Date(formData.purchaseDate),
+      creditPeriod: formData.creditPeriod
+        ? Number(formData.creditPeriod)
+        : undefined,
+      paymentDueDate: formData.paymentDueDate
+        ? new Date(formData.paymentDueDate)
+        : undefined,
+      supplierId: formData.supplierId,
+      invoiceAmount: formData.invoiceAmount
+        ? Number(formData.invoiceAmount)
+        : undefined,
+      totalAmount: subTotal,
+      totalCgst: gstTotal,
+      totalSgst: gstTotal,
+      grandTotal: grandTotal,
+      stockItemDtos: purchaseRows.map((row) => ({
+        itemId: row.itemId,
+        batchNo: row.batchNo,
+        packageQuantity: row.packageQuantity,
+        expiryDate: row.expiryDate,
+        purchasePrice: row.purchasePrice,
+        mrpSalePrice: row.mrpSalePrice,
+        purchasePricePerUnit: row.purchasePricePerUnit,
+        mrpSalePricePerUnit: row.mrpSalePricePerUnit,
+        cgstPercentage: row.cgstPercentage,
+        sgstPercentage: row.sgstPercentage,
+        gstPercentage: row.gstPercentage,
+        cgstAmount: row.cgstAmount,
+        sgstAmount: row.sgstAmount,
+        gstAmount: row.gstAmount,
+        discount: row.discount,
+        amount: row.amount,
+        pharmacyId: row.pharmacyId,
+      })),
+      paymentStatus: "",
+      goodStatus: "",
+    };
+
+    try {
+      const response = await createPurchase(purchaseData);
+      alert("Purchase entry added successfully!");
+      console.log("Purchase Saved:", response);
+
+      // Reset Form & Table after successful submission
+      setFormData({
+        orderId: "",
+        purchaseDate: new Date(), // Default to current date
+        purchaseBillNo: "",
+        creditPeriod: 0,
+        paymentDueDate: new Date(), // Default to current date
+        supplierId: "",
+        invoiceAmount: 0,
+        paymentStatus: "",
+        goodStatus: "",
+        totalAmount: 0,
+        totalCgst: 0,
+        totalSgst: 0,
+        totalDiscount: 0,
+        grandTotal: 0,
+        stockItemDtos: [],
+      });
+      setPurchaseRows([]); // Clear purchase rows after saving
+    } catch (error) {
+      console.error("Error adding purchase:", error);
+      alert("Failed to add purchase. Please try again.");
+    }
+  };
 
   return (
     <>
       {showItem && (
-        <Drawer setShowDrawer={handleCloseDrawer} title={"Add Item"}>
-          <AddItem setShowDrawer={handleCloseDrawer}/>
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
+          <AddItem setShowDrawer={handleCloseDrawer} />
         </Drawer>
       )}
 
       {showSupplier && (
-        <Drawer setShowDrawer={handleCloseDrawer} title={"Add Supplier"}>
-          <AddSupplier setShowDrawer={handleCloseDrawer}/>
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Supplier"}>
+          <AddSupplier setShowDrawer={handleCloseDrawer} />
         </Drawer>
       )}
-
 
       <main className="space-y-6">
         <div className="flex justify-between">
@@ -331,54 +764,82 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
 
           <div className="relative mt-8 grid grid-cols-4 gap-4">
             {[
-              { id: "orderId", label: "Order ID " },
-              { id: "storeId", label: "Store" },
-              { id: "billNo", label: "Bill No" },
+              { id: "orderId", label: "Order ID", type: "select" },
+              { id: "pharmacyName", label: "Pharmacy" },
+              { id: "purchaseBillNo", label: "Bill No" },
               { id: "billDate", label: "Bill Date", type: "date" },
-            ].map(({ id, label,type }) => (
+            ].map(({ id, label, type }) => (
+              <div key={id} className="relative w-72">
+                {id === "orderId" ? (
+                  <>
+                    {/* Floating Label Stays on Top */}
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label}
+                    </label>
+
+                    <select
+                      id="orderId"
+                      value={formData.orderId || ""}
+                      onChange={handleOrderSelect}
+                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                    >
+                      <option value="" disabled>
+                        Select Order
+                      </option>
+                      {orderPurchase.map((order) => (
+                        <option
+                          key={order.orderId ?? "unknown"}
+                          value={order.orderId?.toString() || ""}
+                        >
+                          {order.orderId1 || "Unknown Order"}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : (
+                  <InputField
+                    id={id}
+                    label={label}
+                    type={type}
+                    value={
+                      formData[id as keyof PurchaseEntryData]?.toString() ?? ""
+                    }
+                    onChange={handleInputChange}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="relative mt-8 grid grid-cols-4 gap-4">
+            {[
+              { id: "creditPeriod", label: "Credit Period", type: "number" },
+              { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
+              { id: "supplierName", label: "Supplier", type: "text" },
+              { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
+            ].map(({ id, label, type }) => (
               <InputField
                 key={id}
                 id={id}
                 label={label}
                 type={type}
-                value={formData[id]}
-                onChange={handleInputChange}
+                value={
+                  id === "paymentDueDate" && formData.paymentDueDate
+                    ? new Date(formData.paymentDueDate)
+                        .toISOString()
+                        .split("T")[0] // ✅ Convert Date to YYYY-MM-DD
+                    : formData[id as keyof PurchaseEntryData]?.toString() ?? ""
+                }
+                onChange={
+                  id === "paymentDueDate" ? () => {} : handleInputChange
+                } // Prevents editing Payment Due Date
+                readOnly={id === "paymentDueDate"}
               />
             ))}
           </div>
-
-          <div className="relative mt-8 grid grid-cols-4 gap-4">
-  {[
-    { id: "creditPeriod", label: "Credit Period", type: "number" },
-    { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
-    { id: "supplier", label: "Supplier", type: "text" },
-    { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
-  ].map(({ id, label, type }) => (
-    <InputField
-      key={id}
-      id={id}
-      label={label}
-      type={type}
-      value={
-        id === "paymentDueDate"
-          ? formData.billDate && formData.creditPeriod
-            ? new Date(
-                new Date(formData.billDate).setDate(
-                  new Date(formData.billDate).getDate() + parseInt(formData.creditPeriod, 10) || 0
-                )
-              )
-                .toISOString()
-                .split("T")[0]
-            : ""
-          : formData[id] ?? "" 
-      }
-      onChange={id === "paymentDueDate" ? () => {} : handleInputChange} // No onChange for paymentDueDate
-      readOnly={id === "paymentDueDate"} 
-    />
-  ))}
-</div>
-
-
         </div>
 
         <Table
@@ -399,10 +860,14 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
 
         <div className="border h-56 w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
           {[
-            { label: "SUB TOTAL", value: 1111 },
-            { label: "GST", value: 1111 },
-            { label: "DISCOUNT", value: 1111 },
-            { label: "GRAND TOTAL", value: 1111, isTotal: true },
+            { label: "SUB TOTAL", value: subTotal.toFixed(2) },
+            { label: "GST TOTAL", value: gstTotal.toFixed(2) }, // ✅ Fix GST Total Display
+            { label: "DISCOUNT", value: 0 },
+            {
+              label: "GRAND TOTAL",
+              value: grandTotal.toFixed(2),
+              isTotal: true,
+            },
           ].map(({ label, value, isTotal }, index) => (
             <div
               key={index}
@@ -413,9 +878,18 @@ const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>, index: number
               }`}
             >
               <div>{label}</div>
-              <div>{value}</div>
+              <div>₹{value}</div>
             </div>
           ))}
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            onClick={addPurchase}
+            label="Save"
+            value=""
+            className="w-28 bg-darkPurple text-white"
+          ></Button>
         </div>
       </main>
     </>

@@ -3,7 +3,7 @@ import React from 'react'
 interface TableProps<T> {
     data: T[]; // Array of data to be displayed
     columns: {
-      header: string; // Header text
+      header: React.ReactNode;
       accessor: keyof T | ((item: T, index: number) => React.ReactNode);// Field name or custom renderer
     }[];
     actions?: (item: T) => React.ReactNode; // Optional actions for each row

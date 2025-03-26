@@ -30,7 +30,7 @@ const Drawer : React.FC<DrawerProps> = ({setShowDrawer, children, title}) =>{
               <div className="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl justify-between">
                 <div className="px-4 sm:px-6">
                   <div className="flex items-start justify-between">
-                    <DialogTitle className="text-base font-semibold text-gray-900">{title}</DialogTitle>
+                    <DialogTitle className="text-2xl font-medium text-gray-900">{title}</DialogTitle>
                     <div className="ml-3 flex h-7 items-center">
                       <button
                         type="button"

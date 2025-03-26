@@ -30,6 +30,7 @@ const AddItem : React.FC<SupplierProps> = ({setShowDrawer}) =>{
     mrpSalePricePerUnit: 0,
     cgstPercentage: 0,
     sgstPercentage: 0,
+    gstPercentage: 0,
     hsnNo: "",
     consumables: "",
   });
@@ -91,9 +92,8 @@ const AddItem : React.FC<SupplierProps> = ({setShowDrawer}) =>{
     <>
       <main className="space-y-6">
         <div>
-          <div className="justify-start text-2xl font-medium">Add New Item</div>
 
-          <div className="relative mt-8 grid grid-cols-2 gap-4">
+          <div className="relative mt-4 grid grid-cols-2 gap-4">
             {[
               { id: "itemName", label: "Item Name", type: "text" },
               { id: "purchaseUnit", label: "Purchase Unit", type: "number" },

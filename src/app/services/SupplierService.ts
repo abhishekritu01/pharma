@@ -39,10 +39,10 @@ export const createSupplier = async (formData: SupplierData): Promise<SupplierDa
 
 
 
-export const getSupplierById = async (supplierId: number) => {
+export const getSupplierById = async (supplierId: string) => {
     try {
         const response = await api.get(`pharma/supplier/getById/${supplierId}`);
-        return response.data;
+        return response.data.data;
     } catch (error: unknown) {
         console.error('Error fetching Supplier:', error);
         if (error instanceof Error) {

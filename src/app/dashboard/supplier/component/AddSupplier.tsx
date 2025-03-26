@@ -35,23 +35,25 @@ const AddSupplier: React.FC<SupplierProps> = ({ setShowDrawer }) => {
   //   }));
   // };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement >) => {
     const { id, value } = e.target;
-  
+
     setFormData((prev) => ({
       ...prev,
-      [id]: id === "supplierMobile" ? value.replace(/\D/g, "") : value, 
+      [id]: id === "supplierMobile" ? Number(value.replace(/\D/g, "")) : value,
     }));
-  
+
     // Ensure `id` is a valid key in supplierSchema.shape
     if (id in supplierSchema.shape) {
       const fieldKey = id as keyof typeof supplierSchema.shape;
-  
+
       // Pick the field dynamically
-      const singleFieldSchema = z.object({ [fieldKey]: supplierSchema.shape[fieldKey] });
-  
+      const singleFieldSchema = z.object({
+        [fieldKey]: supplierSchema.shape[fieldKey],
+      });
+
       const result = singleFieldSchema.safeParse({ [fieldKey]: value });
-  
+
       if (!result.success) {
         setValidationErrors((prev) => ({
           ...prev,
@@ -65,7 +67,6 @@ const AddSupplier: React.FC<SupplierProps> = ({ setShowDrawer }) => {
       }
     }
   };
-  
 
   const addSupplier = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -102,24 +103,30 @@ const AddSupplier: React.FC<SupplierProps> = ({ setShowDrawer }) => {
 
   return (
     <>
-      <main className="space-y-6">
+      <main className="space-y-4">
         <div>
-          <div className="justify-start text-2xl font-medium">
-            Add New Supplier
-          </div>
 
-
-          <div className="relative mt-8 grid grid-cols-2 gap-4">
+          <div className="relative mt-4 grid grid-cols-2 gap-4">
             {[
-              { id: "supplierName", label: "Supplier Name", type: "text", maxLength: 50  },
-              { id: "supplierMobile", label: "Mobile Number", type: "text", maxLength: 10 },
+              {
+                id: "supplierName",
+                label: "Supplier Name",
+                type: "text",
+                maxLength: 50,
+              },
+              {
+                id: "supplierMobile",
+                label: "Mobile Number",
+                type: "text",
+                maxLength: 10,
+              },
             ].map(({ id, label, type, maxLength }) => (
               <div key={id} className="flex flex-col">
                 <InputField
-                 type={type}
+                  type={type}
                   id={id}
                   label={label}
-                  maxLength={maxLength} 
+                  maxLength={maxLength}
                   value={String(formData[id as keyof SupplierData] ?? "")}
                   onChange={(e) => handleChange(e)}
                 />
@@ -134,18 +141,44 @@ const AddSupplier: React.FC<SupplierProps> = ({ setShowDrawer }) => {
 
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
-              { id: "supplierGstinNo", label: "GSTIN Number" },
-              { id: "supplierGstType", label: "GST Type" },
-            ].map(({ id, label }) => (
-              <div key={id} className="flex flex-col">
-              <InputField
-                key={id}
-                id={id}
-                label={label}
-                value={String(formData[id as keyof SupplierData])}
-                onChange={(e) => handleChange(e)}
-              />
-              {validationErrors[id] && (
+              { id: "supplierGstinNo", label: "GSTIN Number", maxLength: 15 },
+              { id: "supplierGstType", label: "GST Type", type: "select" }, // ✅ Mark as a dropdown
+            ].map(({ id, label, maxLength, type }) => (
+              <div key={id} className="relative w-72">
+                {id === "supplierGstType" ? (
+                  <>
+                    {/* Floating Label for Dropdown */}
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label}
+                    </label>
+
+                    <select
+                      id={id}
+                      value={formData[id as keyof SupplierData] || ""}
+                      onChange={(e) => handleChange(e)}
+                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                    >
+                      <option value="" disabled>
+                        Select
+                      </option>
+                      <option value="CGST">CGST</option>
+                      <option value="SGST">SGST</option>
+                      <option value="CGST+SGST">CGST+SGST</option>
+                    </select>
+                  </>
+                ) : (
+                  <InputField
+                    id={id}
+                    label={label}
+                    maxLength={maxLength}
+                    value={String(formData[id as keyof SupplierData] ?? "")}
+                    onChange={(e) => handleChange(e)}
+                  />
+                )}
+                {validationErrors[id] && (
                   <span className="text-red-500 text-sm">
                     {validationErrors[id]}
                   </span>

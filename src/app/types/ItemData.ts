@@ -12,6 +12,7 @@ export interface ItemData {
     mrpSalePricePerUnit: number;
     cgstPercentage: number;
     sgstPercentage: number;
+    gstPercentage: number;
     hsnNo: string;
     consumables: string;
   }
