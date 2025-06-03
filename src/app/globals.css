@@ -14,45 +14,40 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* --background: #0a0a0a;
-    --foreground: #ededed; */
-
-    /* Primary branding colors for consistency across the UI */
   --PRIMARY-PURPLE:  #E1C4F8; 
   --SECONDARY-PURPLE: #E5D2F4;
   --TERTIARY-PURPLE: #442060;
   --DARK-PURPLE: #4B0082;
-
   --PRIMARY-GRAY: #433E3F;
   --SECONDARY-GRAY: #B5B3B3;
   --TERTIARY-GRAY: #CCCBCB;
-
   --PRIMARY-RED: #B30000;
-  /* --PRIMARY-LIGHT: #5c1d8f;
-  --SECONDARY: #9333ea; 
-  --TERTIARY: #a855f7; */
-
-  /* Text colors for improved readability and emphasis */
-  
-  /* --TEXT-LIGHT: #71717a; 
-  --TEXT-MUTED: #9ca3af; 
-  --TEXT-WHITE: #ffffff;
-  --TEXT-ZINC: #09090b;  */
-
-  /* Button colors for different actions */
-  /* --SAVE-BUTTON: #8b5cf6; 
-  --SAVE-HOVER: #7c3aed; 
-  --DELETE-BUTTON: #dc2626;
-  --DELETE-HOVER: #b91c1c; 
-  --UPDATE-BUTTON: #4f46e5; 
-  --UPDATE-HOVER: #4338ca;  */
   }
 }
 
+@media (prefers-color-scheme) {
+  :root {
+  --PRIMARY-PURPLE:  #E1C4F8; 
+  --SECONDARY-PURPLE: #E5D2F4;
+  --TERTIARY-PURPLE: #442060;
+  --DARK-PURPLE: #4B0082;
+  --PRIMARY-GRAY: #433E3F;
+  --SECONDARY-GRAY: #B5B3B3;
+  --TERTIARY-GRAY: #CCCBCB;
+  --PRIMARY-RED: #B30000;
+  --SECONDARY-RED: #FFD8D8;
+  --TERTIARY-RED: #FF0000;
+  --PRIMARY-WARNING: #FED0AB;
+  --SECONDARY-WARNING: #B05003;
+  --PRIMARY-GREEN:#AEEBBC;
+  --SECONDARY-GREEN: #1C7631;
+  
+  }
+}
 
 @layer base {
 body {
-  /* background: var(--background); */
+
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -76,6 +71,10 @@ body {
   background-color: var(--PRIMARY-RED);
 
 }
+.bg-secondaryRed {
+  background-color: var(--SECONDARY-RED);
+
+}
 
 .bg-gray{
   background-color: var(--TERTIARY-GRAY);
@@ -88,10 +87,19 @@ body {
 }
 
 .text-darkPurple {
-   color: var(--TERTIARY-PURPLE) !important;
+   color: var(--TERTIARY-PURPLE) ;
 
 }
 
+.text-Purple {
+  color: var(--DARK-PURPLE) ;
+
+}
+
+.text-Red {
+  color: var(--PRIMARY-RED) ;
+
+}
 .border-Gray {
   border-color: var(--SECONDARY-GRAY);
 
@@ -101,4 +109,42 @@ body {
   border-color: var(--DARK-PURPLE);
 
 }
+
+.bg-warning {
+  background-color: var(--PRIMARY-WARNING);
+
+}
+.bg-warning2 {
+  background-color: var(--SECONDARY-WARNING);
+
+}
+
+.text-warning {
+   color: var(--SECONDARY-WARNING) ;
+
+}
+.bg-green {
+  background-color: var(--PRIMARY-GREEN);
+
+}
+.bg-green2 {
+  background-color: var(--SECONDARY-GREEN);
+
+}
+
+.text-green {
+   color: var(--SECONDARY-GREEN) ;
+
+}
+.text-tertiaryRed {
+   color: var(--TERTIARY-RED) ;
+}
+
+}
+
+@layer utilities {
+  .data-\[state\=on\]\:bg-primaryPurple[data-state='on'] {
+    background-color: var(--PRIMARY-PURPLE);
+  }
+  
 }

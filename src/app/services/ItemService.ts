@@ -38,23 +38,22 @@ export const createItem = async (formData: ItemData): Promise<ItemData> => {
   };
 
 
-  export const getItemById = async (itemId: string) => {
-    try {
-        const token = localStorage.getItem("authToken");
-        const response = await api.get(`pharma/item/getById/${itemId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        return response.data.data; // Access 'data' inside the response
-    } catch (error) {
-        console.error('Error fetching Item:', error);
-        throw new Error('Failed to fetch item data');
-    }
+export const getItemById = async (itemId: string) => {
+  try {
+      const response = await api.get(`pharma/item/getById/${itemId}`);
+      return response.data.data;
+  } catch (error: unknown) {
+      console.error('Error fetching Item:', error);
+      if (error instanceof Error) {
+          throw new Error(`Error fetching Item: ${error.message}`);
+      } else {
+          throw new Error('An unknown error occurred while Item.');
+      }
+  }
 };
 
 
-
-  export const updateItem = async (itemId: number, itemData: ItemData) => {
+  export const updateItem = async (itemId: string, itemData: ItemData) => {
     try {
         const response = await api.put(`pharma/item/update/${itemId}`, itemData);
         return response.data;
@@ -70,7 +69,7 @@ export const createItem = async (formData: ItemData): Promise<ItemData> => {
 
 
 
-export const itemDelete = async (itemId: number) => {
+export const itemDelete = async (itemId: string) => {
     try {
         const response = await api.delete(`pharma/item/delete/${itemId}`);
         return response.data;
@@ -83,3 +82,23 @@ export const itemDelete = async (itemId: number) => {
         }
     }
 }
+
+export const checkDuplicateItem = async (data: {
+  itemName: string;
+  manufacturer: string;
+}): Promise<{ duplicate: boolean }> => {
+  try {
+    const response = await api.post<{ duplicate: boolean }>(
+      'pharma/item/check-duplicate',
+      data
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      const message = error.response?.data?.message || 'Failed to check duplicate item.';
+      throw new Error(message);
+    } else {
+      throw new Error('An unknown error occurred.');
+    }
+  }
+};

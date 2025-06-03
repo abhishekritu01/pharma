@@ -1,6 +1,6 @@
 
 export interface PurchaseEntryItem {
-    itemId: number;
+    itemId: string;
     itemName?: string;
     batchNo: string;
     packageQuantity: number;
@@ -18,11 +18,15 @@ export interface PurchaseEntryItem {
     discount: number;
     amount: number;
     pharmacyId: string;
+    pharmacyName?: string;
+    supplierName?: string;
+
   }
   
   export interface PurchaseEntryData {
     invId?:string;
     orderId:string;
+    orderId1?:string;
     purchaseDate: Date;
     purchaseBillNo: string;
     creditPeriod?: number;
@@ -37,6 +41,7 @@ export interface PurchaseEntryItem {
     totalDiscount?: number;
     grandTotal: number;
     supplierName?: string;
+    grnNo?:string;
   
     stockItemDtos: PurchaseEntryItem[]; 
   }

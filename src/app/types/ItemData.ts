@@ -1,10 +1,12 @@
 
 export interface ItemData {
-    itemId?: number;
+    itemId?: string;
     itemName: string;
     purchaseUnit: number;
-    unitId: number;
-    variantId: number;
+    unitId: string;
+    variantId: string;
+    unitName?: string;
+    variantName?: string;
     manufacturer: string;
     purchasePrice: number;
     mrpSalePrice: number;

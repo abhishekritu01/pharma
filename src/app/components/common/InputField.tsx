@@ -5,10 +5,12 @@ const InputField: React.FC<{
   id: string;
   name?: string;
   maxLength?: number;
-  label: string;
+  label: React.ReactNode;
   value: string;
   readOnly?: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, name, label, value, onChange, maxLength, readOnly }) => (
+  max?:string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, label, value, onChange, maxLength, readOnly, max, onKeyDown }) => (
   <div className="relative">
     <input
       type={type}
@@ -19,7 +21,9 @@ const InputField: React.FC<{
       readOnly={readOnly}
       required
       placeholder=" "
-      className="peer w-72 px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+      max={max}
+      onKeyDown={onKeyDown}
+      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
       data-has-value={value ? "true" : "false"}
     />
     <label
