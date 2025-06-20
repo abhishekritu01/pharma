@@ -12,8 +12,6 @@ import { getSupplierById } from "@/app/services/SupplierService";
 import Table from "@/app/components/common/Table";
 import { getItemById } from "@/app/services/ItemService";
 import Footer from "@/app/components/common/Footer";
-import { getVariantById } from "@/app/services/VariantService";
-import { UnitData } from "@/app/types/VariantData";
 
 const PurchaseOrderDetailsClient = () => {
     const searchParams = useSearchParams();
@@ -44,8 +42,6 @@ const PurchaseOrderDetailsClient = () => {
         accessor: "unitName" as keyof PurchaseOrderItem,
       },
   
-      { header: "GST %", accessor: "gstPercentage" as keyof PurchaseOrderItem },
-      { header: "GST ", accessor: "gstAmount" as keyof PurchaseOrderItem },
       {
         header: "Estimated Amount",
         accessor: "amount" as keyof PurchaseOrderItem,
@@ -75,19 +71,8 @@ const PurchaseOrderDetailsClient = () => {
               if (item?.itemId) {
                 const fetchedItem = await getItemById(item.itemId);
                 itemName = fetchedItem?.itemName || itemName;
-              }
-    
-              if (item?.variantTypeId) {
-                const fetchedVariant = await getVariantById(String(item.variantTypeId));
-                variantName = fetchedVariant?.variantName || variantName;
-    
-                // Find matching unitName by comparing unitTypeId
-                if (fetchedVariant?.unitDtos && Array.isArray(fetchedVariant.unitDtos)) {
-                  const matchedUnit = fetchedVariant.unitDtos.find(
-                    (unit: UnitData) => unit.unitId === String(item.unitTypeId)
-                  );
-                  unitName = matchedUnit?.unitName || unitName;
-                }
+                variantName = fetchedItem?.variantName || variantName
+                unitName = fetchedItem?.unitName || unitName
               }
     
               return {
@@ -205,16 +190,9 @@ const PurchaseOrderDetailsClient = () => {
             noDataMessage="No items found"
           />
   
-          <div className="border h-44 w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
+          <div className="border h-full w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
             {[
-              {
-                label: "SUB TOTAL",
-                value: purchaseOrderData?.totalAmount.toFixed(2),
-              },
-              {
-                label: "GST TOTAL",
-                value: purchaseOrderData?.totalGst.toFixed(2),
-              },
+              
               {
                 label: "GRAND TOTAL",
                 value: purchaseOrderData?.grandTotal.toFixed(2),

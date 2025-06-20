@@ -29,15 +29,22 @@ import {
   restrictInvalidNumberKeys,
 } from "@/app/components/common/RestrictedVal";
 import { SupplierData } from "@/app/types/SupplierData";
+import AsyncSelect from "react-select/async";
+import { StylesConfig, GroupBase } from "react-select";
+
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
 }
 
 type OrderSuggestion = {
-  // [x: string]: any;
   orderId: string;
   orderId1: string;
+};
+
+type OptionType = {
+  label: string;
+  value: string;
 };
 
 const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
@@ -71,6 +78,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     onConfirmCallback: () => Promise<void> | void;
     onCancelCallback?: () => void;
   }
+
+  const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
 
   const [, setShowDrawer] = useState<boolean>(false);
   const [purchaseRows, setPurchaseRows] = useState<PurchaseEntryItem[]>([
@@ -114,6 +123,135 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     stockItemDtos: [],
   });
 
+  // const customSelectStyles = {
+  //   control: (provided: any, state: any) => ({
+  //     ...provided,
+  //     borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
+  //     boxShadow: "none",
+  //     borderRadius: "0.5rem",
+  //     "&:hover": {
+  //       borderColor: "#4B0082",
+  //     },
+  //     backgroundColor: "white",
+  //   }),
+
+  //   option: (provided: any, state: any) => ({
+  //     ...provided,
+  //     backgroundColor: state.isSelected
+  //       ? "#F3F4F6"
+  //       : state.isFocused
+  //       ? "#4B0082"
+  //       : "white",
+  //     color: state.isSelected
+  //       ? "#111827"
+  //       : state.isFocused
+  //       ? "white"
+  //       : "#111827",
+  //     cursor: "pointer",
+  //     borderRadius: "0.375rem",
+  //     margin: "2px 8px",
+  //     "&:active": {
+  //       backgroundColor: "#4B0082",
+  //       color: "white",
+  //     },
+  //   }),
+
+  //   singleValue: (provided: any) => ({
+  //     ...provided,
+  //     color: "#111827",
+  //   }),
+
+  //   dropdownIndicator: (provided: any) => ({
+  //     ...provided,
+  //     color: "#6B7280",
+  //     "&:hover": {
+  //       color: "#6B7280",
+  //     },
+  //   }),
+
+  //   indicatorSeparator: () => ({
+  //     display: "none",
+  //   }),
+
+  //   menu: (provided: any) => ({
+  //     ...provided,
+  //     zIndex: 20,
+  //     borderRadius: "0.5rem",
+  //     overflow: "hidden",
+  //     marginTop: "4px",
+  //   }),
+
+  //   menuList: (provided: any) => ({
+  //     ...provided,
+  //     padding: 0,
+  //   }),
+  // };
+
+  const customSelectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
+  control: (provided, state) => ({
+    ...provided,
+    borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
+    boxShadow: "none",
+    borderRadius: "0.5rem",
+    "&:hover": {
+      borderColor: "#4B0082",
+    },
+    backgroundColor: "white",
+  }),
+
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isSelected
+      ? "#F3F4F6"
+      : state.isFocused
+      ? "#4B0082"
+      : "white",
+    color: state.isSelected
+      ? "#111827"
+      : state.isFocused
+      ? "white"
+      : "#111827",
+    cursor: "pointer",
+    borderRadius: "0.375rem",
+    margin: "2px 8px",
+    "&:active": {
+      backgroundColor: "#4B0082",
+      color: "white",
+    },
+  }),
+
+  singleValue: (provided) => ({
+    ...provided,
+    color: "#111827",
+  }),
+
+  dropdownIndicator: (provided) => ({
+    ...provided,
+    color: "#6B7280",
+    "&:hover": {
+      color: "#6B7280",
+    },
+  }),
+
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 20,
+    borderRadius: "0.5rem",
+    overflow: "hidden",
+    marginTop: "4px",
+  }),
+
+  menuList: (provided) => ({
+    ...provided,
+    padding: 0,
+  }),
+};
+
+
   const [items, setItems] = useState<ItemData[]>([]);
   const [subTotal, setSubTotal] = useState(0);
   const [gstTotal, setGstTotal] = useState(0);
@@ -121,22 +259,24 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
 
-  const [supplierSuggestions, setSupplierSuggestions] = useState<
-    SupplierData[]
-  >([]);
-  const [filteredSupplierSuggestions, setFilteredSupplierSuggestions] =
-    useState<SupplierData[]>([]);
-  const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
+  // const [supplierSuggestions, setSupplierSuggestions] = useState<
+  //   SupplierData[]
+  // >([]);
+  // const [filteredSupplierSuggestions, setFilteredSupplierSuggestions] =
+  //   useState<SupplierData[]>([]);
+  // const [, setShowSupplierSuggestions] = useState(false);
+  const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
+
+  const fetchSuppliers = async () => {
+    try {
+      const supplierList = await getSupplier();
+      setSuppliers(supplierList);
+    } catch (error) {
+      console.error("Failed to fetch suppliers:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchSuppliers = async () => {
-      try {
-        const data = await getSupplier();
-        setSupplierSuggestions(data || []);
-      } catch (error) {
-        console.error("Error loading suppliers", error);
-      }
-    };
     fetchSuppliers();
   }, []);
 
@@ -168,6 +308,96 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     fetchOrders();
   }, []);
 
+  const loadItemOptions = async (inputValue: string) => {
+    try {
+      if (!inputValue.trim()) {
+        return defaultItemOptions;
+      }
+
+      const allItems = await getItem();
+
+      const filteredItems = allItems.filter((item: { itemName: string }) =>
+        item.itemName.toLowerCase().includes(inputValue.toLowerCase())
+      );
+
+      const mappedItems = filteredItems.map(
+        (item: { itemName: string; itemId: string }) => ({
+          label: item.itemName,
+          value: item.itemId,
+        })
+      );
+
+      return [...defaultItemOptions, ...mappedItems];
+    } catch (error) {
+      console.error("Error loading item options:", error);
+      return defaultItemOptions;
+    }
+  };
+
+  const handleRowUpdate = (
+    index: number,
+    updatedFields: Partial<PurchaseEntryItem>
+  ) => {
+    setPurchaseRows((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, ...updatedFields } : item
+      )
+    );
+  };
+
+  const handleItemSelect = async (
+    selectedOption: { value: string; label: string } | null,
+    index: number
+  ) => {
+    if (!selectedOption) {
+      handleRowUpdate(index, {
+        itemId: "",
+        itemName: "",
+        batchNo: "",
+        packageQuantity: 0,
+        expiryDate: "",
+        purchasePrice: 0,
+        mrpSalePrice: 0,
+        gstPercentage: 0,
+        gstAmount: 0,
+        discount: 0,
+        amount: 0,
+      });
+      return;
+    }
+
+    const value = selectedOption.value;
+
+    if (value === "newItem") {
+      handleItemDrawer();
+      return;
+    }
+
+    try {
+      const itemDetails = await getItemById(value);
+
+      const updatedRow: Partial<PurchaseEntryItem> = {
+        itemId: itemDetails.itemId,
+        itemName: itemDetails.itemName,
+        // batchNo: itemDetails.batchNo,
+        // packageQuantity: itemDetails.packageQuantity,
+        // expiryDate: itemDetails.expiryDate,
+        purchasePrice: itemDetails.purchasePrice,
+        mrpSalePrice: itemDetails.mrpSalePrice,
+        gstPercentage: itemDetails.gstPercentage,
+        // gstAmount: itemDetails.gstAmount,
+        // discount: itemDetails.discount,
+        amount:
+          (itemDetails.purchasePrice || 0) *
+          (purchaseRows[index]?.packageQuantity || 1),
+      };
+
+      handleRowUpdate(index, updatedRow);
+    } catch (error) {
+      console.error("Error fetching item details:", error);
+    }
+  };
+
   const columns: {
     header: string;
     accessor:
@@ -178,25 +408,30 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     {
       header: "Item Name",
       accessor: (row: PurchaseEntryItem, index: number) => (
-        <select
-          value={row.itemId}
-          onChange={(e) => handleItemSelection(e, index)}
-          className="border border-gray-300 p-2 rounded w-full text-left outline-none focus:ring-0 focus:outline-none"
-        >
-          <option value="">Select Item</option>
-          <option value="newItem" className="text-Purple">
-            + Add New Item
-          </option>
-          {items.map((item) => (
-            <option key={item.itemId} value={item.itemId}>
-              {item.itemName}
-            </option>
-          ))}
-        </select>
+        <AsyncSelect
+          cacheOptions
+          defaultOptions={defaultItemOptions}
+          loadOptions={loadItemOptions}
+          isClearable={true}
+          value={
+            row.itemId
+              ? {
+                  label:
+                    row.itemName ||
+                    items.find((i) => i.itemId === row.itemId)?.itemName ||
+                    "",
+                  value: row.itemId,
+                }
+              : null
+          }
+          onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
+          placeholder="Select or search item"
+          className="text-left w-full"
+          classNamePrefix="react-select"
+          styles={customSelectStyles}
+        />
       ),
-      className: "text-left",
     },
-
     {
       header: "Batch No",
       accessor: (row: PurchaseEntryItem, index: number) => (
@@ -282,84 +517,44 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     },
   ];
 
-  const handleSupplierClick = (id: string, name: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      supplierId: id,
-      supplierName: name,
-    }));
-    setShowSupplierSuggestions(false);
-  };
+  // const handleSupplierClick = (id: string, name: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     supplierId: id,
+  //     supplierName: name,
+  //   }));
+  //   setShowSupplierSuggestions(false);
+  // };
 
-  const handleItemSelection = async (
-    e: React.ChangeEvent<HTMLSelectElement>,
-    index: number
-  ) => {
-    const value = e.target.value;
-
-    if (value === "newItem") {
-      handleItemDrawer();
-      return;
-    }
-
-    try {
-      const itemDetails = await getItemById(value);
-
-      const updatedValues: Partial<PurchaseEntryItem> = {
-        itemId: value,
-        purchasePrice: itemDetails.purchasePrice || 0,
-        mrpSalePrice: itemDetails.mrpSalePrice || 0,
-        cgstPercentage: itemDetails.cgstPercentage || 0,
-        sgstPercentage: itemDetails.sgstPercentage || 0,
-        gstPercentage:
-          (itemDetails.cgstPercentage || 0) + (itemDetails.sgstPercentage || 0),
-      };
-
-      handleChange(e, index, updatedValues);
-    } catch (error) {
-      console.error("Failed to fetch item details:", error);
-      handleChange(e, index); // fallback
-    }
-  };
-
-  // const handleChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  // const handleItemSelection = async (
+  //   e: React.ChangeEvent<HTMLSelectElement>,
   //   index: number
   // ) => {
-  //   const { name, value } = e.target;
-  //   const updatedRows = [...purchaseRows];
+  //   const value = e.target.value;
 
-  //   let updatedValue: number | string = value;
-  //   if (name === "packageQuantity") {
-  //     updatedValue = Number(value) || 0;
+  //   if (value === "newItem") {
+  //     handleItemDrawer();
+  //     return;
   //   }
 
-  //   updatedRows[index] = {
-  //     ...updatedRows[index],
-  //     [name]: updatedValue,
-  //   };
+  //   try {
+  //     const itemDetails = await getItemById(value);
 
-  //   if (name === "packageQuantity") {
-  //     const packageQuantity = Number(value) || 0;
-  //     const purchasePrice = updatedRows[index].purchasePrice || 0;
-
-  //     const amount = packageQuantity * purchasePrice;
-  //     const gstPercentage = updatedRows[index].gstPercentage || 0;
-  //     const gstAmount = (amount * gstPercentage) / 100;
-
-  //     const cgstAmount = gstAmount / 2;
-  //     const sgstAmount = gstAmount / 2;
-
-  //     updatedRows[index] = {
-  //       ...updatedRows[index],
-  //       amount,
-  //       gstAmount,
-  //       cgstAmount,
-  //       sgstAmount,
+  //     const updatedValues: Partial<PurchaseEntryItem> = {
+  //       itemId: value,
+  //       purchasePrice: itemDetails.purchasePrice || 0,
+  //       mrpSalePrice: itemDetails.mrpSalePrice || 0,
+  //       cgstPercentage: itemDetails.cgstPercentage || 0,
+  //       sgstPercentage: itemDetails.sgstPercentage || 0,
+  //       gstPercentage:
+  //         (itemDetails.cgstPercentage || 0) + (itemDetails.sgstPercentage || 0),
   //     };
-  //   }
 
-  //   setPurchaseRows(updatedRows);
+  //     handleChange(e, index, updatedValues);
+  //   } catch (error) {
+  //     console.error("Failed to fetch item details:", error);
+  //     handleChange(e, index);
+  //   }
   // };
 
   const handleChange = (
@@ -529,6 +724,11 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     setShowDrawer(true);
   };
 
+  const handleSupplierDrawer = () => {
+    setShowItem(false);
+    setShowSupplier(true);
+    setShowDrawer(true);
+  };
   const handleCloseDrawer = async () => {
     setShowDrawer(false);
     setShowItem(false);
@@ -589,16 +789,11 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               mrpSalePrice: item.mrpSalePrice || 0,
               purchasePricePerUnit: item.purchasePricePerUnit || 0,
               mrpSalePricePerUnit: item.mrpSalePricePerUnit || 0,
-              cgstPercentage: item.cgstPercentage || 0,
-              sgstPercentage: item.sgstPercentage || 0,
-              cgstAmount: item.cgstAmount || 0,
-              sgstAmount: item.sgstAmount || 0,
+              gstPercentage: item.gstPercentage || 0,
               gstAmount: item.gstAmount || 0,
               discount: item.discount || 0,
               amount: item.amount || 0,
               pharmacyId,
-              gstPercentage:
-                (item.cgstPercentage || 0) + (item.sgstPercentage || 0),
             })
           );
 
@@ -614,13 +809,16 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                   ...row,
                   purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
                   mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
-                  cgstPercentage:
-                    itemDetails.cgstPercentage ?? row.cgstPercentage,
-                  sgstPercentage:
-                    itemDetails.sgstPercentage ?? row.sgstPercentage,
-                  gstPercentage:
-                    (itemDetails.cgstPercentage ?? 0) +
-                    (itemDetails.sgstPercentage ?? 0),
+                  gstPercentage: itemDetails.gstPercentage ?? row.gstPercentage,
+
+                  itemName: row.itemName,
+                  packageQuantity: row.packageQuantity,
+                  batchNo: row.batchNo,
+                  expiryDate: row.expiryDate,
+                  pharmacyId: row.pharmacyId,
+                  amount: row.amount,
+                  discount: row.discount,
+                  gstAmount: row.gstAmount,
                 };
               } catch (error) {
                 console.error(
@@ -971,69 +1169,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
             ))}
           </div>
 
-          {/* <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[
-              { id: "creditPeriod", label: "Credit Period", type: "number" },
-              { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
-              { id: "supplierName", label: "Supplier", type: "text" },
-              { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
-            ].map(({ id, label, type }) => (
-              <InputField
-                key={id}
-                id={id}
-                label={label}
-                type={type}
-                value={
-                  id === "paymentDueDate" && formData.paymentDueDate
-                    ? new Date(formData.paymentDueDate)
-                        .toISOString()
-                        .split("T")[0]
-                    : formData[id as keyof PurchaseEntryData]?.toString() ?? ""
-                }
-                onChange={
-                  id === "paymentDueDate" ? () => {} : handleInputChange
-                }
-                readOnly={id === "paymentDueDate"}
-              />
-            ))}
-          </div> */}
-
-          {/* <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[
-              { id: "creditPeriod", label: "Credit Period", type: "number" },
-              { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
-              { id: "supplierName", label: "Supplier", type: "text" },
-              { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
-            ].map(({ id, label, type }) => (
-              <InputField
-                key={id}
-                id={id}
-                label={label}
-                type={type}
-                value={
-                  id === "paymentDueDate" && formData.paymentDueDate
-                    ? new Date(formData.paymentDueDate)
-                        .toISOString()
-                        .split("T")[0]
-                    : formData[id as keyof PurchaseEntryData]?.toString() ?? ""
-                }
-                onChange={
-                  id === "paymentDueDate"
-                    ? () => {}
-                    : id === "creditPeriod" || id === "invoiceAmount"
-                    ? handleNumericChange(handleInputChange)
-                    : handleInputChange
-                }
-                readOnly={id === "paymentDueDate"}
-                onKeyDown={
-                  id === "creditPeriod" || id === "invoiceAmount"
-                    ? restrictInvalidNumberKeys
-                    : undefined
-                }
-              />
-            ))}
-          </div> */}
-
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[
               { id: "creditPeriod", label: "Credit Period", type: "number" },
@@ -1044,7 +1179,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               <div key={id} className="relative w-full">
                 {id === "supplierName" ? (
                   <div className="relative">
-                    <input
+                    {/* <input
                       type="text"
                       id="supplierName"
                       value={formData.supplierName || ""}
@@ -1114,7 +1249,39 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                             )
                           )}
                         </ul>
-                      )}
+                      )} */}
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label}
+                    </label>
+                    <select
+                      id={id}
+                      value={formData.supplierId || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "newSupplier") {
+                          handleSupplierDrawer();
+                        } else {
+                          handleInputChange(e);
+                        }
+                      }}
+                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
+                      name="supplierId"
+                    >
+                      <option value="" disabled>
+                        Select Supplier
+                      </option>
+                      <option value="newSupplier" className="text-Purple">
+                        + New Supplier
+                      </option>
+                      {suppliers.map((sup) => (
+                        <option key={sup.supplierId} value={sup.supplierId}>
+                          {sup.supplierName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ) : (
                   <InputField
@@ -1180,7 +1347,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               key={index}
               className={`flex justify-between ${
                 isTotal
-                  ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg"
+                  ? "font-semibold text-base bg-gray1 h-8 p-1 items-center rounded-lg"
                   : ""
               }`}
             >

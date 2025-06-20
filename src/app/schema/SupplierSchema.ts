@@ -32,8 +32,8 @@ export const supplierSchema = z.object({
   supplierGstType: z.string().min(1, { message: 'GST Type is Mandatory' }),
 
   supplierEmail: z
-  .string()
-   .min(1, {message: "Email is mandatory" })
-  .email({ message: "Enter a valid email address" }),
+    .string()
+    .min(1, { message: "Email is mandatory" })
+    .email({ message: "Enter a valid email address" }),
 
 });

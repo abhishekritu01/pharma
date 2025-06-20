@@ -6,11 +6,11 @@ const InputField: React.FC<{
   name?: string;
   maxLength?: number;
   label: React.ReactNode;
-  value: string;
+  value?: string;
   readOnly?: boolean;
   max?:string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, label, value, onChange, maxLength, readOnly, max, onKeyDown }) => (
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, label, value, onChange, maxLength, readOnly, max, onKeyDown }) => (
   <div className="relative">
     <input
       type={type}

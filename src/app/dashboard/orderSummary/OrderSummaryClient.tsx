@@ -54,22 +54,42 @@ const OrderSummaryClient = () => {
           await fetchSupplier(purchaseData.supplierId);
         }
 
-        // Fetch item names for each stock item
         if (purchaseData?.stockItemDtos?.length) {
           const stockItemDtosWithNames = await Promise.all(
             purchaseData.stockItemDtos.map(async (item: PurchaseEntryItem) => {
               try {
                 const itemData = await getItemById(item.itemId);
+
+                const gstPercentage = item.gstPercentage || 0;
+                const gstAmount = item.gstAmount || 0;
+
+                const cgstPercentage = gstPercentage / 2;
+                const sgstPercentage = gstPercentage / 2;
+
+                const cgstAmount = gstAmount / 2;
+                const sgstAmount = gstAmount / 2;
+
                 return {
                   ...item,
                   itemName: itemData?.itemName || "Unknown Item",
+                  cgstPercentage,
+                  sgstPercentage,
+                  cgstAmount,
+                  sgstAmount,
                 };
               } catch (error) {
                 console.error("Failed to fetch Item:", error);
 
+                const gstPercentage = item.gstPercentage || 0;
+                const gstAmount = item.gstAmount || 0;
+
                 return {
                   ...item,
                   itemName: "Failed to fetch",
+                  cgstPercentage: gstPercentage / 2,
+                  sgstPercentage: gstPercentage / 2,
+                  cgstAmount: gstAmount / 2,
+                  sgstAmount: gstAmount / 2,
                 };
               }
             })
@@ -94,9 +114,13 @@ const OrderSummaryClient = () => {
   if (error) return <p className="text-red-500">{error}</p>;
   if (!purchaseEntryData) return <p>No data available.</p>;
 
-  const formatDate = (date: string | Date): string => {
-    const parsedDate = typeof date === "string" ? new Date(date) : date;
-    return format(parsedDate, "dd-MM-yyyy");
+  const formatDate = (date: string | Date | null | undefined): string => {
+    if (!date || date === "N/A") return "N/A";
+
+    const parsedDate = new Date(date);
+    return isNaN(parsedDate.getTime())
+      ? "Invalid Date"
+      : format(parsedDate, "dd-MM-yyyy");
   };
 
   const columns = [
@@ -108,7 +132,7 @@ const OrderSummaryClient = () => {
     },
     {
       header: "Expiry Date",
-        accessor: (row: PurchaseEntryItem) => formatDate(row.expiryDate),
+      accessor: (row: PurchaseEntryItem) => formatDate(row.expiryDate),
     },
     {
       header: "Purchase Price",

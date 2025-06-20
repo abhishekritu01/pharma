@@ -31,8 +31,8 @@ export const navigation: NavigationItem[] = [
     icon: FaStore,
     current: false,
     children: [
-      { name: "Supplier", href: "/dashboard/supplier", icon: IoPeople, current: true },
-      { name: "Item", href: "/dashboard/item", icon: RiMedicineBottleFill, current: true },
+      { name: "Supplier Master", href: "/dashboard/supplier", icon: IoPeople, current: true },
+      { name: "Item Master", href: "/dashboard/item", icon: RiMedicineBottleFill, current: true },
      
     ],
   },

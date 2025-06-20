@@ -41,9 +41,8 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
     mrpSalePrice: 0,
     purchasePricePerUnit: 0,
     mrpSalePricePerUnit: 0,
-    cgstPercentage: 0,
-    sgstPercentage: 0,
     gstPercentage: 0,
+    genericName: "",
     hsnNo: "",
     consumables: "",
   });
@@ -78,8 +77,7 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
       "mrpSalePrice",
       "purchasePricePerUnit",
       "mrpSalePricePerUnit",
-      "cgstPercentage",
-      "sgstPercentage",
+      "gstPercentage",
     ];
 
     const formattedValue = numericFields.includes(id)
@@ -103,12 +101,25 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
 
       if (id === "variantId") {
         const chosen = variant.find((v) => v.variantId === value);
-        if (chosen && chosen.unitDtos.length > 0) {
-          next.unitId = chosen.unitDtos[0].unitId;
-          next.unitName = chosen.unitDtos[0].unitName;
-        } else {
-          next.unitId = "";
-          next.unitName = "";
+        if (chosen) {
+          next.variantId = chosen.variantId;
+          next.variantName = chosen.variantName; // <- add this
+          const unit = chosen.unitDtos[0];
+          if (unit) {
+            next.unitId = unit.unitId;
+            next.unitName = unit.unitName; // <- and this
+          } else {
+            next.unitId = "";
+            next.unitName = "";
+          }
+        }
+      }
+
+      if (id === "unitId") {
+        const selectedUnit = unitOptions.find((u) => u.id === value);
+        if (selectedUnit) {
+          next.unitId = selectedUnit.id;
+          next.unitName = selectedUnit.name; // <- set name
         }
       }
 
@@ -204,40 +215,43 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
   };
 
   useEffect(() => {
-    if (!itemId) return;
+  if (!itemId) return;
 
-    async function fetchItemDetails() {
-      try {
-        const data = await getItemById(itemId!);
+  async function fetchItemDetails() {
+    try {
+      const data = await getItemById(itemId!);
 
-        const matchingVariant = variant.find(
-          (v) => v.variantId === data.variantId
-        );
-        const matchingUnit = matchingVariant?.unitDtos.find(
-          (u) => u.unitId === data.unitId
-        );
+      const matchingVariant = variant.find(
+        (v) => v.variantName === data.variantName 
+      );
 
-        setFormData({
-          ...data,
-          purchasePricePerUnit: data.purchaseUnit
-            ? data.purchasePrice / data.purchaseUnit
-            : 0,
-          mrpSalePricePerUnit: data.purchaseUnit
-            ? data.mrpSalePrice / data.purchaseUnit
-            : 0,
-          unitName: matchingUnit?.unitName || "",
-        });
-      } catch (error) {
-        console.error("Failed to fetch item details:", error);
-        toast.error("Failed to fetch item data.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
+      const matchingUnit = matchingVariant?.unitDtos.find(
+        (u) => u.unitName === data.unitName 
+      );
+
+      setFormData({
+        ...data,
+        variantId: matchingVariant?.variantId || "", 
+        unitId: matchingUnit?.unitId || "",        
+        purchasePricePerUnit: data.purchaseUnit
+          ? data.purchasePrice / data.purchaseUnit
+          : 0,
+        mrpSalePricePerUnit: data.purchaseUnit
+          ? data.mrpSalePrice / data.purchaseUnit
+          : 0,
+      });
+    } catch (error) {
+      console.error("Failed to fetch item details:", error);
+      toast.error("Failed to fetch item data.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
+  }
 
-    fetchItemDetails();
-  }, [itemId, variant]);
+  fetchItemDetails();
+}, [itemId, variant]);
+
 
   const handleDeleteItem = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -404,10 +418,10 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
                 key={id}
                 id={id}
                 label={
-                    <>
-                      {label} <span className="text-tertiaryRed">*</span>
-                    </>
-                  }
+                  <>
+                    {label} <span className="text-tertiaryRed">*</span>
+                  </>
+                }
                 value={String(formData[id as keyof ItemData])}
                 onChange={(e) => handleChange(e)}
                 readOnly
@@ -418,13 +432,13 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               {
-                id: "cgstPercentage",
-                label: "CGST Percentage",
+                id: "gstPercentage",
+                label: "GST Percentage",
                 type: "text",
               },
               {
-                id: "sgstPercentage",
-                label: "SGST Percentage",
+                id: "hsnNo",
+                label: "HSN Number",
                 type: "text",
               },
             ].map(({ id, label, type }) => (
@@ -451,8 +465,8 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
 
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
+              { id: "genericName", label: "Generic Name", type: "text" },
               { id: "manufacturer", label: "Manufacturer", type: "text" },
-              { id: "hsnNo", label: "HSN Number", type: "text" },
             ].map(({ id, label, type }) => (
               <div key={id} className="flex flex-col w-full relative">
                 <InputField

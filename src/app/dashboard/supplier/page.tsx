@@ -7,7 +7,7 @@ import { getSupplier } from "@/app/services/SupplierService";
 import { SupplierData } from "@/app/types/SupplierData";
 import { Plus, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { MdEdit, MdDelete } from "react-icons/md";
+import { MdEdit} from "react-icons/md";
 import AddSupplier from "./component/AddSupplier";
 import Button from "@/app/components/common/Button";
 
@@ -49,14 +49,14 @@ const Page = () => {
             <MdEdit size={19} color="228B22" />
           </button>
 
-          <button
+          {/* <button
             className="cursor-pointer hover:opacity-80 transition"
             onClick={() =>
               row.supplierId && handleSupplierDrawer(row.supplierId, "delete")
             }
           >
             <MdDelete size={20} color="B30000" />
-          </button>
+          </button> */}
         </div>
       ),
     },
@@ -105,7 +105,7 @@ const Page = () => {
   return (
     <>
       {showSupplier && (
-        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Supplier"}>
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Supplier Master"}>
           <AddSupplier
             setShowDrawer={handleCloseDrawer}
             supplierId={currentSupplierId}

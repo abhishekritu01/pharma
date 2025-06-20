@@ -40,7 +40,7 @@ export const createItem = async (formData: ItemData): Promise<ItemData> => {
 
 export const getItemById = async (itemId: string) => {
   try {
-      const response = await api.get(`pharma/item/getById/${itemId}`);
+      const response = await api.get(`pharma/item/getById/${itemId}`);      
       return response.data.data;
   } catch (error: unknown) {
       console.error('Error fetching Item:', error);

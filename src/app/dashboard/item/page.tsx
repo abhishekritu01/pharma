@@ -7,7 +7,7 @@ import Table from "@/app/components/common/Table";
 import { ItemData } from "@/app/types/ItemData";
 import { Plus, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { MdDelete, MdEdit } from "react-icons/md";
+import {MdEdit } from "react-icons/md";
 import AddItem from "./components/AddItem";
 import { getItem } from "@/app/services/ItemService";
 import { getVariantById } from "@/app/services/VariantService";
@@ -52,14 +52,14 @@ const Page = () => {
             <MdEdit size={19} color="228B22" />
           </button>
 
-          <button
+          {/* <button
             className="cursor-pointer hover:opacity-80 transition"
             onClick={() =>
               row.itemId && handleSupplierDrawer(row.itemId, "delete")
             }
           >
             <MdDelete size={20} color="B30000" />
-          </button>
+          </button> */}
         </div>
       ),
     },
@@ -134,7 +134,7 @@ const Page = () => {
   return (
     <>
       {showItem && (
-        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Item Master"}>
           <AddItem
             setShowDrawer={handleCloseDrawer}
             itemId={currentItemId}

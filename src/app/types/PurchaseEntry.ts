@@ -9,11 +9,11 @@ export interface PurchaseEntryItem {
     mrpSalePrice: number;
     purchasePricePerUnit: number;
     mrpSalePricePerUnit: number;
-    cgstPercentage: number;
-    sgstPercentage: number;
+    cgstPercentage?: number;
+    sgstPercentage?: number;
     gstPercentage:number;
-    cgstAmount: number;
-    sgstAmount: number;
+    cgstAmount?: number;
+    sgstAmount?: number;
     gstAmount: number;
     discount: number;
     amount: number;
