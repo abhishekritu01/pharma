@@ -19,6 +19,7 @@ import Modal from "@/app/components/common/Modal";
 import { createBilling } from "@/app/services/BillingService";
 import Doctor from "../../doctor/components/Doctor";
 import { getDoctor } from "@/app/services/DoctorService";
+import { DoctorData } from "@/app/types/DoctorData";
 
 interface BillingProps {
   setShowBilling: (value: boolean) => void;
@@ -58,7 +59,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
   >(() => {});
-  const [doctorOptions, setDoctorOptions] = useState<OptionType[]>([]);
+  // const [doctorOptions, setDoctorOptions] = useState<OptionType[]>([]);
+  const [doctorOptions,] = useState<OptionType[]>([]);
 
   // const [paymentStatus, setPaymentStatus] = useState("");
   // const [paymentType, setPaymentType] = useState("");
@@ -463,10 +465,10 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     try {
       const doctors = await getDoctor();
       const filtered = doctors
-        .filter((doc: any) =>
+        .filter((doc: DoctorData) =>
           doc.doctorName.toLowerCase().includes(inputValue.toLowerCase())
         )
-        .map((doc: any) => ({
+        .map((doc: DoctorData) => ({
           label: `${doc.doctorName}`,
           value: doc.doctorId,
         }));

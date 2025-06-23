@@ -13,8 +13,7 @@ export interface ItemData {
     purchasePricePerUnit: number;
     mrpSalePricePerUnit: number;
     gstPercentage: number;
-    genericName: string;
+    genericName?: string;
     hsnNo: string;
     consumables: string;
-    genericName?: string
   } 

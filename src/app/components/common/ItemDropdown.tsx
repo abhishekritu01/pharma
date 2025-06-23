@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { getInventoryDetails } from "@/app/services/InventoryService";
 import { getItemById } from "@/app/services/ItemService";
 import AsyncSelect from "react-select/async";
-import { StylesConfig } from "react-select";
 import { BillingItemData } from "@/app/types/BillingData";
 import { customSelectStyles } from "./DropdownStyle";
 
