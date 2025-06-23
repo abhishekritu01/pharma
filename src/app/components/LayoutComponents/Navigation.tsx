@@ -36,6 +36,8 @@ export const navigation: NavigationItem[] = [
      
     ],
   },
+   { name: "Stock Inventory", href: "/dashboard/stockreport", icon: MdOutlineInventory , current: true },
+
  
   { name: "Billing", href: "/dashboard/billing", icon: PiReceiptFill, current: true },
   
@@ -48,8 +50,4 @@ export const navigation: NavigationItem[] = [
   //     { name: "Pharmacy", href: "/dashboard/lab", current: false, icon: FaHouseChimneyMedical },
   //   ],
   // },
-  
-
- 
-
 ];

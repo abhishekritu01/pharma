@@ -16,4 +16,5 @@ export interface ItemData {
     genericName: string;
     hsnNo: string;
     consumables: string;
-  }
+    genericName?: string
+  } 

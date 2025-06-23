@@ -53,6 +53,23 @@ export const getItemById = async (itemId: string) => {
 };
 
 
+
+// export const getItemById = async (itemId: string) => {
+//   try {
+//       const response = await api.get(`/pharma/stock/getByItemId/${itemId}`);
+//       return response.data.data;
+//   } catch (error: unknown) {
+//       console.error('Error fetching Item:', error);
+//       if (error instanceof Error) {
+//           throw new Error(`Error fetching Item: ${error.message}`);
+//       } else {
+//           throw new Error('An unknown error occurred while Item.');
+//       }
+//   }
+// };
+
+
+
   export const updateItem = async (itemId: string, itemData: ItemData) => {
     try {
         const response = await api.put(`pharma/item/update/${itemId}`, itemData);
