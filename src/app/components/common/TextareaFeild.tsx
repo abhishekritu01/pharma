@@ -4,10 +4,10 @@ const TextareaField: React.FC<{
   id: string;
   name?: string;
   label: string;
-  value: string;
+  value?: string;
   rows?: number;
   cols?: number;
-  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }> = ({ id, name, label, value, onChange, rows, cols }) => (
   <div className="relative w-full">
     <textarea

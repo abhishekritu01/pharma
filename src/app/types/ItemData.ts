@@ -1,20 +1,19 @@
 
 export interface ItemData {
-    itemId?: string;
+    itemId: string;
     itemName: string;
     purchaseUnit: number;
-    unitId: string;
-    variantId: string;
-    unitName?: string;
-    variantName?: string;
+    variantId?: string;
+    unitId?: string;
+    variantName: string;
+    unitName: string;
     manufacturer: string;
     purchasePrice: number;
     mrpSalePrice: number;
     purchasePricePerUnit: number;
     mrpSalePricePerUnit: number;
-    cgstPercentage: number;
-    sgstPercentage: number;
     gstPercentage: number;
+    genericName: string;
     hsnNo: string;
     consumables: string;
     genericName?: string

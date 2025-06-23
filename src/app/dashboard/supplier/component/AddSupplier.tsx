@@ -273,6 +273,8 @@ const AddSupplier: React.FC<SupplierProps> = ({
               </div>
             ))}
           </div>
+
+          
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[{ id: "supplierEmail", label: "Email" }].map(({ id, label }) => (
               <div key={id} className="relative w-72">

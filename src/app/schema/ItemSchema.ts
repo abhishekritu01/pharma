@@ -42,7 +42,7 @@ export const itemSchema = z.object({
   .max(99999, { message: "MRP must be between 1 and 99999" }),
 
 
-  cgstPercentage: z
+  gstPercentage: z
     .number({
       invalid_type_error: "CGST Percentage must be an integer",
       required_error: "CGST Percentage is Mandatory",
@@ -51,15 +51,6 @@ export const itemSchema = z.object({
     .min(1, { message: "CGST Percentage is Mandatory" })
     .max(99, { message: "CGST Percentage must be 2 digit" }),
 
-    sgstPercentage: z
-  .number({
-    invalid_type_error: "SGST Percentage must be an integer",
-    required_error: "SGST Percentage is Mandatory",
-  })
-  .int({ message: "SGST Percentage must be an integer" })
-  .min(1, { message: "SGST Percentage is Mandatory" })
-  .max(99999, { message: "SGST Percentage must be 2 digit" }),
-
 
   manufacturer: z.string().min(1, { message: 'Manufacturer is Mandatory' })
   .refine((val) => /^[A-Za-z\s]+$/.test(val), {
@@ -67,4 +58,11 @@ export const itemSchema = z.object({
     }),
 
   hsnNo: z.string().min(1, { message: 'HSN No. is Mandatory' }),
+
+    genericName: z
+    .string()
+    .max(50, { message: "Generic Name cannot exceed 50 characters." })
+    .refine((val) => /^[A-Za-z\s]+$/.test(val), {
+      message: "Generic Name must contain only alphabets",
+    }),
 });

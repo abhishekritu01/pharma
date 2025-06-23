@@ -1,16 +1,18 @@
 export interface BillingItemData {
-    billItemId: number;
+    billItemId: string;
     itemId: string;
-    // itemName: string;
+    itemName: string;
     batchNo: string;
-    expiryDate: Date;
-    quantity: number;
-    discount: number;
-    mrp: number;
+    expiryDate: Date | null;
+    packageQuantity: number;
+    availableQuantity: number;
+    discountPercentage: number;
+    discountAmount: number;
+    mrpPerUnit: number;
     gstPercentage: number;
     gstAmount: number;
-    grossTotal: number;
     netTotal: number;
+    grossTotal: number;  
 
   }
   
@@ -18,9 +20,9 @@ export interface BillingItemData {
     billId: string;
     billId1?: string;
     pharmacyId: string;
-    billDate: Date;
-    billTime: string;
+    billDateTime: Date;
     patientId: string;
+    patientId1?: string;
     patientName?: string;
     doctorId: string;
     patientType:string;
@@ -28,9 +30,10 @@ export interface BillingItemData {
     totalGst: number;
     totalDiscount: number;
     grandTotal: number;
-    paymentType:string;
-    billStatus:string;
-    pharmacyName?:string;
+    paymentStatus:string;
+    paymentType:string; 
+    receivedAmount:number;
+    balanceAmount:number;
   
     billItemDtos: BillingItemData[]; 
   }

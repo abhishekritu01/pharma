@@ -11,14 +11,14 @@ const mockSuppliers: SupplierData[] = [
 ];
 
 const mockPurchases: ItemPurchase[] = [
-  { id: '1', name: 'Paracetamol 500mg', supplier: 'PharmaCorp', date: '2025-04-15', amount: 1200, quantity: 100 },
-  { id: '2', name: 'Amoxicillin 250mg', supplier: 'MediSupply', date: '2025-04-14', amount: 2500, quantity: 50 },
-  { id: '3', name: 'Ibuprofen 400mg', supplier: 'HealthPharm', date: '2025-04-13', amount: 800, quantity: 80 },
-  { id: '4', name: 'Cetirizine 10mg', supplier: 'CureAll', date: '2025-04-12', amount: 1500, quantity: 150 },
-  { id: '5', name: 'Omeprazole 20mg', supplier: 'MediTech', date: '2025-04-10', amount: 1800, quantity: 90 },
-  { id: '6', name: 'Salbutamol Inhaler', supplier: 'PharmaCorp', date: '2025-04-09', amount: 3000, quantity: 40 },
-  { id: '7', name: 'Aspirin 75mg', supplier: 'MediSupply', date: '2025-04-08', amount: 600, quantity: 200 },
-  { id: '8', name: 'Metformin 500mg', supplier: 'HealthPharm', date: '2025-04-07', amount: 1100, quantity: 120 }
+  { id: '1', name: 'Paracetamol 500mg', supplier: 'PharmaCorp', date: '2025-06-15', amount: 1200, quantity: 100 },
+  { id: '2', name: 'Amoxicillin 250mg', supplier: 'MediSupply', date: '2025-06-14', amount: 2500, quantity: 50 },
+  { id: '3', name: 'Ibuprofen 400mg', supplier: 'HealthPharm', date: '2025-06-13', amount: 800, quantity: 80 },
+  { id: '4', name: 'Cetirizine 10mg', supplier: 'CureAll', date: '2025-06-12', amount: 1500, quantity: 150 },
+  { id: '5', name: 'Omeprazole 20mg', supplier: 'MediTech', date: '2025-06-10', amount: 1800, quantity: 90 },
+  { id: '6', name: 'Salbutamol Inhaler', supplier: 'PharmaCorp', date: '2025-06-09', amount: 3000, quantity: 40 },
+  { id: '7', name: 'Aspirin 75mg', supplier: 'MediSupply', date: '2025-06-08', amount: 600, quantity: 200 },
+  { id: '8', name: 'Metformin 500mg', supplier: 'HealthPharm', date: '2025-06-07', amount: 1100, quantity: 120 }
 ];
 
 const mockLowStock: StockItem[] = [

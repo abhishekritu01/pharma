@@ -32,17 +32,25 @@ import {
   handleNumericChange,
   restrictInvalidNumberKeys,
 } from "@/app/components/common/RestrictedVal";
+import AsyncSelect from "react-select/async";
+import { StylesConfig, GroupBase } from "react-select";
+
 
 interface PurchaseOrderProps {
   setShowPurchasOrder: (value: boolean) => void;
   orderIdNew?: string | null;
 }
 
+type OptionType = {
+  label: string;
+  value: string;
+};
+
 const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   setShowPurchasOrder,
   orderIdNew,
 }) => {
-  const [items, setItems] = useState<ItemData[]>([]);
+  const [, setItems] = useState<ItemData[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierData[]>([]);
   const [pharmacies, setPharmacies] = useState<PharmacyData[]>([]);
 
@@ -59,6 +67,10 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [modalSecondaryMessage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
 
+    const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
+
+
+  
   interface ModalOptions {
     message: string;
     secondaryMessage?: string;
@@ -84,7 +96,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     {
       itemId: "",
       itemName: "",
-      quantity: 0,
+      packageQuantity: 0,
       manufacturer: "",
       unitTypeId: "",
       variantTypeId: "",
@@ -97,10 +109,137 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     },
   ]);
 
+  // const customSelectStyles = {
+  //   control: (provided: any, state: any) => ({
+  //     ...provided,
+  //     borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
+  //     boxShadow: "none",
+  //     borderRadius: "0.5rem",
+  //     "&:hover": {
+  //       borderColor: "#4B0082",
+  //     },
+  //     backgroundColor: "white", // Ensure no active background
+  //   }),
+
+  //   option: (provided: any, state: any) => ({
+  //     ...provided,
+  //     backgroundColor: state.isSelected
+  //       ? "#F3F4F6" // Light gray for selected item instead of white or blue
+  //       : state.isFocused
+  //       ? "#4B0082"
+  //       : "white",
+  //     color: state.isSelected
+  //       ? "#111827" // Dark text for selected
+  //       : state.isFocused
+  //       ? "white"
+  //       : "#111827",
+  //     cursor: "pointer",
+  //     borderRadius: "0.375rem",
+  //     margin: "2px 8px",
+  //     "&:active": {
+  //       backgroundColor: "#4B0082", // Fix active blue on click
+  //       color: "white",
+  //     },
+  //   }),
+
+  //   singleValue: (provided: any) => ({
+  //     ...provided,
+  //     color: "#111827",
+  //   }),
+
+  //   dropdownIndicator: (provided: any) => ({
+  //     ...provided,
+  //     color: "#6B7280",
+  //     "&:hover": {
+  //       color: "#6B7280",
+  //     },
+  //   }),
+
+  //   indicatorSeparator: () => ({
+  //     display: "none",
+  //   }),
+
+  //   menu: (provided: any) => ({
+  //     ...provided,
+  //     zIndex: 20,
+  //     borderRadius: "0.5rem",
+  //     overflow: "hidden",
+  //     marginTop: "4px",
+  //   }),
+
+  //   menuList: (provided: any) => ({
+  //     ...provided,
+  //     padding: 0,
+  //   }),
+  // };
+
+   const customSelectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
+    control: (provided, state) => ({
+      ...provided,
+      borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
+      boxShadow: "none",
+      borderRadius: "0.5rem",
+      "&:hover": {
+        borderColor: "#4B0082",
+      },
+      backgroundColor: "white",
+    }),
+  
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected
+        ? "#F3F4F6"
+        : state.isFocused
+        ? "#4B0082"
+        : "white",
+      color: state.isSelected
+        ? "#111827"
+        : state.isFocused
+        ? "white"
+        : "#111827",
+      cursor: "pointer",
+      borderRadius: "0.375rem",
+      margin: "2px 8px",
+      "&:active": {
+        backgroundColor: "#4B0082",
+        color: "white",
+      },
+    }),
+  
+    singleValue: (provided) => ({
+      ...provided,
+      color: "#111827",
+    }),
+  
+    dropdownIndicator: (provided) => ({
+      ...provided,
+      color: "#6B7280",
+      "&:hover": {
+        color: "#6B7280",
+      },
+    }),
+  
+    indicatorSeparator: () => ({
+      display: "none",
+    }),
+  
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 20,
+      borderRadius: "0.5rem",
+      overflow: "hidden",
+      marginTop: "4px",
+    }),
+  
+    menuList: (provided) => ({
+      ...provided,
+      padding: 0,
+    }),
+  };
   const fetchSuppliers = async () => {
     try {
       const supplierList = await getSupplier();
-      setSuppliers(supplierList); // Set the suppliers to state
+      setSuppliers(supplierList); 
     } catch (error) {
       console.error("Failed to fetch suppliers:", error);
     }
@@ -123,6 +262,90 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     fetchItems();
   }, []);
 
+
+
+  const loadItemOptions = async (inputValue: string) => {
+    try {
+      if (!inputValue.trim()) {
+        return defaultItemOptions;
+      }
+
+      const allItems = await getItem();
+
+      const filteredItems = allItems.filter((item: { itemName: string }) =>
+        item.itemName.toLowerCase().includes(inputValue.toLowerCase())
+      );
+
+      const mappedItems = filteredItems.map(
+        (item: { itemName: string; itemId: string }) => ({
+          label: item.itemName,
+          value: item.itemId,
+        })
+      );
+
+      return [...defaultItemOptions, ...mappedItems];
+    } catch (error) {
+      console.error("Error loading item options:", error);
+      return defaultItemOptions;
+    }
+  };
+
+  const handleRowUpdate = (
+    index: number,
+    updatedFields: Partial<PurchaseOrderItem>
+  ) => {
+    setorderItemRows((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, ...updatedFields } : item
+      )
+    );
+  };
+
+  const handleItemSelect = async (
+    selectedOption: { value: string; label: string } | null,
+    index: number
+  ) => {
+    if (!selectedOption) {
+      handleRowUpdate(index, {
+        itemId: "",
+        itemName: "",
+        manufacturer: "",
+        variantName: "",
+        unitName: "",
+        purchasePrice: 0,
+        amount: 0,
+      });
+      return;
+    }
+
+    const value = selectedOption.value;
+
+    if (value === "newItem") {
+      handleItemDrawer();
+      return;
+    }
+
+    try {
+      const itemDetails = await getItemById(value);
+
+      const updatedRow: Partial<PurchaseOrderItem> = {
+        itemId: itemDetails.itemId,
+        itemName: itemDetails.itemName,
+        manufacturer: itemDetails.manufacturer,
+        variantName: itemDetails.variantName,
+        unitName: itemDetails.unitName,
+        purchasePrice: itemDetails.purchasePrice,
+        amount:
+          (itemDetails.purchasePrice || 0) *
+          (orderItemRows[index]?.packageQuantity || 1),
+      };
+
+      handleRowUpdate(index, updatedRow);
+    } catch (error) {
+      console.error("Error fetching item details:", error);
+    }
+  };
+
   const columns: {
     header: string;
     accessor:
@@ -133,40 +356,34 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     {
       header: "Item Name",
       accessor: (row: PurchaseOrderItem, index: number) => (
-        <select
-          value={row.itemId}
-          name="itemId"
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === "newItem") {
-              handleItemDrawer();
-            } else {
-              handleChange(e, index);
-            }
-          }}
-          className="border border-gray-300 p-2 rounded w-full text-left outline-none focus:ring-0 focus:outline-none"
-        >
-          <option value="">Select Item</option>
-          <option value="newItem" className="text-Purple">
-            + Add New Item
-          </option>
-          {items.map((item) => (
-            <option key={item.itemId} value={item.itemId}>
-              {item.itemName}
-            </option>
-          ))}
-        </select>
+        <AsyncSelect
+          cacheOptions
+          defaultOptions={defaultItemOptions}
+          loadOptions={loadItemOptions}
+          isClearable={true}
+          value={
+            row.itemId
+              ? {
+                  label: row.itemName || "",
+                  value: row.itemId,
+                }
+              : null
+          }
+          onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
+          placeholder="Select or search item"
+          className="text-left w-full"
+          classNamePrefix="react-select"
+          styles={customSelectStyles}
+        />
       ),
-      className: "text-left",
     },
-
     {
       header: "Order Qty",
       accessor: (row: PurchaseOrderItem, index: number) => (
         <input
           type="number"
-          name="quantity"
-          value={row.quantity}
+          name="packageQuantity"
+          value={row.packageQuantity}
           onKeyDown={restrictInvalidNumberKeys}
           onChange={handleNumericChange((e) => handleChange(e, index))}
           className="border border-gray-300 p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
@@ -342,7 +559,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
       {
         itemId: "",
         itemName: "",
-        quantity: 0,
+        packageQuantity: 0,
         manufacturer: "",
         gstPercentage: 0,
         gstAmount: 0,
@@ -435,7 +652,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
       purchaseOrderItemDtos: orderItemRows.map((row) => ({
         itemId: row.itemId,
         itemName: row.itemName,
-        quantity: row.quantity,
+        packageQuantity: row.packageQuantity,
         manufacturer: row.manufacturer,
         unitTypeId: row.unitTypeId,
         variantTypeId: row.variantTypeId,
@@ -474,7 +691,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
             {
               itemId: "",
               itemName: "",
-              quantity: 0,
+              packageQuantity: 0,
               manufacturer: "",
               unitTypeId: "",
               variantTypeId: "",
@@ -521,7 +738,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
           (data.purchaseOrderItemDtos || []).map((item: PurchaseOrderItem) => ({
             itemId: item.itemId || "",
             itemName: item.itemName || "",
-            quantity: item.quantity || 0,
+            packageQuantity: item.packageQuantity || 0,
             manufacturer: item.manufacturer || "",
             unitTypeId: item.unitTypeId || "",
             variantTypeId: item.variantTypeId || "",

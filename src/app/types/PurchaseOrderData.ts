@@ -2,7 +2,7 @@ export interface PurchaseOrderItem {
     orderItemId?: number;
     itemId: string;
     itemName: string;
-    quantity: number;
+    packageQuantity: number;
     manufacturer: string;
     gstPercentage: number;
     gstAmount: number;
