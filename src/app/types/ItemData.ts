@@ -17,4 +17,5 @@ export interface ItemData {
     gstPercentage: number;
     hsnNo: string;
     consumables: string;
-  }
+    genericName?: string
+  } 

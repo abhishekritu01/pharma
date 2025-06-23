@@ -6,7 +6,10 @@ import { getItemById } from "@/app/services/ItemService";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import { InventoryData } from "@/app/types/InventoryData";
-import { PurchaseEntryData, PurchaseEntryItem } from "@/app/types/PurchaseEntry";
+import {
+  PurchaseEntryData,
+  PurchaseEntryItem,
+} from "@/app/types/PurchaseEntry";
 import React, { useEffect, useState } from "react";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { toast } from "react-toastify";
@@ -22,9 +25,10 @@ const ViewStock: React.FC<ViewStockProps> = ({ setShowViewStock, itemId }) => {
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+    return `${String(date.getDate()).padStart(2, "0")}-${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}-${date.getFullYear()}`;
   };
-  
 
   const columns = [
     {
@@ -56,36 +60,46 @@ const ViewStock: React.FC<ViewStockProps> = ({ setShowViewStock, itemId }) => {
       accessor: (row: PurchaseEntryItem) => {
         const isExpired = new Date(row.expiryDate) < new Date();
         return (
-          <span className={isExpired ? "p-2 items-center justify-center text-Red bg-secondaryRed w-full h-full rounded-2xl" : "p-2"}>
+          <span
+            className={
+              isExpired
+                ? "p-2 items-center justify-center text-Red bg-secondaryRed w-full h-full rounded-2xl"
+                : "p-2"
+            }
+          >
             {formatDate(row.expiryDate)}
           </span>
         );
       },
     },
-    
+
     {
       header: "Quantity",
       accessor: (row: PurchaseEntryItem) => {
         const isExpired = new Date(row.expiryDate) < new Date();
         return (
-          <span className={isExpired ? "p-2 items-center justify-center text-Red bg-secondaryRed w-full h-full rounded-2xl" : "p-2"}>
+          <span
+            className={
+              isExpired
+                ? "p-2 items-center justify-center text-Red bg-secondaryRed w-full h-full rounded-2xl"
+                : "p-2"
+            }
+          >
             {row.packageQuantity}
           </span>
         );
       },
-    }
-    
+    },
   ];
-
 
   useEffect(() => {
     const fetchStockData = async () => {
       if (!itemId) return;
-  
+
       try {
         const res = await getPurchase();
         const purchases: PurchaseEntryData[] = res.data;
-  
+
         // Step 1: Filter items by itemId, and attach supplierId from parent
         const allFilteredItems: (PurchaseEntryItem & { supplierId: string })[] =
           purchases.flatMap((entry) =>
@@ -96,20 +110,20 @@ const ViewStock: React.FC<ViewStockProps> = ({ setShowViewStock, itemId }) => {
                 supplierId: entry.supplierId,
               }))
           );
-  
+
         // Step 2: Extract unique supplierIds
         const uniqueSupplierIds = [
           ...new Set(allFilteredItems.map((item) => item.supplierId)),
         ];
-  
+
         // Step 3: Fetch supplier names in parallel
         const supplierMap: Record<string, string> = {};
         await Promise.all(
           uniqueSupplierIds.map(async (id) => {
             try {
               const supplier = await getSupplierById(id);
-              console.log("Supplierrrr",supplier);
-              
+              console.log("Supplierrrr", supplier);
+
               supplierMap[id] = supplier.supplierName ?? "Unknown";
             } catch (err) {
               console.error(`Failed to fetch supplier with ID ${id}`, err);
@@ -117,24 +131,22 @@ const ViewStock: React.FC<ViewStockProps> = ({ setShowViewStock, itemId }) => {
             }
           })
         );
-  
+
         // Step 4: Attach supplierName to each item
         const enrichedItems = allFilteredItems.map((item) => ({
           ...item,
           supplierName: supplierMap[item.supplierId] ?? "Unknown",
         }));
-  
+
         setTableData(enrichedItems);
       } catch (error) {
         console.error("Error fetching stock table data:", error);
         toast.error("Failed to load stock details.");
       }
     };
-  
+
     fetchStockData();
   }, [itemId]);
-  
-
 
   const fetchItem = async (
     itemId: string
@@ -214,41 +226,69 @@ const ViewStock: React.FC<ViewStockProps> = ({ setShowViewStock, itemId }) => {
           </div>
         </div>
 
+        {itemId && (
+          <div className="border border-Gray w-full rounded-lg p-5 flex justify-between">
+            {(() => {
+              const itemData = inventoryData.find(
+                (item) => item.itemId === itemId
+              );
+              if (!itemData)
+                return (
+                  <div className="text-gray-500">Loading item data...</div>
+                );
+              return (
+                <>
+                  <div className="flex flex-col">
+                    <div className="font-normal text-sm text-gray">
+                      Item Name
+                    </div>
+                    <div className="font-normal text-base">
+                      {itemData.itemName}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="font-normal text-sm text-gray">
+                      Manufacturer
+                    </div>
+                    <div className="font-normal text-base">
+                      {itemData.manufacturer}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="font-normal text-sm text-gray">
+                      Total Stock
+                    </div>
+                    <div className="font-normal text-base">
+                      {itemData.packageQuantity}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="font-normal text-sm text-gray">
+                      Expired Stock
+                    </div>
+                    <div className="px-2 font-normal text-base text-Red bg-secondaryRed rounded-2xl w-fit">
+                      {itemData.expiredStock}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="font-normal text-sm text-gray">
+                      Current Stock
+                    </div>
+                    <div className="font-normal text-base">
+                      {itemData.currentStock}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
 
-{itemId && (
-  <div className="border border-Gray w-full rounded-lg p-5 flex justify-between">
-    {(() => {
-      const itemData = inventoryData.find((item) => item.itemId === itemId);
-      if (!itemData) return <div className="text-gray-500">Loading item data...</div>;
-      return (
-        <>
-          <div className="flex flex-col">
-            <div className="font-normal text-sm text-gray">Item Name</div>
-            <div className="font-normal text-base">{itemData.itemName}</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="font-normal text-sm text-gray">Manufacturer</div>
-            <div className="font-normal text-base">{itemData.manufacturer}</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="font-normal text-sm text-gray">Total Stock</div>
-            <div className="font-normal text-base">{itemData.packageQuantity}</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="font-normal text-sm text-gray">Expired Stock</div>
-            <div className="px-2 font-normal text-base text-Red bg-secondaryRed rounded-2xl w-fit">{itemData.expiredStock}</div>
-          </div>
-          <div className="flex flex-col">
-            <div className="font-normal text-sm text-gray">Current Stock</div>
-            <div className="font-normal text-base">{itemData.currentStock}</div>
-          </div>
-        </>
-      );
-    })()}
-  </div>
-)}
-
-        <Table data={tableData} columns={columns} noDataMessage="No records found" />
+        <Table
+          data={tableData}
+          columns={columns}
+          noDataMessage="No records found"
+        />
       </main>
     </>
   );
