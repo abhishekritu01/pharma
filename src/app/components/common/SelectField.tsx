@@ -1,7 +1,6 @@
 import React from "react";
-import Select, {
-  StylesConfig,
-} from "react-select";
+import AsyncSelect from "react-select/async";
+import { StylesConfig } from "react-select";
 
 type OptionType = {
   label: string;
@@ -9,12 +8,11 @@ type OptionType = {
 };
 
 interface SelectFieldProps {
-  options: OptionType[];
   value: OptionType | null;
   onChange: (value: OptionType | null) => void;
   label: string;
+  loadOptions: (inputValue: string, callback: (options: OptionType[]) => void) => void;
   isClearable?: boolean;
-  placeholder?: string;
   isDisabled?: boolean;
 }
 
@@ -24,7 +22,7 @@ const customStyles: StylesConfig<OptionType, false> = {
     height: "49px",
     padding: "0.375rem 0.75rem",
     borderRadius: "0.5rem",
-    borderColor: state.isFocused ? "#6B21A8" : "#B5B3B3", // purple / gray
+    borderColor: state.isFocused ? "#6B21A8" : "#B5B3B3",
     boxShadow: state.isFocused ? "#6B21A8" : "none",
     backgroundColor: "transparent",
     "&:hover": {
@@ -33,7 +31,7 @@ const customStyles: StylesConfig<OptionType, false> = {
   }),
   placeholder: (base) => ({
     ...base,
-    color: "#6B7280", // gray-500
+    color: "#6B7280",
     fontSize: "0.875rem",
   }),
   input: (base) => ({
@@ -62,17 +60,19 @@ const customStyles: StylesConfig<OptionType, false> = {
 };
 
 const SelectField: React.FC<SelectFieldProps> = ({
-  options,
   value,
   onChange,
   label,
+  loadOptions,
   isClearable = true,
   isDisabled = false,
 }) => {
   return (
     <div className="relative w-full">
-      <Select
-        options={options}
+      <AsyncSelect
+        cacheOptions
+        loadOptions={loadOptions}
+        defaultOptions={false} // disables showing options on click
         value={value}
         onChange={onChange}
         isClearable={isClearable}

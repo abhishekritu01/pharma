@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { getInventoryDetails } from "@/app/services/InventoryService";
-import { getItemById } from "@/app/services/ItemService"; 
+import { getItemById } from "@/app/services/ItemService";
 import AsyncSelect from "react-select/async";
-import {StylesConfig } from "react-select";
+import { StylesConfig } from "react-select";
 import { BillingItemData } from "@/app/types/BillingData";
-
+import { customSelectStyles } from "./DropdownStyle";
 
 type OptionType = {
   label: string;
   value: string;
   batchNo?: string;
   itemId?: string;
+  packageQty?: number;
 };
 
 interface ItemDropdownProps {
@@ -23,68 +24,6 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
   onChange,
 }) => {
   const [option, setOption] = useState<OptionType | null>(selectedOption);
-
-  // const customStyles = {
-  //   control: (base: any, state: any) => ({
-  //     ...base,
-  //     borderColor: state.isFocused ? "#6B21A8" : "#D1D5DB",
-  //     boxShadow: state.isFocused ? "#6B21A8" : "none",
-  //     "&:hover": {
-  //       borderColor: "#4B0082",
-  //     },
-  //     borderRadius: "0.5rem",
-  //   }),
-  //   option: (base: any, state: any) => ({
-  //     ...base,
-  //     backgroundColor: state.isSelected
-  //       ? "#4B0082"
-  //       : state.isFocused
-  //       ? "#E5D2F4"
-  //       : "white",
-  //     color: state.isSelected ? "white" : "black",
-  //     cursor: "pointer",
-  //     borderRadius: "0.5rem",
-  //     margin: "2px",
-  //     ":active": {
-  //       backgroundColor: state.isSelected ? "#4B0082" : "#E5D2F4",
-  //     },
-  //   }),
-  //   singleValue: (base: any) => ({
-  //     ...base,
-  //     color: "#000",
-  //   }),
-  // };
-
-  const customStyles: StylesConfig<OptionType, false> = {
-  control: (base, state) => ({
-    ...base,
-    borderColor: state.isFocused ? "#6B21A8" : "#D1D5DB",
-    boxShadow: state.isFocused ? "#6B21A8" : "none",
-    "&:hover": {
-      borderColor: "#4B0082",
-    },
-    borderRadius: "0.5rem",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "#4B0082"
-      : state.isFocused
-      ? "#E5D2F4"
-      : "white",
-    color: state.isSelected ? "white" : "black",
-    cursor: "pointer",
-    borderRadius: "0.5rem",
-    margin: "2px",
-    ":active": {
-      backgroundColor: state.isSelected ? "#4B0082" : "#E5D2F4",
-    },
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: "#000",
-  }),
-};
 
   useEffect(() => {
     const fetchLabelIfMissing = async () => {
@@ -104,10 +43,10 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
             batchNo: found.batchNo,
           };
           setOption(newOption);
-          onChange(newOption); 
+          onChange(newOption);
         } else {
           setOption(null);
-          onChange(null); 
+          onChange(null);
         }
       } else {
         setOption(selectedOption);
@@ -129,6 +68,7 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
             label: item.itemName,
             value: inv.itemId,
             batchNo: inv.batchNo,
+            packageQty: inv.packageQuantity, // ✅ Add this
           };
         } catch (err) {
           console.error("Failed to fetch item for ID:", inv.itemId, err);
@@ -150,8 +90,8 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
   return (
     <AsyncSelect
       cacheOptions
-      defaultOptions
       loadOptions={loadOptions}
+      isClearable={true}
       value={option}
       onChange={(value) => {
         setOption(value);
@@ -161,12 +101,14 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
       getOptionValue={(e) => e.value}
       placeholder="Search item..."
       className="w-full"
-      styles={customStyles}
+      styles={customSelectStyles<OptionType>()}
       formatOptionLabel={(data, { context }) =>
         context === "menu" ? (
-          <div className="flex font-medium">
-            <span>{data.label} </span>
-            {data.batchNo && <span> - {data.batchNo}</span>}
+          <div className="flex flex-col font-medium leading-5">
+            <span>{data.label}</span>
+            <span className="text-sm text-gray-500">
+              Batch: {data.batchNo || "N/A"} | Qty: {data.packageQty ?? "N/A"}
+            </span>
           </div>
         ) : (
           <span>{data.label}</span>

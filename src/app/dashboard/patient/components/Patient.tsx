@@ -10,11 +10,11 @@ import React, {useState } from "react";
 import { toast } from "react-toastify";
 import { z, ZodError } from "zod";
 
-interface ItemProps {
+interface PatientProps {
   setShowDrawer: (value: boolean) => void;
 }
 
-const Patient: React.FC<ItemProps> = ({ setShowDrawer }) => {
+const Patient: React.FC<PatientProps> = ({ setShowDrawer }) => {
   const [formData, setFormData] = useState<PatientData>({
     patientId: "",
     patientId1: "",
@@ -112,20 +112,6 @@ const Patient: React.FC<ItemProps> = ({ setShowDrawer }) => {
         position: "top-right",
         autoClose: 3000,
       });
-
-      // if (patientId) {
-      //   await updatePatient(patientId, formData);
-      //   toast.success("Patient updated successfully", {
-      //     position: "top-right",
-      //     autoClose: 3000,
-      //   });
-      // } else {
-      //   await createPatient(formData);
-      //   toast.success("Patient created successfully", {
-      //     position: "top-right",
-      //     autoClose: 3000,
-      //   });
-      // }
 
       setShowDrawer(false);
     } catch (error) {
@@ -412,10 +398,10 @@ const Patient: React.FC<ItemProps> = ({ setShowDrawer }) => {
           />
         </div> */}
 
-        <div className="flex justify-end">
+        <div className="flex">
           <Button
             onClick={addPatient}
-            label="Save"
+            label="Add Patient"
             value=""
             className="w-28 bg-darkPurple text-white h-11"
           ></Button>

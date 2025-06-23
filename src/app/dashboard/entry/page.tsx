@@ -53,7 +53,24 @@ const Page = () => {
         const purchasesWithSuppliers = await Promise.all(
           purchases.map(async (purchase) => {
             const supplierName = await fetchSupplier(purchase.supplierId);
-            return { ...purchase, supplierName };
+
+            let dueStatus: string = "—";
+
+            if (purchase.paymentDueDate) {
+              const dueDate = new Date(purchase.paymentDueDate);
+              const currentDate = new Date();
+              dueDate.setHours(0, 0, 0, 0);
+              currentDate.setHours(0, 0, 0, 0);
+
+              const timeDiff = dueDate.getTime() - currentDate.getTime();
+              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+              if (daysLeft < 0) dueStatus = "Overdue";
+              else if (daysLeft === 0) dueStatus = "Due Today";
+              else dueStatus = `${daysLeft} day${daysLeft > 1 ? "s" : ""}`;
+            }
+
+            return { ...purchase, supplierName, dueStatus };
           })
         );
 
@@ -126,25 +143,25 @@ const Page = () => {
 
   const columns = [
     {
-       header: (
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => handleSort("grnNo")}
-            >
-              <span>GRN No</span>
-              {sortConfig.key === "grnNo" ? (
-                sortConfig.direction === "asc" ? (
-                  <FaArrowUp />
-                ) : (
-                  <FaArrowDown />
-                )
-              ) : (
-                <FaArrowDown />
-              )}
-            </div>
-          ),
-          accessor: "grnNo" as keyof PurchaseEntryData,
-        },
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("grnNo")}
+        >
+          <span>GRN No</span>
+          {sortConfig.key === "grnNo" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
+      accessor: "grnNo" as keyof PurchaseEntryData,
+    },
     {
       header: "Supplier Name",
       accessor: "supplierName" as keyof PurchaseEntryData,
@@ -161,6 +178,40 @@ const Page = () => {
       header: "Bill Amount",
       accessor: "grandTotal" as keyof PurchaseEntryData,
     },
+    {
+      header: "Due In (Days)",
+      accessor: (row: PurchaseEntryData) => {
+        const status = row.dueStatus?.toLowerCase();
+
+        const textClass =
+          status === "due today"
+            ? "text-warning"
+            : status === "overdue"
+            ? "text-danger"
+            : "";
+
+        const bgClass =
+          status === "due today"
+            ? "bg-warning2"
+            : status === "overdue"
+            ? "bg-danger"
+            : "";
+
+        return (
+          <>
+            <span
+              className={`inline-block w-2 h-2 rounded-full ${bgClass}`}
+            ></span>
+            <span
+              className={`px-2 py-1 rounded-xl text-sm font-medium ${textClass}`}
+            >
+              {row.dueStatus}
+            </span>
+          </>
+        );
+      },
+    },
+
     {
       header: "Payment Status",
       accessor: (row: PurchaseEntryData) => {
@@ -228,30 +279,32 @@ const Page = () => {
     },
   ];
 
-  
   const filteredData = purchaseEntryData
-  .filter((item) => {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    .filter((item) => {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const purchaseDate = new Date(item.purchaseDate);
-    return purchaseDate >= oneMonthAgo; // Filter only last 1 month
-  })
-  .filter((item) => {
-    const search = searchText.toLowerCase();
+      const purchaseDate = new Date(item.purchaseDate);
+      return purchaseDate >= oneMonthAgo; // Filter only last 1 month
+    })
+    .filter((item) => {
+      const search = searchText.toLowerCase();
 
-    const purchaseDateFormatted = format(new Date(item.purchaseDate), "dd-MM-yyyy");
-    
-    return (
-      item.grnNo?.toLowerCase().includes(search) ||
-      item.supplierName?.toLowerCase().includes(search) ||
-      purchaseDateFormatted.toLowerCase().includes(search) ||
-      item.purchaseBillNo?.toLowerCase().includes(search) ||
-      item.grandTotal?.toString().toLowerCase().includes(search) ||
-      item.paymentStatus?.toString().toLowerCase().includes(search) ||
-      item.goodStatus?.toString().toLowerCase().includes(search)
-    );
-  });
+      const purchaseDateFormatted = format(
+        new Date(item.purchaseDate),
+        "dd-MM-yyyy"
+      );
+
+      return (
+        item.grnNo?.toLowerCase().includes(search) ||
+        item.supplierName?.toLowerCase().includes(search) ||
+        purchaseDateFormatted.toLowerCase().includes(search) ||
+        item.purchaseBillNo?.toLowerCase().includes(search) ||
+        item.grandTotal?.toString().toLowerCase().includes(search) ||
+        item.paymentStatus?.toString().toLowerCase().includes(search) ||
+        item.goodStatus?.toString().toLowerCase().includes(search)
+      );
+    });
 
   return (
     <>

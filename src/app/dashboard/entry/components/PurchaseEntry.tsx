@@ -30,8 +30,7 @@ import {
 } from "@/app/components/common/RestrictedVal";
 import { SupplierData } from "@/app/types/SupplierData";
 import AsyncSelect from "react-select/async";
-import { StylesConfig, GroupBase } from "react-select";
-
+import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -122,135 +121,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     grandTotal: 0,
     stockItemDtos: [],
   });
-
-  // const customSelectStyles = {
-  //   control: (provided: any, state: any) => ({
-  //     ...provided,
-  //     borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
-  //     boxShadow: "none",
-  //     borderRadius: "0.5rem",
-  //     "&:hover": {
-  //       borderColor: "#4B0082",
-  //     },
-  //     backgroundColor: "white",
-  //   }),
-
-  //   option: (provided: any, state: any) => ({
-  //     ...provided,
-  //     backgroundColor: state.isSelected
-  //       ? "#F3F4F6"
-  //       : state.isFocused
-  //       ? "#4B0082"
-  //       : "white",
-  //     color: state.isSelected
-  //       ? "#111827"
-  //       : state.isFocused
-  //       ? "white"
-  //       : "#111827",
-  //     cursor: "pointer",
-  //     borderRadius: "0.375rem",
-  //     margin: "2px 8px",
-  //     "&:active": {
-  //       backgroundColor: "#4B0082",
-  //       color: "white",
-  //     },
-  //   }),
-
-  //   singleValue: (provided: any) => ({
-  //     ...provided,
-  //     color: "#111827",
-  //   }),
-
-  //   dropdownIndicator: (provided: any) => ({
-  //     ...provided,
-  //     color: "#6B7280",
-  //     "&:hover": {
-  //       color: "#6B7280",
-  //     },
-  //   }),
-
-  //   indicatorSeparator: () => ({
-  //     display: "none",
-  //   }),
-
-  //   menu: (provided: any) => ({
-  //     ...provided,
-  //     zIndex: 20,
-  //     borderRadius: "0.5rem",
-  //     overflow: "hidden",
-  //     marginTop: "4px",
-  //   }),
-
-  //   menuList: (provided: any) => ({
-  //     ...provided,
-  //     padding: 0,
-  //   }),
-  // };
-
-  const customSelectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
-  control: (provided, state) => ({
-    ...provided,
-    borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
-    boxShadow: "none",
-    borderRadius: "0.5rem",
-    "&:hover": {
-      borderColor: "#4B0082",
-    },
-    backgroundColor: "white",
-  }),
-
-  option: (provided, state) => ({
-    ...provided,
-    backgroundColor: state.isSelected
-      ? "#F3F4F6"
-      : state.isFocused
-      ? "#4B0082"
-      : "white",
-    color: state.isSelected
-      ? "#111827"
-      : state.isFocused
-      ? "white"
-      : "#111827",
-    cursor: "pointer",
-    borderRadius: "0.375rem",
-    margin: "2px 8px",
-    "&:active": {
-      backgroundColor: "#4B0082",
-      color: "white",
-    },
-  }),
-
-  singleValue: (provided) => ({
-    ...provided,
-    color: "#111827",
-  }),
-
-  dropdownIndicator: (provided) => ({
-    ...provided,
-    color: "#6B7280",
-    "&:hover": {
-      color: "#6B7280",
-    },
-  }),
-
-  indicatorSeparator: () => ({
-    display: "none",
-  }),
-
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 20,
-    borderRadius: "0.5rem",
-    overflow: "hidden",
-    marginTop: "4px",
-  }),
-
-  menuList: (provided) => ({
-    ...provided,
-    padding: 0,
-  }),
-};
-
 
   const [items, setItems] = useState<ItemData[]>([]);
   const [subTotal, setSubTotal] = useState(0);
@@ -428,7 +298,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           placeholder="Select or search item"
           className="text-left w-full"
           classNamePrefix="react-select"
-          styles={customSelectStyles}
+          styles={customSelectStyles<OptionType>()}
         />
       ),
     },

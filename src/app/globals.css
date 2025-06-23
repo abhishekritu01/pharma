@@ -131,8 +131,18 @@ body {
 
 }
 
+.bg-danger {
+  background-color: var(--PRIMARY-RED);
+
+}
+
 .text-warning {
    color: var(--SECONDARY-WARNING) ;
+
+}
+
+.text-danger{
+   color: var(--PRIMARY-RED) ;
 
 }
 .bg-green {

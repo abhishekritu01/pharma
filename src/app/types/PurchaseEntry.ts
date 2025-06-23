@@ -42,6 +42,7 @@ export interface PurchaseEntryItem {
     grandTotal: number;
     supplierName?: string;
     grnNo?:string;
+    dueStatus?:string;
   
     stockItemDtos: PurchaseEntryItem[]; 
   }
