@@ -681,7 +681,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       bgClassName: "bg-darkPurple",
       onConfirmCallback: async () => {
         try {
-          const {...payloadWithoutDoctorName } = formData;
+          const { ...payloadWithoutDoctorName } = formData;
 
           const billingPayload: BillingData = {
             ...payloadWithoutDoctorName,
@@ -963,7 +963,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     >
                       <option value="">Select Status</option>
                       <option value="paid">Paid</option>
-                      <option value="unpaid">Not Paid</option>
+                      <option value="pending">Not Paid</option>
                     </select>
                   </>
                 )}
@@ -973,10 +973,15 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                       Payment Type
                     </label>
                     <select
-                      className="w-60 h-10 p-2 border border-Gray rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0 text-base"
+                      className={`w-60 h-10 p-2 border rounded-md bg-white text-black outline-none text-base ${
+                        formData.paymentStatus === "pending"
+                          ? "border-gray-300 bg-gray-100 cursor-not-allowed"
+                          : "border-Gray focus:border-purple-900 focus:ring-0"
+                      }`}
                       value={formData.paymentType}
                       onChange={handleInputChange}
                       name="paymentType"
+                      disabled={formData.paymentStatus === "pending"}
                     >
                       <option value="">Select Type</option>
                       <option value="cash">Cash</option>
@@ -987,6 +992,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     </select>
                   </>
                 )}
+
                 {index === 2 && (
                   <>
                     <label

@@ -35,6 +35,7 @@ export interface BillingItemData {
     paymentType:string; 
     receivedAmount:number;
     balanceAmount:number;
-  
+    phone?:number;
+    
     billItemDtos: BillingItemData[]; 
   }

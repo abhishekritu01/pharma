@@ -45,6 +45,33 @@ const Page = () => {
     });
   };
 
+  // const getSortedData = () => {
+  //   const sorted = [...filteredData];
+
+  //   if (sortConfig.key) {
+  //     sorted.sort((a, b) => {
+  //       const aValue = a[sortConfig.key!];
+  //       const bValue = b[sortConfig.key!];
+
+  //       if (typeof aValue === "string" && typeof bValue === "string") {
+  //         return sortConfig.direction === "asc"
+  //           ? aValue.localeCompare(bValue)
+  //           : bValue.localeCompare(aValue);
+  //       }
+
+  //       if (typeof aValue === "number" && typeof bValue === "number") {
+  //         return sortConfig.direction === "asc"
+  //           ? aValue - bValue
+  //           : bValue - aValue;
+  //       }
+
+  //       return 0;
+  //     });
+  //   }
+
+  //   return sorted;
+  // };
+
   const getSortedData = () => {
     const sorted = [...filteredData];
 
@@ -67,9 +94,21 @@ const Page = () => {
 
         return 0;
       });
+    } else {
+      sorted.sort(
+        (a, b) =>
+          new Date(b.billDateTime).getTime() -
+          new Date(a.billDateTime).getTime()
+      );
     }
 
     return sorted;
+  };
+
+  const displayValue = (
+    value: string | number | null | undefined
+  ): string | number => {
+    return value !== undefined && value !== null && value !== "" ? value : "--";
   };
 
   const columns = [
@@ -91,40 +130,88 @@ const Page = () => {
           )}
         </div>
       ),
-      accessor: "billId1" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.billId1),
     },
     {
       header: "Patient Name",
-      accessor: "patientName" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.patientName),
     },
 
     {
       header: "Mobile No.",
-      accessor: "phone" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.phone),
     },
     {
       header: "Patient Type",
-      accessor: "patientType" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.patientType),
     },
     {
       header: "Bill Date",
-      accessor: (row: BillingData) => formatDate(row.billDateTime),
+      accessor: (row: BillingData) =>
+        row.billDateTime ? formatDate(row.billDateTime) : "--",
     },
     {
       header: "Patient ID",
-      accessor: "patientId1" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.patientId1),
     },
     {
       header: "Payment Status",
-      accessor: "paymentStatus" as keyof BillingData,
+      accessor: (row: BillingData) => {
+        const value = displayValue(row.paymentStatus);
+
+        if (value === "--") {
+          return (
+            <span className="px-2 py-1 rounded-xl text-sm font-medium bg-gray-200 text-gray-600">
+              {value}
+            </span>
+          );
+        }
+
+        if (typeof value === "string") {
+          const status = value.toLowerCase();
+          const isPending = status === "pending";
+
+          const bgClass = isPending ? "bg-warning" : "bg-green";
+          const textClass = isPending ? "text-warning" : "text-green";
+          const displayText = status.charAt(0).toUpperCase() + status.slice(1);
+
+          return (
+            <span
+              className={`px-2 py-1 rounded-xl text-sm font-medium ${bgClass} ${textClass}`}
+            >
+              {displayText}
+            </span>
+          );
+        }
+
+        return (
+          <span className="px-2 py-1 rounded-xl text-sm font-medium bg-gray-200 text-gray-600">
+            {String(value)}
+          </span>
+        );
+      },
     },
+
     {
       header: "Payment Mode",
-      accessor: "paymentType" as keyof BillingData,
+      accessor: (row: BillingData) => {
+        const value = displayValue(row.paymentType);
+
+        const paymentTypeMap: Record<string, string> = {
+          cash: "Cash",
+          upi: "UPI",
+          creditCard: "Credit Card",
+          debitCard: "Debit Card",
+          net_banking: "Net Banking",
+        };
+
+        return paymentTypeMap[value] || "--";
+      },
     },
+
     {
       header: "Bill Amount",
-      accessor: "grandTotal" as keyof BillingData,
+      accessor: (row: BillingData) => displayValue(row.grandTotal),
     },
     {
       header: <BsThreeDotsVertical size={18} />,

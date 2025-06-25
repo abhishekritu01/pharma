@@ -7,23 +7,32 @@ import Image from "next/image";
 import Button from "@/app/components/common/Button";
 import { getItemById } from "@/app/services/ItemService";
 import { ItemData } from "@/app/types/ItemData";
+import { getPatientById } from "@/app/services/PatientService";
 
 interface BillingSummaryProps {
   billId: string;
-   onClose: () => void;
+  onClose: () => void;
 }
 
-const BillingSummary: React.FC<BillingSummaryProps> = ({
-  billId,
-  onClose,
-}) => {
+const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
   const [billingData, setBillingData] = useState<BillingData | null>(null);
+
+  const paymentTypeMap: Record<string, string> = {
+    cash: "Cash",
+    upi: "UPI",
+    creditCard: "Credit Card",
+    debitCard: "Debit Card",
+    net_banking: "Net Banking",
+  };
+
+  <span>{paymentTypeMap[billingData?.paymentType ?? ""] || "--"} - </span>;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getBillingById(billId);
 
+        // Fetch item names
         const enrichedItems = await Promise.all(
           data.billItemDtos.map(async (item: ItemData) => {
             try {
@@ -42,9 +51,23 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
           })
         );
 
+        let patientName = "Unknown";
+        let phone = "N/A";
+
+        try {
+          const patient = await getPatientById(data.patientId);
+          patientName = `${patient.firstName} ${patient.lastName}`;
+          phone = patient.phone;
+        } catch (err) {
+          console.error("Failed to fetch patient details:", err);
+        }
+
+        // Update billing data with enriched items and patient info
         setBillingData({
           ...data,
           billItemDtos: enrichedItems,
+          patientName,
+          phone,
         });
       } catch (error) {
         console.error("Failed to fetch billing data:", error);
@@ -55,7 +78,6 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
       fetchData();
     }
   }, [billId]);
-
 
   return (
     <>
@@ -90,10 +112,19 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
                     label: "Date / Time",
                     value: new Date(billingData.billDateTime).toLocaleString(),
                   },
-                  { label: "Contact No.", value: "N/A" },
-                  { label: "Name", value: billingData.patientName ?? "N/A" },
-                  { label: "Doctor", value: billingData.doctorId },
-                  { label: "Payment Status", value: billingData.paymentStatus },
+                  { label: "Contact No.", value: billingData.phone ?? "N/A" },
+                  {
+                    label: "Patient Name",
+                    value: billingData.patientName ?? "N/A",
+                  },
+                  { label: "Doctor", value: billingData.doctorName },
+                  {
+                    label: "Payment Status",
+                    value: billingData.paymentStatus
+                      ? billingData.paymentStatus.charAt(0).toUpperCase() +
+                        billingData.paymentStatus.slice(1).toLowerCase()
+                      : "--",
+                  },
                 ].map(({ label, value }, index) => (
                   <div
                     key={index}
@@ -190,8 +221,10 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
           <div className="border-t border-gray-400 text-sm">
             <div className="flex justify-between px-4 py-2 items-center flex-wrap gap-2">
               <div className="text-[#5A5555]">
-                {billingData?.paymentType} -{" "}
-                {billingData?.receivedAmount ?? "N/A"}
+                {paymentTypeMap[billingData?.paymentType ?? ""] || "--"}{" "}
+                {billingData?.paymentStatus?.toLowerCase() === "paid" && (
+                  <> - {billingData?.grandTotal ?? "N/A"}</>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-right font-medium text-[#5A5555]">
@@ -210,7 +243,13 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({
                     : 0
                   ).toFixed(2)}
                 </span>
-                <span>Due {billingData?.balanceAmount ?? "0.00"}</span>
+                <span>
+                  Due{" "}
+                  {billingData?.paymentStatus?.toLowerCase() === "pending"
+                    ? billingData?.grandTotal ?? "0.00"
+                    : "0.00"}
+                </span>
+
                 <span className="text-black">
                   TOTAL {billingData?.grandTotal ?? "0.00"}
                 </span>
