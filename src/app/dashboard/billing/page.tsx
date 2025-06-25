@@ -228,12 +228,12 @@ const Page = () => {
             >
               View
             </button>
-            <button
+            {/* <button
               onClick={() => handleBillingSummary(row.billId)}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
-            </button>
+            </button> */}
           </div>
         </div>
       ),
