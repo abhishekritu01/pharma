@@ -5,7 +5,7 @@ import Drawer from "@/app/components/common/Drawer";
 import Table from "@/app/components/common/Table";
 import { BillingData, BillingItemData } from "@/app/types/BillingData";
 import { ClipboardList, Plus } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Patient from "../../patient/components/Patient";
 import ItemDropdown from "@/app/components/common/ItemDropdown";
@@ -19,6 +19,10 @@ import Modal from "@/app/components/common/Modal";
 import { createBilling } from "@/app/services/BillingService";
 import Doctor from "../../doctor/components/Doctor";
 import { getDoctor } from "@/app/services/DoctorService";
+import {
+  handleNumericChange,
+  restrictInvalidNumberKeys,
+} from "@/app/components/common/RestrictedVal";
 import { DoctorData } from "@/app/types/DoctorData";
 
 interface BillingProps {
@@ -59,13 +63,13 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
   >(() => {});
-  // const [doctorOptions, setDoctorOptions] = useState<OptionType[]>([]);
-  const [doctorOptions,] = useState<OptionType[]>([]);
+  const defaultMobileOptions = [
+    { label: "+ Add New Patient", value: "newPatient" },
+  ];
 
-  // const [paymentStatus, setPaymentStatus] = useState("");
-  // const [paymentType, setPaymentType] = useState("");
-  // const [receivedAmount, setReceivedAmount] = useState(0);
-  // const [balanceAmount, setBalanceAmount] = useState(0);
+  const defaultDoctorOptions = [
+    { label: "+ Add New Doctor", value: "newDoctor" },
+  ];
 
   interface ModalOptions {
     message: string;
@@ -107,7 +111,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       availableQuantity: 0,
       discountPercentage: 0,
       discountAmount: 0,
-      mrpPerUnit: 0,
+      mrpSalePricePerUnit: 0,
       gstPercentage: 0,
       gstAmount: 0,
       netTotal: 0,
@@ -116,36 +120,56 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   ]);
 
   const addNewRow = () => {
-    setBillingItemRows([
-      ...billingItemRows,
-      {
-        billItemId: "",
-        itemId: "",
-        itemName: "",
-        batchNo: "",
-        expiryDate: null,
-        packageQuantity: 0,
-        availableQuantity: 0,
-        discountPercentage: 0,
-        discountAmount: 0,
-        mrpPerUnit: 0,
-        gstPercentage: 0,
-        gstAmount: 0,
-        netTotal: 0,
-        grossTotal: 0,
-      },
-    ]);
+    const newRow: BillingItemData = {
+      billItemId: "",
+      itemId: "",
+      itemName: "",
+      batchNo: "",
+      expiryDate: null,
+      packageQuantity: 0,
+      availableQuantity: 0,
+      discountPercentage: 0,
+      discountAmount: 0,
+      mrpSalePricePerUnit: 0,
+      gstPercentage: 0,
+      gstAmount: 0,
+      netTotal: 0,
+      grossTotal: 0,
+    };
+
+    setBillingItemRows((prev) => [...prev, newRow]);
+    setBillingItems((prev) => [...prev, newRow]);
   };
+
+  const clearBillingRow = (): BillingItemData => ({
+    billItemId: "",
+    itemId: "",
+    itemName: "",
+    batchNo: "",
+    expiryDate: null,
+    packageQuantity: 0,
+    availableQuantity: 0,
+    discountPercentage: 0,
+    discountAmount: 0,
+    mrpSalePricePerUnit: 0,
+    gstPercentage: 0,
+    gstAmount: 0,
+    netTotal: 0,
+    grossTotal: 0,
+  });
 
   const handleItemChange = async (
     index: number,
     selectedOption: { label: string; value: string }
   ) => {
     try {
+      const [itemId, batchNo] = selectedOption.value.split("__");
+
       const { data: inventory = [] } = await getInventoryDetails();
 
       const inventoryItem = inventory.find(
-        (inv: BillingItemData) => inv.itemId === selectedOption.value
+        (inv: BillingItemData) =>
+          inv.itemId === itemId && inv.batchNo === batchNo
       );
 
       if (!inventoryItem) {
@@ -153,28 +177,65 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         return;
       }
 
-      const item = await getItemById(selectedOption.value);
+      // Check for duplicate selection of same item+batch
+      const isDuplicate = billingItemRows.some((item, idx) => {
+        return (
+          idx !== index && item.itemId === itemId && item.batchNo === batchNo
+        );
+      });
+
+      if (isDuplicate) {
+        toast.error(`Item "${selectedOption.label}" is already selected.`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        // Clear the row if duplicate
+        const updatedRows = [...billingItemRows];
+        updatedRows[index] = {
+          ...updatedRows[index],
+          itemId: "",
+          itemName: "",
+          batchNo: "",
+          expiryDate: null,
+          packageQuantity: 0,
+          availableQuantity: 0,
+          discountPercentage: 0,
+          discountAmount: 0,
+          mrpSalePricePerUnit: 0,
+          gstPercentage: 0,
+          gstAmount: 0,
+          netTotal: 0,
+          grossTotal: 0,
+        };
+        setBillingItemRows(updatedRows);
+        setBillingItems(updatedRows);
+        return;
+      }
+
+      const item = await getItemById(itemId);
 
       const updatedItem: BillingItemData = {
         billItemId: "",
-        itemId: selectedOption.value,
-        itemName: selectedOption.label,
-        batchNo: inventoryItem.batchNo,
+        itemId,
+        itemName: item.itemName,
+        batchNo,
         expiryDate: inventoryItem.expiryDate,
         packageQuantity: 0,
         availableQuantity: inventoryItem.packageQuantity,
         discountPercentage: 0,
         discountAmount: 0,
-        mrpPerUnit:
+        mrpSalePricePerUnit:
           inventoryItem.mrpSalePricePerUnit ?? item.mrpSalePricePerUnit ?? 0,
         gstPercentage: inventoryItem.gstPercentage,
-
         gstAmount: inventoryItem.gstAmount,
         netTotal: 0,
         grossTotal: 0,
       };
 
-      const baseAmount = updatedItem.packageQuantity * updatedItem.mrpPerUnit;
+      // Price calculations
+      const baseAmount =
+        updatedItem.packageQuantity * updatedItem.mrpSalePricePerUnit;
       const discount = parseFloat(
         ((baseAmount * updatedItem.discountPercentage) / 100).toFixed(2)
       );
@@ -208,18 +269,29 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     {
       header: "Item Name",
       accessor: (row: BillingItemData, index: number) => {
-        const selectedOption: OptionType | null =
-          row.itemId && row.itemName
-            ? { value: row.itemId, label: row.itemName }
-            : row.itemId
-            ? { value: row.itemId, label: "" }
+        const selectedOption =
+          row.itemId && row.batchNo
+            ? {
+                value: `${row.itemId}__${row.batchNo}`,
+                label: `${row.itemName}`,
+                batchNo: row.batchNo,
+                itemId: row.itemId,
+                packageQty: row.availableQuantity,
+              }
             : null;
 
         return (
           <ItemDropdown
             selectedOption={selectedOption}
             onChange={(selectedOption) => {
-              if (!selectedOption) return;
+              if (!selectedOption) {
+                const clearedRows = [...billingItemRows];
+                clearedRows[index] = clearBillingRow();
+                setBillingItemRows(clearedRows);
+                setBillingItems(clearedRows);
+                return;
+              }
+
               handleItemChange(index, selectedOption);
             }}
           />
@@ -269,7 +341,11 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       className: "text-left",
     },
 
-    { header: "Price / Unit ", accessor: "mrpPerUnit", className: "text-left" },
+    {
+      header: "Price / Unit ",
+      accessor: "mrpSalePricePerUnit",
+      className: "text-left",
+    },
     {
       header: "Discount %",
       accessor: (row: BillingItemData, index: number) => (
@@ -358,7 +434,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       }
     }
 
-    const baseAmount = row.packageQuantity * row.mrpPerUnit;
+    const baseAmount = row.packageQuantity * row.mrpSalePricePerUnit;
     const discount = parseFloat(
       ((baseAmount * row.discountPercentage) / 100).toFixed(2)
     );
@@ -408,7 +484,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         opt.label.toLowerCase().includes(inputValue.toLowerCase()) ||
         String(opt.value).toLowerCase().includes(inputValue.toLowerCase())
     );
-    callback(filtered);
+    callback([...defaultMobileOptions, ...filtered]);
   };
 
   const handleMobileSelect = (
@@ -427,7 +503,11 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         patientType: "",
         doctorId: "",
       }));
+      return;
+    }
 
+    if (selected.value === "newPatient") {
+      handlePatientDrawer();
       return;
     }
 
@@ -438,7 +518,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     if (found) {
       const fullName = `${found.firstName} ${found.lastName}`;
 
-      // 1. Set display-only values in `patientData`
       setPatientData({
         phone: Number(selected.value),
         firstName: fullName,
@@ -472,10 +551,10 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
           label: `${doc.doctorName}`,
           value: doc.doctorId,
         }));
-      callback(filtered);
+      callback([...defaultDoctorOptions, ...filtered]);
     } catch (error) {
       console.error("Failed to load doctor options", error);
-      callback([]);
+      callback(defaultDoctorOptions);
     }
   };
 
@@ -578,27 +657,21 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     }));
   }, [billingItemRows]);
 
+  const prevPaymentTypeRef = useRef(formData.paymentType);
+
   useEffect(() => {
-    if (formData.paymentStatus === "paid") {
-      setFormData((prev) => ({
-        ...prev,
-        receivedAmount: formData.grandTotal,
-        balanceAmount: 0,
-      }));
-    } else if (formData.paymentStatus === "unpaid") {
+    const prevPaymentType = prevPaymentTypeRef.current;
+
+    if (prevPaymentType === "cash" && formData.paymentType !== "cash") {
       setFormData((prev) => ({
         ...prev,
         receivedAmount: 0,
-        balanceAmount: formData.grandTotal,
-      }));
-    } else if (formData.paymentStatus === "partial") {
-      setFormData((prev) => ({
-        ...prev,
-        balanceAmount:
-          formData.grandTotal - Number(formData.receivedAmount || 0),
+        balanceAmount: 0,
       }));
     }
-  }, [formData.paymentStatus, formData.grandTotal, formData.receivedAmount]);
+
+    prevPaymentTypeRef.current = formData.paymentType;
+  }, [formData.paymentType]);
 
   const addBilling = () => {
     handleShowModal({
@@ -608,8 +681,10 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       bgClassName: "bg-darkPurple",
       onConfirmCallback: async () => {
         try {
+          const {...payloadWithoutDoctorName } = formData;
+
           const billingPayload: BillingData = {
-            ...formData,
+            ...payloadWithoutDoctorName,
             billItemDtos: billingItemRows,
           };
 
@@ -638,6 +713,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
             balanceAmount: 0,
             billItemDtos: [],
           });
+
           setBillingItemRows([]);
           window.location.reload();
         } catch (error: unknown) {
@@ -686,22 +762,12 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
           <div>
             <Button
               onClick={() => handleBillingList()}
-              label="Billing Logs"
+              label="Billing List"
               value=""
               className="w-48 bg-darkPurple text-white h-11"
               icon={<ClipboardList size={15} />}
             ></Button>
           </div>
-        </div>
-
-        <div>
-          <Button
-            onClick={() => handleDoctorDrawer()}
-            label="Add Doctor"
-            value=""
-            className="w-48 bg-darkPurple text-white h-11"
-            icon={<ClipboardList size={15} />}
-          ></Button>
         </div>
 
         <div className="border border-Gray w-full rounded-lg p-5">
@@ -731,7 +797,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
               },
             ].map(({ id, label, type, readOnly }) =>
               id === "phone" ? (
-                <div key={id} className="relative w-full z-30">
+                <div key={id} className="relative w-full z-50">
                   <SelectField
                     value={
                       mobileOptions.find(
@@ -741,6 +807,9 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     onChange={handleMobileSelect}
                     label="Mobile Number"
                     loadOptions={loadMobileOptions}
+                    formatOptionLabel={(data, { context }) =>
+                      context === "value" ? data.value : data.label
+                    }
                   />
                 </div>
               ) : (
@@ -772,64 +841,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
               )
             )}
           </div>
-
-          {/* <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-            {[
-              {
-                id: "patientId1",
-                label: "Patient ID",
-                type: "text",
-                readOnly: false,
-              },
-              {
-                id: "patientType",
-                label: "Patient Type",
-                type: "text",
-                readOnly: false,
-              },
-              {
-                id: "doctorId",
-                label: "Doctor Referred",
-                type: "text",
-                readOnly: false,
-              },
-            ].map(({ id, label, type, readOnly }) => (
-              <div key={id} className="relative w-full">
-                <label
-                  htmlFor={id}
-                  className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                >
-                  {label}
-                </label>
-
-                {id === "patientType" ? (
-                  <select
-                    id={id}
-                    name={id}
-                    value={formData.patientType}
-                    onChange={handleInputChange}
-                    className="peer w-full h-[49px] px-3 py-3 border border-Gray rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                  >
-                    <option value="Walkin">Walkin</option>
-                    <option value="IP">IP</option>
-                    <option value="OP">OP</option>
-                  </select>
-                ) : (
-                  <input
-                    id={id}
-                    name={id}
-                    type={type}
-                    readOnly={readOnly}
-                    value={
-                      formData[id as keyof typeof formData]?.toString() ?? ""
-                    }
-                    onChange={handleInputChange}
-                    className="peer w-full h-[49px] px-3 py-3 border border-Gray rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                  />
-                )}
-              </div>
-            ))}
-          </div> */}
 
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
             {[
@@ -872,27 +883,31 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     <option value="IP">IP</option>
                     <option value="OP">OP</option>
                   </select>
-                ) : id === "doctorId" && formData.patientType !== "Walkin" ? (
+                ) : id === "doctorId" ? (
                   <SelectField
                     value={
-                      formData.doctorId
+                      formData.doctorId && formData.doctorName
                         ? {
-                            label:
-                              doctorOptions.find(
-                                (opt) => opt.value === formData.doctorId
-                              )?.label || formData.doctorId,
+                            label: formData.doctorName,
                             value: formData.doctorId,
                           }
                         : null
                     }
                     onChange={(selected) => {
+                      if (selected?.value === "newDoctor") {
+                        handleDoctorDrawer();
+                        return;
+                      }
                       setFormData((prev) => ({
                         ...prev,
                         doctorId: selected?.value || "",
+                        doctorName: selected?.label || "",
                       }));
                     }}
                     label="Doctor Referred"
                     loadOptions={loadDoctorOptions}
+                    defaultOptions={defaultDoctorOptions}
+                    formatOptionLabel={(data) => data.label}
                   />
                 ) : (
                   <input
@@ -901,7 +916,10 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     type={type}
                     readOnly={readOnly}
                     value={
-                      formData[id as keyof typeof formData]?.toString() ?? ""
+                      id === "doctorId"
+                        ? formData.doctorName || ""
+                        : formData[id as keyof typeof formData]?.toString() ??
+                          ""
                     }
                     onChange={handleInputChange}
                     className="peer w-full h-[49px] px-3 py-3 border border-Gray rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
@@ -983,13 +1001,17 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                         id="receivedAmount"
                         name="receivedAmount"
                         className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
-                          formData.paymentStatus !== "partial"
+                          formData.paymentType !== "cash"
                             ? "border-gray-300 bg-gray-100 cursor-not-allowed"
                             : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
                         }`}
                         value={formData.receivedAmount}
-                        onChange={handleInputChange}
-                        disabled={formData.paymentStatus !== "partial"}
+                        onKeyDown={restrictInvalidNumberKeys}
+                        onChange={handleNumericChange((e) =>
+                          handleInputChange(e)
+                        )}
+                        // onChange={handleInputChange}
+                        disabled={formData.paymentType !== "cash"}
                       />
                     </div>
                   </>
@@ -1008,9 +1030,18 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                         type="number"
                         id="balanceAmount"
                         name="balanceAmount"
-                        className="w-60 h-10 p-2 border border-gray-300 rounded-md bg-gray-100 text-black outline-none text-base cursor-not-allowed"
-                        value={formData.balanceAmount.toFixed(2)}
-                        readOnly
+                        className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
+                          formData.paymentType !== "cash"
+                            ? "border-gray-300 bg-gray-100 cursor-not-allowed"
+                            : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
+                        }`}
+                        value={formData.balanceAmount}
+                        onKeyDown={restrictInvalidNumberKeys}
+                        onChange={handleNumericChange((e) =>
+                          handleInputChange(e)
+                        )}
+                        // onChange={handleInputChange}
+                        disabled={formData.paymentType !== "cash"}
                       />
                     </div>
                   </>

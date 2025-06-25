@@ -7,12 +7,16 @@ import React, { useEffect, useState } from "react";
 import PurchaseEntry from "./components/PurchaseEntry";
 import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
 import Table from "@/app/components/common/Table";
-import { getPurchase } from "@/app/services/PurchaseEntryService";
+import {
+  confirmPurchasePayment,
+  getPurchase,
+} from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import { format } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const Page = () => {
   const [showPurchasEntry, setShowPurchasEntry] = useState(false);
@@ -56,7 +60,9 @@ const Page = () => {
 
             let dueStatus: string = "—";
 
-            if (purchase.paymentDueDate) {
+            if (purchase.paymentStatus === "Paid") {
+              dueStatus = "Payment Cleared";
+            } else if (purchase.paymentDueDate) {
               const dueDate = new Date(purchase.paymentDueDate);
               const currentDate = new Date();
               dueDate.setHours(0, 0, 0, 0);
@@ -141,6 +147,24 @@ const Page = () => {
     return sorted;
   };
 
+  const handleConfirmPayment = async (invId: string) => {
+    try {
+      await confirmPurchasePayment(invId);
+      toast.success("Payment status updated to Paid", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      window.location.reload();
+      // TODO: Optionally refetch the data or update UI
+    } catch (error) {
+      console.log(error);     
+      toast.error("Failed to update payment status", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
   const columns = [
     {
       header: (
@@ -188,6 +212,8 @@ const Page = () => {
             ? "text-warning"
             : status === "overdue"
             ? "text-danger"
+            : status === "payment cleared"
+            ? "text-green"
             : "";
 
         const bgClass =
@@ -195,6 +221,8 @@ const Page = () => {
             ? "bg-warning2"
             : status === "overdue"
             ? "bg-danger"
+            : status === "payment cleared"
+            ? "bg-green2"
             : "";
 
         return (
@@ -254,25 +282,33 @@ const Page = () => {
     },
     {
       header: <BsThreeDotsVertical size={18} />,
-      accessor: (row: PurchaseEntryData, index: number) => (
+      accessor: (row: PurchaseEntryData) => (
         <div className="relative group">
           <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
             <BsThreeDotsVertical size={18} />
           </button>
 
-          <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+          <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap">
             <Link
               href={`/dashboard/orderSummary?id=${row.invId}`}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               View
             </Link>
-            <button
+            {/* <button
               onClick={() => console.log("Deleting Item:", index)}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
-            </button>
+            </button> */}
+            {row.paymentStatus?.toLowerCase() === "pending" && (
+              <button
+                onClick={() => handleConfirmPayment(row.invId!)}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                Confirm Payment
+              </button>
+            )}
           </div>
         </div>
       ),
@@ -285,7 +321,7 @@ const Page = () => {
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
       const purchaseDate = new Date(item.purchaseDate);
-      return purchaseDate >= oneMonthAgo; // Filter only last 1 month
+      return purchaseDate >= oneMonthAgo;
     })
     .filter((item) => {
       const search = searchText.toLowerCase();

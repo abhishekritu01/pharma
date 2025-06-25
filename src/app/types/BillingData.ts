@@ -8,7 +8,7 @@ export interface BillingItemData {
     availableQuantity: number;
     discountPercentage: number;
     discountAmount: number;
-    mrpPerUnit: number;
+    mrpSalePricePerUnit: number;
     gstPercentage: number;
     gstAmount: number;
     netTotal: number;
@@ -25,6 +25,7 @@ export interface BillingItemData {
     patientId1?: string;
     patientName?: string;
     doctorId: string;
+    doctorName?: string;
     patientType:string;
     subTotal: number;
     totalGst: number;
