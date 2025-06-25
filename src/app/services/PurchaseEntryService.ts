@@ -70,7 +70,6 @@ export const getPurchase = async () => {
 };
 
 
-// Get PurchaseById
 export const getPurchaseById = async (invId: string) => {
   try {
       const response = await api.get(`pharma/stock/getById/${invId}`);
@@ -131,4 +130,16 @@ export const getItemsBySupplier = async (supplierId: string) => {
 };
 
 
-
+export const confirmPurchasePayment = async (invId: string) => {
+  try {
+    const response = await api.put(`pharma/stock/confirmPayment/${invId}`);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error confirming payment:", error);
+    if (error instanceof Error) {
+      throw new Error(`Error confirming payment: ${error.message}`);
+    } else {
+      throw new Error("An unknown error occurred while confirming payment.");
+    }
+  }
+};

@@ -5,67 +5,56 @@ import { BillingData } from "@/app/types/BillingData";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Button from "@/app/components/common/Button";
-import { useRouter } from "next/navigation";
 import { getItemById } from "@/app/services/ItemService";
 import { ItemData } from "@/app/types/ItemData";
 
 interface BillingSummaryProps {
   billId: string;
+   onClose: () => void;
 }
 
-const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
-  const router = useRouter();
+const BillingSummary: React.FC<BillingSummaryProps> = ({
+  billId,
+  onClose,
+}) => {
   const [billingData, setBillingData] = useState<BillingData | null>(null);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const data = await getBillingById(billId);
-  //       setBillingData(data);
-  //     } catch (error) {
-  //       console.error("Failed to fetch billing data:", error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [billId]);
-
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const data = await getBillingById(billId);
+    const fetchData = async () => {
+      try {
+        const data = await getBillingById(billId);
 
-      const enrichedItems = await Promise.all(
-        data.billItemDtos.map(async (item: ItemData) => {
-          try {
-            const itemDetails = await getItemById(item.itemId);
-            return {
-              ...item,
-              itemName: itemDetails.itemName || "N/A", // add itemName to each bill item
-            };
-          } catch (err) {
-            console.error("Failed to fetch item name:", err);
-            return {
-              ...item,
-              itemName: "Unknown Item",
-            };
-          }
-        })
-      );
+        const enrichedItems = await Promise.all(
+          data.billItemDtos.map(async (item: ItemData) => {
+            try {
+              const itemDetails = await getItemById(item.itemId);
+              return {
+                ...item,
+                itemName: itemDetails.itemName || "N/A",
+              };
+            } catch (err) {
+              console.error("Failed to fetch item name:", err);
+              return {
+                ...item,
+                itemName: "Unknown Item",
+              };
+            }
+          })
+        );
 
-      setBillingData({
-        ...data,
-        billItemDtos: enrichedItems, // replace with enriched data
-      });
-    } catch (error) {
-      console.error("Failed to fetch billing data:", error);
+        setBillingData({
+          ...data,
+          billItemDtos: enrichedItems,
+        });
+      } catch (error) {
+        console.error("Failed to fetch billing data:", error);
+      }
+    };
+
+    if (billId) {
+      fetchData();
     }
-  };
-
-  if (billId) {
-    fetchData();
-  }
-}, [billId]);
+  }, [billId]);
 
 
   return (
@@ -143,9 +132,9 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
             </div>
           </div>
 
-          <div className="border-t border-gray-400">
-            {billingData && billingData.billItemDtos && (
-              <table className="text-sm font-medium w-full table-fixed border-collapse">
+          <div className="border-t border-gray-400 overflow-auto">
+            {billingData?.billItemDtos && (
+              <table className="text-sm font-medium w-full table-auto border-collapse">
                 <thead className="h-12 whitespace-nowrap border-b border-gray-400">
                   <tr>
                     {[
@@ -160,9 +149,9 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
                       "Net",
                       "Gross",
                     ].map((header, i) => (
-                      <td key={i} className="text-left px-4 py-2">
+                      <th key={i} className="text-left px-4 py-2">
                         {header}
-                      </td>
+                      </th>
                     ))}
                   </tr>
                 </thead>
@@ -170,17 +159,20 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
                   {billingData.billItemDtos.map((item, index) => (
                     <tr key={item.billItemId}>
                       <td className="px-4 py-2">{index + 1}</td>
-                      <td className="px-4 py-2">{item.itemName}</td>
-                      <td className="px-4 py-2">{item.batchNo}</td>
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2 break-words min-w-[160px] max-w-[250px]">
+                        {item.itemName}
+                      </td>
+                      <td className="px-4 py-2 min-w-[120px]">
+                        {item.batchNo}
+                      </td>
+                      <td className="px-4 py-2 min-w-[120px]">
                         {item.expiryDate
                           ? new Date(item.expiryDate).toLocaleDateString()
                           : "N/A"}
                       </td>
-
                       <td className="px-4 py-2">{item.packageQuantity}</td>
                       <td className="px-4 py-2">
-                        {item.mrpPerUnit.toFixed(2)}
+                        {item.mrpSalePricePerUnit.toFixed(2)}
                       </td>
                       <td className="px-4 py-2">{item.gstPercentage}%</td>
                       <td className="px-4 py-2">{item.gstAmount.toFixed(2)}</td>
@@ -195,13 +187,14 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
             )}
           </div>
 
-          <div className="flex justify-between border-t border-gray-400 h-9 px-4 items-center text-sm">
-            <div className="text-[#5A5555]">
-              {billingData?.paymentType} -{" "}
-              {billingData?.receivedAmount ?? "N/A"}
-            </div>
-            <div className="flex space-x-3">
-              <div className="text-[#5A5555] space-x-2">
+          <div className="border-t border-gray-400 text-sm">
+            <div className="flex justify-between px-4 py-2 items-center flex-wrap gap-2">
+              <div className="text-[#5A5555]">
+                {billingData?.paymentType} -{" "}
+                {billingData?.receivedAmount ?? "N/A"}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-right font-medium text-[#5A5555]">
                 <span>Disc {billingData?.totalDiscount ?? "0.00"}</span>
                 <span>
                   CGST{" "}
@@ -218,10 +211,9 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
                   ).toFixed(2)}
                 </span>
                 <span>Due {billingData?.balanceAmount ?? "0.00"}</span>
-              </div>
-              <div className="space-x-2 font-medium">
-                <span>Total</span>
-                <span>{billingData?.grandTotal ?? "0.00"}</span>
+                <span className="text-black">
+                  TOTAL {billingData?.grandTotal ?? "0.00"}
+                </span>
               </div>
             </div>
           </div>
@@ -231,14 +223,50 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId }) => {
             {/* <div>{billingData ? rupeesInWords(billingData.grandTotal) : ""}</div> */}
           </div>
         </div>
+        <div className="flex justify-end pt-25 px-5">Q P Signature</div>
 
-        <div className="flex justify-end">
-          <Button
-            label="Back"
-            value=""
-            className="w-20 text-black h-11"
-            onClick={() => router.back()}
-          ></Button>
+        <div className="flex justify-between">
+          <div className="space-y-3">
+            <div className="text-lg font-semibold flex space-x-3">
+              <Image
+                src="/TiamedsIcon.svg"
+                alt="Company Logo"
+                width={45}
+                height={32}
+              />
+              <Image
+                src="/TiamedsLogo.svg"
+                alt="Company Logo"
+                width={90}
+                height={32}
+              />
+            </div>
+            <div className="text-base">
+              <span className="font-medium">Powered by</span>
+              <span className="font-bold"> TiaMeds Technology Pvt Ltd</span>
+            </div>
+          </div>
+
+          <div className="mt-9 flex space-x-5">
+            <Button
+              label="Billing List"
+              value=""
+              className="w-28 text-black"
+              onClick={onClose}
+            ></Button>
+            <Button
+              label="Print"
+              value=""
+              className="w-20 text-black"
+              onClick={() => window.print()}
+            ></Button>
+            <Button
+              label="Thermal Print"
+              value=""
+              className="w-28 text-black"
+              onClick={() => window.print()}
+            ></Button>
+          </div>
         </div>
       </main>
     </>

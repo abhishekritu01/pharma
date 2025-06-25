@@ -55,25 +55,60 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
     fetchLabelIfMissing();
   }, [selectedOption, onChange]);
 
+  // const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
+  //   const response = await getInventoryDetails();
+  //   const inventory = response.data || [];
+
+  //   const options = await Promise.all(
+  //     inventory.map(async (inv: BillingItemData) => {
+  //       try {
+  //         const item = await getItemById(inv.itemId);
+  //         return {
+  //           label: `${item.itemName}`,
+  //           value: `${inv.itemId}__${inv.batchNo}`,
+  //           batchNo: inv.batchNo,
+  //           itemId: inv.itemId,
+  //           packageQty: inv.packageQuantity,
+  //         };
+  //       } catch (err) {
+  //         console.error("Failed to fetch item for ID:", inv.itemId, err);
+  //         return null;
+  //       }
+  //     })
+  //   );
+
+  //   const filtered = options.filter(
+  //     (opt): opt is OptionType =>
+  //       opt !== null &&
+  //       (inputValue.trim() === "" ||
+  //         opt.label.toLowerCase().includes(inputValue.toLowerCase()))
+  //   );
+
+  //   return filtered;
+  // };
+
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     const response = await getInventoryDetails();
     const inventory = response.data || [];
 
     const options = await Promise.all(
-      inventory.map(async (inv: BillingItemData) => {
-        try {
-          const item = await getItemById(inv.itemId);
-          return {
-            label: item.itemName,
-            value: inv.itemId,
-            batchNo: inv.batchNo,
-            packageQty: inv.packageQuantity, // ✅ Add this
-          };
-        } catch (err) {
-          console.error("Failed to fetch item for ID:", inv.itemId, err);
-          return null;
-        }
-      })
+      inventory
+        .filter((inv: BillingItemData) => inv.packageQuantity > 0) // ✅ Only include available stock
+        .map(async (inv: BillingItemData) => {
+          try {
+            const item = await getItemById(inv.itemId);
+            return {
+              label: `${item.itemName}`,
+              value: `${inv.itemId}__${inv.batchNo}`,
+              batchNo: inv.batchNo,
+              itemId: inv.itemId,
+              packageQty: inv.packageQuantity,
+            };
+          } catch (err) {
+            console.error("Failed to fetch item for ID:", inv.itemId, err);
+            return null;
+          }
+        })
     );
 
     const filtered = options.filter(

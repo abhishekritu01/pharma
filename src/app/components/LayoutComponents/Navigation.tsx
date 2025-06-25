@@ -20,10 +20,11 @@ export const navigation: NavigationItem[] = [
       { name: "Purchase Order", href: "/dashboard/order", current: false, icon:  FaNotesMedical},
       { name: "Purchase Entry", href: "/dashboard/entry", current: false, icon: FaListAlt  },
       { name: "Purchase Return", href: "/dashboard/return", current: false, icon: MdAssignmentReturn },
+      { name: "Inventory", href: "/dashboard/stockreport", icon: MdOutlineInventory , current: true },
     ],
   },
 
-  { name: "Stock", href: "/dashboard/inventory", icon: MdOutlineInventory , current: true },
+  // { name: "Stock", href: "/dashboard/inventory", icon: MdOutlineInventory , current: true },
 
 
   {
@@ -36,9 +37,8 @@ export const navigation: NavigationItem[] = [
      
     ],
   },
-   { name: "Stock Inventory", href: "/dashboard/stockreport", icon: MdOutlineInventory , current: true },
+   
 
- 
   { name: "Billing", href: "/dashboard/billing", icon: PiReceiptFill, current: true },
   
   // {

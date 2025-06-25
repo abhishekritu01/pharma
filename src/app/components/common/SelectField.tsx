@@ -1,6 +1,6 @@
 import React from "react";
 import AsyncSelect from "react-select/async";
-import { StylesConfig } from "react-select";
+import { FormatOptionLabelMeta, StylesConfig } from "react-select";
 
 type OptionType = {
   label: string;
@@ -11,9 +11,17 @@ interface SelectFieldProps {
   value: OptionType | null;
   onChange: (value: OptionType | null) => void;
   label: string;
-  loadOptions: (inputValue: string, callback: (options: OptionType[]) => void) => void;
+  loadOptions: (
+    inputValue: string,
+    callback: (options: OptionType[]) => void
+  ) => void;
   isClearable?: boolean;
   isDisabled?: boolean;
+  defaultOptions?: OptionType[];
+  formatOptionLabel?: (
+    data: OptionType,
+    context: FormatOptionLabelMeta<OptionType>
+  ) => React.ReactNode;
 }
 
 const customStyles: StylesConfig<OptionType, false> = {
@@ -57,7 +65,12 @@ const customStyles: StylesConfig<OptionType, false> = {
       backgroundColor: state.isSelected ? "#4B0082" : "#E5D2F4",
     },
   }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999,
+  }),
 };
+
 
 const SelectField: React.FC<SelectFieldProps> = ({
   value,
@@ -66,13 +79,15 @@ const SelectField: React.FC<SelectFieldProps> = ({
   loadOptions,
   isClearable = true,
   isDisabled = false,
+  defaultOptions,
+  formatOptionLabel,
 }) => {
   return (
     <div className="relative w-full">
       <AsyncSelect
         cacheOptions
         loadOptions={loadOptions}
-        defaultOptions={false} // disables showing options on click
+        defaultOptions={defaultOptions || []}
         value={value}
         onChange={onChange}
         isClearable={isClearable}
@@ -81,9 +96,9 @@ const SelectField: React.FC<SelectFieldProps> = ({
         styles={customStyles}
         className="w-full peer"
         getOptionLabel={(e) => e.label}
-        formatOptionLabel={(data, { context }) =>
-          context === "value" ? data.value : data.label
-        }
+        formatOptionLabel={formatOptionLabel ?? ((data) => data.label)}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
       />
       <label
         className={`absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all

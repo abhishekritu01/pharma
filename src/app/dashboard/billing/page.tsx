@@ -244,7 +244,13 @@ const Page = () => {
   return (
     <>
       {showBillSummary && currentBillId ? (
-        <BillingSummary billId={currentBillId} />
+        <BillingSummary
+          billId={currentBillId}
+          onClose={() => {
+            setShowBillSummary(false);
+            setCurrentBillId(null);
+          }}
+        />
       ) : showBilling ? (
         <Billing setShowBilling={setShowBilling} />
       ) : (

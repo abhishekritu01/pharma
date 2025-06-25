@@ -128,13 +128,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [grandTotal, setGrandTotal] = useState(0);
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
-
-  // const [supplierSuggestions, setSupplierSuggestions] = useState<
-  //   SupplierData[]
-  // >([]);
-  // const [filteredSupplierSuggestions, setFilteredSupplierSuggestions] =
-  //   useState<SupplierData[]>([]);
-  // const [, setShowSupplierSuggestions] = useState(false);
   const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
 
   const fetchSuppliers = async () => {
@@ -232,6 +225,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         gstAmount: 0,
         discount: 0,
         amount: 0,
+        purchasePricePerUnit: 0,
+        mrpSalePricePerUnit: 0,
       });
       return;
     }
@@ -254,6 +249,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         // expiryDate: itemDetails.expiryDate,
         purchasePrice: itemDetails.purchasePrice,
         mrpSalePrice: itemDetails.mrpSalePrice,
+        purchasePricePerUnit: itemDetails.purchasePricePerUnit,
         gstPercentage: itemDetails.gstPercentage,
         // gstAmount: itemDetails.gstAmount,
         // discount: itemDetails.discount,
@@ -386,46 +382,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       ),
     },
   ];
-
-  // const handleSupplierClick = (id: string, name: string) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     supplierId: id,
-  //     supplierName: name,
-  //   }));
-  //   setShowSupplierSuggestions(false);
-  // };
-
-  // const handleItemSelection = async (
-  //   e: React.ChangeEvent<HTMLSelectElement>,
-  //   index: number
-  // ) => {
-  //   const value = e.target.value;
-
-  //   if (value === "newItem") {
-  //     handleItemDrawer();
-  //     return;
-  //   }
-
-  //   try {
-  //     const itemDetails = await getItemById(value);
-
-  //     const updatedValues: Partial<PurchaseEntryItem> = {
-  //       itemId: value,
-  //       purchasePrice: itemDetails.purchasePrice || 0,
-  //       mrpSalePrice: itemDetails.mrpSalePrice || 0,
-  //       cgstPercentage: itemDetails.cgstPercentage || 0,
-  //       sgstPercentage: itemDetails.sgstPercentage || 0,
-  //       gstPercentage:
-  //         (itemDetails.cgstPercentage || 0) + (itemDetails.sgstPercentage || 0),
-  //     };
-
-  //     handleChange(e, index, updatedValues);
-  //   } catch (error) {
-  //     console.error("Failed to fetch item details:", error);
-  //     handleChange(e, index);
-  //   }
-  // };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -677,18 +633,24 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
 
                 return {
                   ...row,
-                  purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
-                  mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
-                  gstPercentage: itemDetails.gstPercentage ?? row.gstPercentage,
-
                   itemName: row.itemName,
-                  packageQuantity: row.packageQuantity,
                   batchNo: row.batchNo,
                   expiryDate: row.expiryDate,
+                  packageQuantity: row.packageQuantity,
                   pharmacyId: row.pharmacyId,
                   amount: row.amount,
                   discount: row.discount,
                   gstAmount: row.gstAmount,
+
+                  // ✅ directly fetched from itemDetails
+                  purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
+                  mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
+                  gstPercentage: itemDetails.gstPercentage ?? row.gstPercentage,
+                  purchasePricePerUnit:
+                    itemDetails.purchasePricePerUnit ??
+                    row.purchasePricePerUnit,
+                  mrpSalePricePerUnit:
+                    itemDetails.mrpSalePricePerUnit ?? row.mrpSalePricePerUnit,
                 };
               } catch (error) {
                 console.error(
@@ -787,7 +749,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       0
     );
 
-    // ✅ Fix GST Total Calculation
     const newGstTotal = purchaseRows.reduce(
       (sum, row) => sum + (row.gstAmount || 0),
       0
@@ -856,11 +817,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         mrpSalePrice: row.mrpSalePrice,
         purchasePricePerUnit: row.purchasePricePerUnit,
         mrpSalePricePerUnit: row.mrpSalePricePerUnit,
-        cgstPercentage: row.cgstPercentage,
-        sgstPercentage: row.sgstPercentage,
         gstPercentage: row.gstPercentage,
-        cgstAmount: row.cgstAmount,
-        sgstAmount: row.sgstAmount,
         gstAmount: row.gstAmount,
         discount: row.discount,
         amount: row.amount,
@@ -869,6 +826,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       paymentStatus: "",
       goodStatus: "",
     };
+
+    console.log("purchaseData----------", purchaseData);
 
     handleShowModal({
       message:
@@ -1049,77 +1008,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               <div key={id} className="relative w-full">
                 {id === "supplierName" ? (
                   <div className="relative">
-                    {/* <input
-                      type="text"
-                      id="supplierName"
-                      value={formData.supplierName || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          supplierName: value,
-                        }));
-
-                        const filtered = supplierSuggestions.filter(
-                          (supplier) =>
-                            supplier.supplierName
-                              .toLowerCase()
-                              .includes(value.toLowerCase())
-                        );
-                        setFilteredSupplierSuggestions(filtered);
-                        setShowSupplierSuggestions(true);
-                      }}
-                      onBlur={() =>
-                        setTimeout(() => setShowSupplierSuggestions(false), 200)
-                      }
-                      onFocus={() => {
-                        if (formData.supplierName) {
-                          const filtered = supplierSuggestions.filter(
-                            (supplier) =>
-                              supplier.supplierName
-                                .toLowerCase()
-                                .includes(formData.supplierName!.toLowerCase())
-                          );
-                          setFilteredSupplierSuggestions(filtered);
-                          setShowSupplierSuggestions(true);
-                        }
-                      }}
-                      placeholder=" "
-                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                      data-has-value={formData.supplierName ? "true" : "false"}
-                      required
-                    />
-                    <label
-                      htmlFor="supplierName"
-                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all 
-              peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
-              peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
-              peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
-                    >
-                      {label}
-                    </label>
-
-                    {showSupplierSuggestions &&
-                      filteredSupplierSuggestions.length > 0 && (
-                        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
-                          {filteredSupplierSuggestions.map(
-                            (supplier, index) => (
-                              <li
-                                key={index}
-                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                onClick={() =>
-                                  handleSupplierClick(
-                                    supplier.supplierId,
-                                    supplier.supplierName  
-                                  )
-                                }
-                              >
-                                {supplier.supplierName}
-                              </li>
-                            )
-                          )}
-                        </ul>
-                      )} */}
                     <label
                       htmlFor={id}
                       className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
