@@ -175,10 +175,10 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                       "Expiry Date",
                       "Quantity",
                       "Price",
+                      "Gross",
                       "GST %",
                       "GST",
                       "Net",
-                      "Gross",
                     ].map((header, i) => (
                       <th key={i} className="text-left px-4 py-2">
                         {header}
@@ -205,9 +205,9 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                       <td className="px-4 py-2">
                         {item.mrpSalePricePerUnit.toFixed(2)}
                       </td>
+                      <td className="px-4 py-2">{item.netTotal.toFixed(2)}</td>
                       <td className="px-4 py-2">{item.gstPercentage}%</td>
                       <td className="px-4 py-2">{item.gstAmount.toFixed(2)}</td>
-                      <td className="px-4 py-2">{item.netTotal.toFixed(2)}</td>
                       <td className="px-4 py-2">
                         {item.grossTotal.toFixed(2)}
                       </td>
