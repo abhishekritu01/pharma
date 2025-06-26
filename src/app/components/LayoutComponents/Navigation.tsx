@@ -7,7 +7,8 @@ import { RiMedicineBottleFill} from "react-icons/ri";
 import { FaNotesMedical, FaStore} from "react-icons/fa6";
 import { PiReceiptFill } from "react-icons/pi";
 import { FaListAlt } from 'react-icons/fa';
-import { BiSolidCreditCard } from "react-icons/bi";
+import { TbCreditCardFilled } from "react-icons/tb";
+
 
 
 export const navigation: NavigationItem[] = [
@@ -41,8 +42,17 @@ export const navigation: NavigationItem[] = [
    
 
   { name: "Billing", href: "/dashboard/billing", icon: PiReceiptFill, current: true },
-  { name: "Supplier's Payment Summary", href: "/dashboard/spaymentsummary", icon: BiSolidCreditCard , current: true },
+  // { name: "Supplier's Payment Summary", href: "/dashboard/spaymentsummary", icon: BiSolidCreditCard , current: true },
   
+  {
+    name: "Stock Summary",
+    icon: FaStore,
+    current: false,
+    children: [
+      { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },     
+    ],
+  },
+
   // {
   //   name: "Settings",
   //   icon: IoSettings,
