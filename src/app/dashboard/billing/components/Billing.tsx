@@ -381,12 +381,12 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       className: "text-left",
     },
     {
-      header: "Net",
+      header: "Gross",
       accessor: "netTotal",
       className: "text-left",
     },
     {
-      header: "Gross",
+      header: "Net",
       accessor: "grossTotal",
       className: "text-left",
     },
