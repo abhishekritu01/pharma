@@ -299,7 +299,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     { header: "Estimated Amount", accessor: "amount", className: "text-left" },
     {
       header: "Action",
-      accessor: (row: PurchaseOrderItem, index: number) => (
+      accessor: (row: PurchaseOrderItem) => (
         <div className="relative group">
           <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
             <BsThreeDotsVertical size={18} />
@@ -313,12 +313,12 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
               Edit Item Details
             </button>
 
-            <button
+            {/* <button
               onClick={() => handleDeleteRow(index)}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
-            </button>
+            </button> */}
           </div>
         </div>
       ),
@@ -380,25 +380,25 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     }
   };
 
-  const handleDeleteRow = (index: number) => {
-    if (orderItemRows.length === 1) {
-      toast.error("Cannot delete the last row", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
+  // const handleDeleteRow = (index: number) => {
+  //   if (orderItemRows.length === 1) {
+  //     toast.error("Cannot delete the last row", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
+  //     return;
+  //   }
 
-    handleShowModal({
-      message:
-        "Are you sure you want to delete this item? This action cannot be undone",
-      secondaryMessage: "Confirm Deletion",
-      bgClassName: "bg-darkRed",
-      onConfirmCallback: () => {
-        setorderItemRows(orderItemRows.filter((_, i) => i !== index));
-      },
-    });
-  };
+  //   handleShowModal({
+  //     message:
+  //       "Are you sure you want to delete this item? This action cannot be undone",
+  //     secondaryMessage: "Confirm Deletion",
+  //     bgClassName: "bg-darkRed",
+  //     onConfirmCallback: () => {
+  //       setorderItemRows(orderItemRows.filter((_, i) => i !== index));
+  //     },
+  //   });
+  // };
 
   const handlePurchaseOrderList = () => {
     setShowPurchasOrder(false);
