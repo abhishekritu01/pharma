@@ -31,6 +31,9 @@ import {
 import { SupplierData } from "@/app/types/SupplierData";
 import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
+import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
+import { components } from "react-select";
+
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -180,7 +183,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       const allItems = await getItem();
 
       const filteredItems = allItems.filter((item: { itemName: string }) =>
-        item.itemName.toLowerCase().includes(inputValue.toLowerCase())
+        item.itemName.toLowerCase().startsWith(inputValue.toLowerCase())
       );
 
       const mappedItems = filteredItems.map(
@@ -272,32 +275,49 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     className?: string;
   }[] = [
     {
-      header: "Item Name",
-      accessor: (row: PurchaseEntryItem, index: number) => (
-        <AsyncSelect
-          cacheOptions
-          defaultOptions={defaultItemOptions}
-          loadOptions={loadItemOptions}
-          isClearable={true}
-          value={
-            row.itemId
-              ? {
-                  label:
-                    row.itemName ||
-                    items.find((i) => i.itemId === row.itemId)?.itemName ||
-                    "",
-                  value: row.itemId,
-                }
-              : null
-          }
-          onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
-          placeholder="Select or search item"
-          className="text-left w-full"
-          classNamePrefix="react-select"
-          styles={customSelectStyles<OptionType>()}
-        />
-      ),
-    },
+  header: "Item Name",
+  accessor: (row: PurchaseEntryItem, index: number) => (
+    <AsyncSelect
+      cacheOptions
+      defaultOptions={defaultItemOptions}
+      loadOptions={loadItemOptions}
+      isClearable={true}
+      value={
+        row.itemId
+          ? {
+              label:
+                row.itemName ||
+                items.find((i) => i.itemId === row.itemId)?.itemName ||
+                "",
+              value: row.itemId,
+            }
+          : null
+      }
+      onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
+      placeholder="Select or search item"
+      className="text-left w-full"
+      classNamePrefix="react-select"
+      styles={customSelectStyles<OptionType>()}
+      formatOptionLabel={(data, { context }) =>
+        context === "menu" ? (
+          <div className="flex flex-col font-medium leading-5 w-full">
+            <EllipsisTooltip text={data.label} className="w-full" />
+          </div>
+        ) : (
+          <EllipsisTooltip text={data.label} className="w-full" />
+        )
+      }
+      components={{
+        SingleValue: (props) => (
+          <components.SingleValue {...props}>
+            <EllipsisTooltip text={props.data.label} className="w-full" />
+          </components.SingleValue>
+        ),
+      }}
+    />
+  ),
+},
+
     {
       header: "Batch No",
       accessor: (row: PurchaseEntryItem, index: number) => (
@@ -497,7 +517,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           bgClassName: "bg-darkPurple",
           onConfirmCallback: () => resolve(true),
           onCancelCallback: () => {
-            // ✅ Clear from STATE (not input directly)
+          
             setPurchaseRows((prev) =>
               prev.map((row, i) =>
                 i === idx ? { ...row, expiryDate: "" } : row
@@ -642,7 +662,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                   discount: row.discount,
                   gstAmount: row.gstAmount,
 
-                  // ✅ directly fetched from itemDetails
                   purchasePrice: itemDetails.purchasePrice ?? row.purchasePrice,
                   mrpSalePrice: itemDetails.mrpSalePrice ?? row.mrpSalePrice,
                   gstPercentage: itemDetails.gstPercentage ?? row.gstPercentage,
@@ -1002,11 +1021,11 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
             {[
               { id: "creditPeriod", label: "Credit Period", type: "number" },
               { id: "paymentDueDate", label: "Payment Due Date", type: "date" },
-              { id: "supplierName", label: "Supplier", type: "text" },
+              { id: "supplierId", label: "Supplier", type: "text" },
               { id: "invoiceAmount", label: "Invoice Amount", type: "number" },
             ].map(({ id, label, type }) => (
               <div key={id} className="relative w-full">
-                {id === "supplierName" ? (
+                {id === "supplierId" ? (
                   <div className="relative">
                     <label
                       htmlFor={id}

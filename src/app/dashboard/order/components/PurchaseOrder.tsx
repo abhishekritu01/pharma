@@ -34,6 +34,8 @@ import {
 } from "@/app/components/common/RestrictedVal";
 import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
+import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
+import { components } from "react-select";
 
 interface PurchaseOrderProps {
   setShowPurchasOrder: (value: boolean) => void;
@@ -141,7 +143,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
       const allItems = await getItem();
 
       const filteredItems = allItems.filter((item: { itemName: string }) =>
-        item.itemName.toLowerCase().includes(inputValue.toLowerCase())
+        item.itemName.toLowerCase().startsWith(inputValue.toLowerCase())
       );
 
       const mappedItems = filteredItems.map(
@@ -242,6 +244,22 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
           className="text-left w-full"
           classNamePrefix="react-select"
           styles={customSelectStyles<OptionType>()}
+          formatOptionLabel={(data, { context }) =>
+            context === "menu" ? (
+              <div className="flex flex-col font-medium leading-5 w-full">
+                <EllipsisTooltip text={data.label} className="w-full" />
+              </div>
+            ) : (
+              <EllipsisTooltip text={data.label} className="w-full" />
+            )
+          }
+          components={{
+            SingleValue: (props) => (
+              <components.SingleValue {...props}>
+                <EllipsisTooltip text={props.data.label} className="w-full" />
+              </components.SingleValue>
+            ),
+          }}
         />
       ),
     },
@@ -350,8 +368,10 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                 ...row,
                 [name]: value,
                 amount:
-                  name === "quantity"
+                  name === "packageQuantity"
                     ? parseFloat(value) * (row.purchasePrice || 0)
+                    : name === "purchasePrice"
+                    ? (row.packageQuantity || 0) * parseFloat(value)
                     : row.amount,
               }
             : row

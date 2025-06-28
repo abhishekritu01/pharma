@@ -4,6 +4,7 @@ import { getItemById } from "@/app/services/ItemService";
 import AsyncSelect from "react-select/async";
 import { BillingItemData } from "@/app/types/BillingData";
 import { customSelectStyles } from "./DropdownStyle";
+import EllipsisTooltip from "./EllipsisTooltip";
 
 type OptionType = {
   label: string;
@@ -55,45 +56,13 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
     fetchLabelIfMissing();
   }, [selectedOption, onChange]);
 
-  // const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
-  //   const response = await getInventoryDetails();
-  //   const inventory = response.data || [];
-
-  //   const options = await Promise.all(
-  //     inventory.map(async (inv: BillingItemData) => {
-  //       try {
-  //         const item = await getItemById(inv.itemId);
-  //         return {
-  //           label: `${item.itemName}`,
-  //           value: `${inv.itemId}__${inv.batchNo}`,
-  //           batchNo: inv.batchNo,
-  //           itemId: inv.itemId,
-  //           packageQty: inv.packageQuantity,
-  //         };
-  //       } catch (err) {
-  //         console.error("Failed to fetch item for ID:", inv.itemId, err);
-  //         return null;
-  //       }
-  //     })
-  //   );
-
-  //   const filtered = options.filter(
-  //     (opt): opt is OptionType =>
-  //       opt !== null &&
-  //       (inputValue.trim() === "" ||
-  //         opt.label.toLowerCase().includes(inputValue.toLowerCase()))
-  //   );
-
-  //   return filtered;
-  // };
-
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
     const response = await getInventoryDetails();
     const inventory = response.data || [];
 
     const options = await Promise.all(
       inventory
-        .filter((inv: BillingItemData) => inv.packageQuantity > 0) // ✅ Only include available stock
+        .filter((inv: BillingItemData) => inv.packageQuantity > 0)
         .map(async (inv: BillingItemData) => {
           try {
             const item = await getItemById(inv.itemId);
@@ -115,7 +84,7 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
       (opt): opt is OptionType =>
         opt !== null &&
         (inputValue.trim() === "" ||
-          opt.label.toLowerCase().includes(inputValue.toLowerCase()))
+          opt.label.toLowerCase().startsWith(inputValue.toLowerCase()))
     );
 
     return filtered;
@@ -134,18 +103,21 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
       getOptionLabel={(e) => e.label}
       getOptionValue={(e) => e.value}
       placeholder="Search item..."
-      className="w-full"
+      className="w-72"
       styles={customSelectStyles<OptionType>()}
       formatOptionLabel={(data, { context }) =>
         context === "menu" ? (
-          <div className="flex flex-col font-medium leading-5">
-            <span>{data.label}</span>
-            <span className="text-sm text-gray-500">
-              Batch: {data.batchNo || "N/A"} | Qty: {data.packageQty ?? "N/A"}
-            </span>
+          <div className="flex flex-col font-medium leading-5 w-full">
+            <EllipsisTooltip text={data.label} className="w-full" />
+            <EllipsisTooltip
+              text={`Batch: ${data.batchNo || "N/A"} | Qty: ${
+                data.packageQty ?? "N/A"
+              }`}
+              className="text-sm text-gray-500 w-full"
+            />
           </div>
         ) : (
-          <span>{data.label}</span>
+          <EllipsisTooltip text={data.label} className="w-full" />
         )
       }
     />

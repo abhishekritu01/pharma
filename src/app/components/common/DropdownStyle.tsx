@@ -5,6 +5,7 @@ export const customSelectStyles = <
 >(): StylesConfig<T, false, GroupBase<T>> => ({
   control: (provided, state) => ({
     ...provided,
+    width: 288, // fixed width (same as Tailwind's w-72)
     borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
     boxShadow: "none",
     borderRadius: "0.5rem",
@@ -29,6 +30,9 @@ export const customSelectStyles = <
     cursor: "pointer",
     borderRadius: "0.375rem",
     margin: "2px 8px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
     "&:active": {
       backgroundColor: "#4B0082",
       color: "white",
@@ -38,6 +42,9 @@ export const customSelectStyles = <
   singleValue: (provided) => ({
     ...provided,
     color: "#111827",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   }),
 
   dropdownIndicator: (provided) => ({
@@ -55,8 +62,9 @@ export const customSelectStyles = <
   menu: (provided) => ({
     ...provided,
     zIndex: 20,
+    width: 288,
     borderRadius: "0.5rem",
-    overflow: "hidden",
+    overflowX: "hidden", 
     marginTop: "4px",
   }),
 

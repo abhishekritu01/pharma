@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
 import React from "react";
 import Image from "next/image";
 import Button from "./Button";
 import { useRouter } from "next/navigation";
 
-
 const Footer = () => {
-    const router = useRouter();
+  const router = useRouter();
   return (
     <>
       <div className="flex justify-between">
@@ -31,9 +30,23 @@ const Footer = () => {
             <span className="font-bold"> TiaMeds Technology Pvt Ltd</span>
           </div>
         </div>
-
-        <div className="mt-9">
-          <Button label="Back" value="" className="w-20 text-black h-11" onClick={() => router.back()}></Button>
+        <div className="mt-9 flex space-x-5">
+          <div>
+            <Button
+              label="Print"
+              value=""
+              className="w-20 text-black h-11"
+              onClick={() => window.print()}
+            ></Button>
+          </div>
+          <div>
+            <Button
+              label="Back"
+              value=""
+              className="w-20 text-black h-11"
+              onClick={() => router.back()}
+            ></Button>
+          </div>
         </div>
       </div>
     </>

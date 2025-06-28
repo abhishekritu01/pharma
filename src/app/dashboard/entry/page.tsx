@@ -80,7 +80,13 @@ const Page = () => {
           })
         );
 
-        setPurchaseEntryData(purchasesWithSuppliers.reverse());
+        setPurchaseEntryData(
+          purchasesWithSuppliers.sort(
+            (a, b) =>
+              new Date(b.purchaseDate).getTime() -
+              new Date(a.purchaseDate).getTime()
+          )
+        );
       } catch (error) {
         console.error("Error fetching purchases:", error);
         setError(
@@ -155,9 +161,8 @@ const Page = () => {
         autoClose: 3000,
       });
       window.location.reload();
-      // TODO: Optionally refetch the data or update UI
     } catch (error) {
-      console.log(error);     
+      console.log(error);
       toast.error("Failed to update payment status", {
         position: "top-right",
         autoClose: 3000,
