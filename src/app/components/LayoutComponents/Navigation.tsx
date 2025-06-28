@@ -8,6 +8,7 @@ import { FaNotesMedical, FaStore} from "react-icons/fa6";
 import { PiReceiptFill } from "react-icons/pi";
 import { FaListAlt } from 'react-icons/fa';
 import { TbCreditCardFilled } from "react-icons/tb";
+import { RiWaterPercentFill } from "react-icons/ri";
 
 
 
@@ -49,9 +50,12 @@ export const navigation: NavigationItem[] = [
     icon: FaStore,
     current: false,
     children: [
-      { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },     
+      { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
+      { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true }   
     ],
   },
+  
+   
 
   // {
   //   name: "Settings",
