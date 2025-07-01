@@ -22,6 +22,7 @@
   --SECONDARY-GRAY: #B5B3B3;
   --TERTIARY-GRAY: #CCCBCB;
   --NEW-GRAY: #F3ECF8;
+  --FOUR-GRAY: #726C6C;
   --PRIMARY-RED: #B30000;
   --SECONDARY-RED: #FFD8D8;
   --TERTIARY-RED: #FF0000;
@@ -41,6 +42,7 @@
   --PRIMARY-GRAY: #433E3F;
   --SECONDARY-GRAY: #B5B3B3;
   --TERTIARY-GRAY: #CCCBCB;
+  --FOUR-GRAY: #726C6C;
   --NEW-GRAY: #F3ECF8;
   --PRIMARY-RED: #B30000;
   --SECONDARY-RED: #FFD8D8;
@@ -160,6 +162,11 @@ body {
 }
 .text-tertiaryRed {
    color: var(--TERTIARY-RED) ;
+}
+
+.text-fourGray {
+   color: var(--FOUR-GRAY) ;
+
 }
 
 }

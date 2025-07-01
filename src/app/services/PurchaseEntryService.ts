@@ -21,22 +21,6 @@ export const createPurchase = async (formData: PurchaseEntryData): Promise<Purch
     }
   };
 
-
-//   Get Purchase
-// export const getPurchase = async () => {
-//   try {
-//       const response = await api.get('pharma/stock/getAll');
-//       return response.data;
-//   } catch (error: unknown) {
-//       console.error('Error fetching Purchase:', error);
-//       if (error instanceof Error) {
-//           throw new Error(`Error fetching Purchase: ${error.message}`);
-//       } else {
-//           throw new Error('An unknown error occurred while fetching Purchase.');
-//       }
-//   }
-// };
-
 export const getPurchase = async () => {
   try {
     const response = await api.get('pharma/stock/getAll');
@@ -49,15 +33,12 @@ export const getPurchase = async () => {
         data: response.data
       };
     }
-
-    // If backend returns { data: [...] }
     if (Array.isArray(response.data.data)) {
       return {
         status: "success",
         data: response.data.data
       };
     }
-
     throw new Error("Unexpected response structure from getPurchase");
   } catch (error: unknown) {
     console.error('Error fetching Purchase:', error);

@@ -1,175 +1,304 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import useUserStore from "../context/userStore";
+import DoughnutChart from "../components/common/DoughnutChart";
+import { getBilling } from "../services/BillingService";
+import { BillingData } from "../types/BillingData";
+import BarChart from "../components/common/BarChart";
+import { RiBarChartBoxFill } from "react-icons/ri";
+import { AiFillAlert } from "react-icons/ai";
+import { getPurchase } from "../services/PurchaseEntryService";
+import { getPurchaseOrder } from "../services/PurchaseOrderService";
 
-import { Package, Truck, DollarSign, Box, AlertCircle } from "lucide-react";
-import { useDashboardData } from "./hooks/useDashboardData";
-import StatCard from "./components/StatCard";
-import PurchasesPieChart from "./components/PurchasePieChart";
-import { ExpiryTimeframe } from "../types/dashboard";
-import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
+const Page = () => {
+  const { user, initializeUser } = useUserStore();
+  const [greeting, setGreeting] = useState("");
+  const [weeklyBillCount, setWeeklyBillCount] = useState<number>(0);
+  const [weeklyBillAmount, setWeeklyBillAmount] = useState<number>(0);
+  const [pendingInvoices, setPendingInvoices] = useState<number>(0);
+  const [overdueInvoices, setOverdueInvoices] = useState<number>(0);
+  const [deliveryStats, setDeliveryStats] = useState({
+    dueThisWeek: 0,
+    overdueUndelivered: 0,
+  });
 
-const Index = () => {
-  const [selectedTimeframe, setSelectedTimeframe] =
-    useState<ExpiryTimeframe>("24h");
-  const { suppliers, purchases, lowStock, loading, error } =
-    useDashboardData(selectedTimeframe);
+  const [billCountData, setBillCountData] = useState({
+    labels: ["Paid", "Pending"],
+    values: [0, 0],
+  });
 
-  // Calculate total values for stat cards based on filtered data
-  const totalPurchases = purchases.reduce((sum, item) => sum + item.amount, 0);
-  const totalSuppliers = suppliers.length;
-  const totalLowStock = lowStock.length;
-  const totalStock = purchases.reduce((sum, item) => sum + item.quantity, 0);
+  const [financialSummaryData, setFinancialSummaryData] = useState({
+    labels: ["Cash", "Card", "Online"],
+    values: [0, 0, 0],
+  });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-purple-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-lg font-semibold text-Purple">
-            Loading dashboard data...
-          </h2>
-        </div>
-      </div>
-    );
-  }
+  const [patientSummaryData, setPatientSummaryData] = useState({
+    labels: ["Walkin", "IP", "OP"],
+    values: [0, 0, 0],
+  });
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-md">
-          <AlertCircle className="w-12 h-12 text-pharma-red-alert mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-pharma-tertiary mb-2">
-            Error Loading Dashboard
-          </h2>
-          <p className="text-muted-foreground">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setGreeting(getGreeting());
+    initializeUser();
+    fetchData();
+  }, []);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Good Morning";
+    if (hour >= 12 && hour < 17) return "Good Afternoon";
+    if (hour >= 17 && hour < 21) return "Good Evening";
+    return "Good Night";
+  };
+
+  const fetchData = async () => {
+    const result = await getBilling();
+
+    if (result.status === "success" && Array.isArray(result.data)) {
+      const patientCounts = { Walkin: 0, IP: 0, OP: 0 };
+      let paid = 0,
+        pending = 0;
+      let cash = 0,
+        card = 0,
+        online = 0;
+      const salesByDay = Array(7).fill(0);
+      let weeklyBillTotal = 0;
+      let weeklyAmountTotal = 0;
+
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      result.data.forEach((bill: BillingData) => {
+        const billDate = new Date(bill.billDateTime ?? "");
+        const amount = bill.grandTotal ?? 0;
+
+        if (billDate >= startOfWeek && billDate <= endOfWeek) {
+          weeklyBillTotal++;
+          weeklyAmountTotal += amount;
+          const day = billDate.getDay();
+          salesByDay[day] += amount;
+        }
+
+        const type = bill.patientType;
+        if (type === "Walkin") patientCounts.Walkin++;
+        else if (type === "IP") patientCounts.IP++;
+        else if (type === "OP") patientCounts.OP++;
+
+        if (bill.paymentStatus === "paid") paid++;
+        else pending++;
+
+        const paymentType = bill.paymentType?.toLowerCase();
+
+        if (paymentType === "cash") cash += amount;
+        else if (paymentType === "credit card" || paymentType === "debit card")
+          card += amount;
+        else if (paymentType === "upi" || paymentType === "net banking")
+          online += amount;
+      });
+
+      setPatientSummaryData({
+        labels: ["Walkin", "IP", "OP"],
+        values: [patientCounts.Walkin, patientCounts.IP, patientCounts.OP],
+      });
+
+      setBillCountData({
+        labels: ["Paid", "Pending"],
+        values: [paid, pending],
+      });
+      setFinancialSummaryData({
+        labels: ["Cash", "Card", "Online"],
+        values: [cash, card, online],
+      });
+      setWeeklySalesData(salesByDay);
+      setWeeklyBillCount(weeklyBillTotal);
+      setWeeklyBillAmount(weeklyAmountTotal);
+
+      const purchaseResult = await getPurchase();
+      if (
+        purchaseResult.status === "success" &&
+        Array.isArray(purchaseResult.data)
+      ) {
+        let pendingInvoicesCount = 0;
+        let overdueInvoicesCount = 0;
+
+        const today = new Date();
+        const startOfCurrentWeek = new Date(today);
+        startOfCurrentWeek.setDate(today.getDate() - today.getDay());
+        startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+        const endOfCurrentWeek = new Date(startOfCurrentWeek);
+        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+        endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+        const todayMidnight = new Date();
+        todayMidnight.setHours(0, 0, 0, 0);
+
+        purchaseResult.data.forEach((purchase) => {
+          if (!purchase.paymentDueDate) return;
+
+          const dueDate = new Date(purchase.paymentDueDate);
+          const isPaid = purchase.paymentStatus?.toLowerCase() === "paid";
+
+          const isInCurrentWeek =
+            dueDate >= startOfCurrentWeek && dueDate <= endOfCurrentWeek;
+
+          if (isInCurrentWeek && !isPaid) {
+            if (dueDate < todayMidnight) {
+              overdueInvoicesCount++;
+            } else {
+              pendingInvoicesCount++;
+            }
+          }
+        });
+
+        setPendingInvoices(pendingInvoicesCount);
+        setOverdueInvoices(overdueInvoicesCount);
+      }
+
+      const purchaseOrderResult = await getPurchaseOrder();
+      if (
+        purchaseOrderResult.status === "success" &&
+        Array.isArray(purchaseOrderResult.data)
+      ) {
+        let ordersDueThisWeek = 0;
+        let undeliveredOverdueOrders = 0;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const startOfCurrentWeek = new Date(today);
+        startOfCurrentWeek.setDate(today.getDate() - today.getDay());
+        startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+        const endOfCurrentWeek = new Date(startOfCurrentWeek);
+        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+        endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+        purchaseOrderResult.data.forEach((order) => {
+          if (!order.intendedDeliveryDate) return;
+
+          const deliveryDate = new Date(order.intendedDeliveryDate);
+          deliveryDate.setHours(0, 0, 0, 0);
+
+          const isInCurrentWeek =
+            deliveryDate >= startOfCurrentWeek &&
+            deliveryDate <= endOfCurrentWeek;
+
+          if (isInCurrentWeek) {
+            ordersDueThisWeek++;
+
+            if (deliveryDate < today) {
+              undeliveredOverdueOrders++;
+            }
+          }
+        });
+
+        setDeliveryStats({
+          dueThisWeek: ordersDueThisWeek,
+          overdueUndelivered: undeliveredOverdueOrders,
+        });
+      }
+    } else {
+      console.error("Failed to load billing data:", result.message);
+    }
+  };
+
+  const capitalize = (str: string) =>
+    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
+  const [weeklySalesData, setWeeklySalesData] = useState<number[]>([
+    0, 0, 0, 0, 0, 0, 0,
+  ]);
 
   return (
-    <main className="flex-1">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-purple-100 rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-darkPurple mb-2">
-            Welcome to Pharmacy Dashboard
-          </h1>
-          <p className="text-[var(--PRIMARY-GRAY)]">
-            Monitor your pharmacy inventory and purchases in real-time
-          </p>
+    <main className="space-y-10">
+      <div className="mt-3 space-y-1">
+        <div className="font-semibold text-3xl text-darkPurple">
+          {greeting},{" "}
+          {`${capitalize(user?.firstName || "")} ${capitalize(
+            user?.lastName || ""
+          )}`}
+        </div>
+        <div className="font-normal text-lg text-fourGray">
+          Welcome to your Pharma Management Dashboard
+        </div>
+      </div>
+
+      <div className="flex gap-6">
+        <ChartCard title="Bill Count Summary" data={billCountData} />
+        <ChartCard title="Financial Summary" data={financialSummaryData} />
+        <ChartCard title="Patient Summary" data={patientSummaryData} />
+      </div>
+
+      <div className="flex">
+        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-4 h-72 w-full">
+          <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3">
+            <span className="text-[#B16CE9]">
+              <RiBarChartBoxFill />
+            </span>
+            <span>Sales Analytics</span>
+          </div>
+          <div className="">
+            <BarChart salesData={weeklySalesData} />
+          </div>
         </div>
 
-        <div className="flex justify-center mb-6">
-          <ToggleGroup
-            type="single"
-            value={selectedTimeframe}
-            onValueChange={(value) =>
-              value && setSelectedTimeframe(value as ExpiryTimeframe)
-            }
-            className="bg-purple-100 rounded-lg shadow-sm p-1 text-darkPurple"
-          >
-            <ToggleGroupItem
-              value="24h"
-              className="px-6 py-2 data-[state=on]:bg-primaryPurple cursor-pointer rounded-md"
-            >
-              Last 24 Hours
-            </ToggleGroupItem>
-
-            <ToggleGroupItem
-              value="7d"
-              className="px-6 py-2 data-[state=on]:bg-primaryPurple cursor-pointer rounded-md"
-            >
-              Last 7 Days
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="15d"
-              className="px-6 py-2 data-[state=on]:bg-primaryPurple cursor-pointer rounded-md"
-            >
-              Last 15 Days
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="1m"
-              className="px-6 py-2 data-[state=on]:bg-primaryPurple cursor-pointer rounded-md"
-            >
-              Last Month
-            </ToggleGroupItem>
-          </ToggleGroup>
+        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full space-y-6">
+          <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3">
+            <span className="text-[#FCA258]">
+              <AiFillAlert />
+            </span>
+            <span>Important Alerts</span>
+          </div>
+          <div className="flex flex-col space-y-2 text-base font-normal text-[#433E3F] cursor-pointer">
+            <span className="hover:text-[#4B0082] transition-colors">
+              {weeklyBillCount} bills were generated this week
+            </span>
+            <span className="hover:text-[#4B0082] transition-colors">
+              ₹{weeklyBillAmount} total billing for the week
+            </span>
+            <span className="hover:text-[#4B0082] transition-colors">
+              {pendingInvoices} purchase invoices due this week
+            </span>
+            <span className="hover:text-[#4B0082] transition-colors">
+              {overdueInvoices} purchase invoices pending past due date
+            </span>
+            <span className="hover:text-[#4B0082] transition-colors">
+              {deliveryStats.dueThisWeek} orders expected for delivery this week
+            </span>
+            <span className="hover:text-[#4B0082] transition-colors">
+              {deliveryStats.overdueUndelivered} orders are undelivered past the
+              expected delivery date
+            </span>
+          </div>
         </div>
-
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            title="Total Stock"
-            value={totalStock}
-            icon={<Box className="h-5 w-5" />}
-            description="Total items in inventory"
-          />
-          <StatCard
-            title="Total Purchases"
-            value={`₹${totalPurchases.toLocaleString("en-IN")}`}
-            icon={<DollarSign className="h-5 w-5" />}
-            description="Total purchases value"
-          />
-          <StatCard
-            title="Active Suppliers"
-            value={totalSuppliers}
-            icon={<Truck className="h-5 w-5" />}
-            description="Total number of Suppliers"
-          />
-          <StatCard
-            title="Low Stock Items"
-            value={totalLowStock}
-            icon={<Package className="h-5 w-5" />}
-            description="Items below minimum stock level"
-          />
-        </div>
-
-        {/* Full-width Pie Chart */}
-        <div className="w-full rounded-lg shadow-sm ">
-          <PurchasesPieChart
-            data={[
-              {
-                id: "1",
-                name: "Total Stock",
-                purchaseAmount: totalStock,
-                color: "#5a55a6",
-              },
-              {
-                id: "2",
-                name: "Total Purchases",
-                purchaseAmount: totalPurchases,
-                color: "#4e9567",
-              },
-              {
-                id: "3",
-                name: "Active Suppliers",
-                purchaseAmount: totalSuppliers * 1000,
-                color: "#cc9d33",
-              },
-              {
-                id: "4",
-                name: "Low Stock Items",
-                purchaseAmount: totalLowStock * 1000,
-                color: "#cc5b1f",
-              },
-            ]}
-          />
-        </div>
-
-        {/* Lists */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ScrollableCard title="All Purchases">
-            <PurchasesList items={purchases} />
-          </ScrollableCard>
-
-          <ScrollableCard title="Low Stock Items">
-            <LowStockList items={lowStock} compact />
-          </ScrollableCard>
-        </div> */}
       </div>
     </main>
   );
 };
 
-export default Index;
+const ChartCard = ({
+  title,
+  data,
+}: {
+  title: string;
+  data: { labels: string[]; values: number[] };
+}) => (
+  <div className="max-w-sm mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-4 h-64 w-full">
+    <div className="flex flex-col">
+      <h1 className="font-normal text-lg whitespace-nowrap">{title}</h1>
+      <div className="flex items-center mt-5">
+        <DoughnutChart labels={data.labels} data={data.values} />
+      </div>
+    </div>
+  </div>
+);
+
+export default Page;

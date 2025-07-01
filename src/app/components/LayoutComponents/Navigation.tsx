@@ -1,7 +1,7 @@
 "use client"; 
 
 import { NavigationItem } from '@/app/types/NavigationItem'
-import { MdDashboard, MdInventory, MdAssignmentReturn, MdOutlineInventory } from "react-icons/md";
+import { MdDashboard, MdInventory, MdAssignmentReturn, MdOutlineInventory,MdBarChart  } from "react-icons/md";
 import { IoPeople } from "react-icons/io5";
 import { RiMedicineBottleFill} from "react-icons/ri";
 import { FaNotesMedical, FaStore} from "react-icons/fa6";
@@ -47,7 +47,7 @@ export const navigation: NavigationItem[] = [
   
   {
     name: "Stock Summary",
-    icon: FaStore,
+    icon: MdBarChart,
     current: false,
     children: [
       { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
