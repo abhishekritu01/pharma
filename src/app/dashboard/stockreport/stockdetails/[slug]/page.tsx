@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useParams } from "next/navigation";
 import { getItemById } from "@/app/services/ItemService";
 import { useEffect, useState } from "react";
@@ -10,6 +11,7 @@ import { toast } from "react-toastify";
 import Link from "next/link";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 
+
 interface PurchaseEntryItem {
   itemId: string;
   batchNo: string;
@@ -19,6 +21,7 @@ interface PurchaseEntryItem {
   invId: string;
 }
 
+
 interface PurchaseEntryData {
   supplierId: string;
   purchaseBillNo: string;
@@ -26,6 +29,7 @@ interface PurchaseEntryData {
   invId: string;
   stockItemDtos: PurchaseEntryItem[];
 }
+
 
 interface Item {
   itemId: string;
@@ -48,6 +52,7 @@ interface Item {
   modifiedDate: string | null;
 }
 
+
 const formatDate = (dateStr: string): string => {
   try {
     const date = new Date(dateStr);
@@ -61,6 +66,7 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
+
 export default function Page() {
   const params = useParams();
   const itemId = params.slug as string;
@@ -72,6 +78,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [totalStock, setTotalStock] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>("");
+
 
   const filteredRecords = purchaseRecords.filter((record) => {
     const search = searchText.toLowerCase();
@@ -104,10 +111,24 @@ export default function Page() {
   const getSortedData = () => {
     const sorted = [...filteredRecords];
 
+
     if (sortConfig.key) {
       sorted.sort((a, b) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
+
+
+        // Special handling for dates
+        if (sortConfig.key === "expiryDate" || sortConfig.key === "createdDate") {
+          const dateA = new Date(aValue as string);
+          const dateB = new Date(bValue as string);
+          if (isNaN(dateA.getTime())) return sortConfig.direction === "asc" ? 1 : -1;
+          if (isNaN(dateB.getTime())) return sortConfig.direction === "asc" ? -1 : 1;
+          return sortConfig.direction === "asc"
+            ? dateA.getTime() - dateB.getTime()
+            : dateB.getTime() - dateA.getTime();
+        }
+
 
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "asc"
@@ -115,33 +136,22 @@ export default function Page() {
             : bValue.localeCompare(aValue);
         }
 
+
         if (typeof aValue === "number" && typeof bValue === "number") {
           return sortConfig.direction === "asc"
             ? aValue - bValue
             : bValue - aValue;
         }
 
+
         return 0;
       });
     }
 
+
     return sorted;
   };
-  // const generateInvId = (entry: PurchaseEntryData): string => {
-  //     return `${entry.purchaseBillNo}-${entry.purchaseDate}`;
-  //   };
 
-  // const filterRecords = purchaseRecords.filter((record) => {
-  //   const search = searchText.toLowerCase();
-  //   return (
-  //     record.batchNo?.toLowerCase().includes(search) ||
-  //     record.purchaseBillNo?.toLowerCase().includes(search) ||
-  //     formatDate(record.expiryDate || "")
-  //       .toLowerCase()
-  //       .includes(search) ||
-  //     record.packageQuantity?.toString().includes(search)
-  //   );
-  // });
 
   const columns = [
     {
@@ -176,42 +186,89 @@ export default function Page() {
       ),
     },
     {
-      header: "Batch Number",
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("batchNo")}
+        >
+          <span>Batch Number</span>
+          {sortConfig.key === "batchNo" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: PurchaseEntryItem) => row.batchNo || "--",
     },
     {
-      header: "Date Added",
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("createdDate")}
+        >
+          <span>Date Added</span>
+          {sortConfig.key === "createdDate" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: PurchaseEntryItem) => formatDate(row.createdDate || ""),
     },
     {
-      header: "Quantity",
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("packageQuantity")}
+        >
+          <span>Quantity</span>
+          {sortConfig.key === "packageQuantity" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: PurchaseEntryItem) =>
         row.packageQuantity?.toLocaleString() || "0",
     },
-    // {
-    //   header: "Quantity",
-    //   accessor: (row: PurchaseEntryItem) => {
-    //     const expiryDate = new Date(row.expiryDate || "");
-    //     const isExpired =
-    //       !isNaN(expiryDate.getTime()) && expiryDate < new Date();
-
-    //     return (
-    //       <span
-    //         className={
-    //           isExpired ? "text-Red bg-secondaryRed px-2 py-1 rounded-full" : ""
-    //         }
-    //       >
-    //         {row.packageQuantity?.toLocaleString() || "0"}
-    //       </span>
-    //     );
-    //   },
-    // },
     {
-      header: "Expiry Date",
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("expiryDate")}
+        >
+          <span>Expiry Date</span>
+          {sortConfig.key === "expiryDate" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: PurchaseEntryItem) => {
         const expiryDate = new Date(row.expiryDate || "");
         const isValidDate = !isNaN(expiryDate.getTime());
         const isExpired = isValidDate && expiryDate < new Date();
+
 
         return (
           <div className="flex items-center gap-1">
@@ -241,30 +298,31 @@ export default function Page() {
     },
   ];
 
+
   useEffect(() => {
     const fetchStockData = async () => {
       if (!itemId) return;
+
 
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch item details
+
         const itemData = await getItemById(itemId);
         setItem(itemData);
 
-        // Fetch purchase data
+
         const res = await getPurchase();
         const purchases: PurchaseEntryData[] = res.data;
-
-        // Filter items by itemId and map to purchase records
+       
         const records = purchases.flatMap((entry) =>
           entry.stockItemDtos
             .filter((item) => item.itemId === itemId)
             .map((item) => ({
               ...item,
               purchaseBillNo: entry.purchaseBillNo,
-              invId: entry.invId, // Direct usage, no fallback needed
+              invId: entry.invId,
             }))
         );
         const stockTotal = records.reduce(
@@ -272,6 +330,7 @@ export default function Page() {
           0
         );
         setTotalStock(stockTotal);
+
 
         setPurchaseRecords(records);
       } catch (err) {
@@ -283,8 +342,10 @@ export default function Page() {
       }
     };
 
+
     fetchStockData();
   }, [itemId]);
+
 
   if (loading)
     return (
@@ -292,6 +353,7 @@ export default function Page() {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
+
 
   if (error)
     return (
@@ -317,12 +379,14 @@ export default function Page() {
       </div>
     );
 
+
   if (!item)
     return (
       <div className="bg-white rounded-lg shadow p-6 text-center">
         <h3 className="text-lg font-medium text-gray-900">Item not found</h3>
       </div>
     );
+
 
   return (
     <div className="w-full max-w-[1136px] p-6">
@@ -333,9 +397,11 @@ export default function Page() {
         </h1>
       </div>
 
+
       {/* Basic Details Card */}
       <div className="w-full p-6 rounded-lg border border-[#B5B3B3] bg-white flex flex-col gap-6 mb-6">
         <h2 className="text-lg font-normal text-[#0A0A0B]">Basic Details</h2>
+
 
         <div className="flex flex-wrap gap-6">
           <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
@@ -347,6 +413,7 @@ export default function Page() {
             </div>
           </div>
 
+
           <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Generic Name
@@ -355,6 +422,7 @@ export default function Page() {
               {item.genericName || "--"}
             </div>
           </div>
+
 
           <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
@@ -365,6 +433,7 @@ export default function Page() {
             </div>
           </div>
 
+
           <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Variant
@@ -373,6 +442,7 @@ export default function Page() {
               {item.variantName || "--"}
             </div>
           </div>
+
 
           <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
@@ -384,6 +454,7 @@ export default function Page() {
           </div>
         </div>
       </div>
+
 
       {/* Table Section */}
       <div className="mb-6">
@@ -426,6 +497,7 @@ export default function Page() {
         />
       </div>
 
+
       {/* Back Button */}
       <div className="flex justify-end">
         <button
@@ -439,3 +511,4 @@ export default function Page() {
     </div>
   );
 }
+

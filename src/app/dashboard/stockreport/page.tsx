@@ -12,6 +12,7 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 
+
 interface ExtendedInventoryData extends InventoryData {
   genericName: string;
   variantName: string;
@@ -20,6 +21,7 @@ interface ExtendedInventoryData extends InventoryData {
   expiredStock: number;
   currentStock: number;
 }
+
 
 const Page = () => {
   const [searchText, setSearchText] = useState<string>("");
@@ -45,10 +47,12 @@ const Page = () => {
   const getSortedData = () => {
     const sorted = [...filteredData];
 
+
     if (sortConfig.key) {
       sorted.sort((a, b) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
+
 
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "asc"
@@ -56,11 +60,13 @@ const Page = () => {
             : bValue.localeCompare(aValue);
         }
 
+
         if (typeof aValue === "number" && typeof bValue === "number") {
           return sortConfig.direction === "asc"
             ? aValue - bValue
             : bValue - aValue;
         }
+
 
         return 0;
       });
@@ -88,30 +94,110 @@ const Page = () => {
       ),
       accessor: "itemName" as keyof ExtendedInventoryData,
     },
-    {
-      header: "Generic Name",
+     {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("genericName")}
+        >
+          <span>Generic Name</span>
+          {sortConfig.key === "genericName" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: ExtendedInventoryData) => (
         <span className="p-2">{row.genericName ?? "--"}</span>
       ),
     },
-    {
-      header: "Manufacturer",
+     {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("manufacturer")}
+        >
+          <span>Manufacturer</span>
+          {sortConfig.key === "manufacturer" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: "manufacturer" as keyof ExtendedInventoryData,
     },
-    {
-      header: "Variant",
+     {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("variantName")}
+        >
+          <span>Variant</span>
+          {sortConfig.key === "variantName" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: ExtendedInventoryData) => (
         <span className="p-2">{row.variantName ?? "--"}</span>
       ),
     },
-    {
-      header: "Total Stock",
+     {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("packageQuantity")}
+        >
+          <span>Total Stock</span>
+          {sortConfig.key === "packageQuantity" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: ExtendedInventoryData) => (
         <span className="p-2">{row.packageQuantity?.toLocaleString()}</span>
       ),
     },
     {
-      header: "Expired Stock",
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("expiredStock")}
+        >
+          <span>Expired Stock</span>
+          {sortConfig.key === "expiredStock" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: ExtendedInventoryData) =>
         row.expiredStock && row.expiredStock > 0 ? (
           <span className="p-2 items-center justify-center text-Red bg-secondaryRed w-full h-[27px] rounded-2xl">
@@ -121,8 +207,24 @@ const Page = () => {
           <span className="p-2">{row.expiredStock?.toLocaleString()}</span>
         ),
     },
-    {
-      header: "Current Stock",
+     {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("currentStock")}
+        >
+          <span>Current Stock</span>
+          {sortConfig.key === "currentStock" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
       accessor: (row: ExtendedInventoryData) => {
         let colorClass =
           "p-2 items-center justify-center text-Green bg-secondaryGreen w-full h-[27px] rounded-2xl";
@@ -160,6 +262,7 @@ const Page = () => {
     },
   ];
 
+
   const filteredData = inventoryData.filter((item) => {
     const search = searchText.toLowerCase();
     return (
@@ -173,6 +276,7 @@ const Page = () => {
     );
   });
 
+
   const fetchItem = async (
     itemId: string
   ): Promise<{
@@ -183,6 +287,7 @@ const Page = () => {
   }> => {
     try {
       const item: ItemData = await getItemById(itemId);
+
 
       console.log(item, "item");
       return {
@@ -201,6 +306,7 @@ const Page = () => {
       };
     }
   };
+
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -221,6 +327,7 @@ const Page = () => {
             item.packageQuantity,
           ])
         );
+
 
         const inventoryWithData = await Promise.all(
           inventoryResponse.map(async (inventory) => {
@@ -247,8 +354,10 @@ const Page = () => {
       }
     };
 
+
     fetchInventory();
   }, []);
+
 
   return (
     <>
@@ -258,6 +367,7 @@ const Page = () => {
             <div className="justify-start text-darkPurple text-3xl font-medium leading-10">
               Stocks Report
             </div>
+
 
             <div>
               <Input
@@ -271,6 +381,7 @@ const Page = () => {
             </div>
           </div>
 
+
           <Table
             data={getSortedData()}
             columns={columns}
@@ -282,4 +393,8 @@ const Page = () => {
   );
 };
 
+
 export default Page;
+
+
+
