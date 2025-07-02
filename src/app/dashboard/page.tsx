@@ -22,6 +22,9 @@ const Page = () => {
     dueThisWeek: 0,
     overdueUndelivered: 0,
   });
+  const [selectedRange, setSelectedRange] = useState<
+    "today" | "week" | "month"
+  >("today");
 
   const [billCountData, setBillCountData] = useState({
     labels: ["Paid", "Pending"],
@@ -52,7 +55,170 @@ const Page = () => {
     return "Good Night";
   };
 
-  const fetchData = async () => {
+  // const fetchData = async () => {
+  //   const result = await getBilling();
+
+  //   if (result.status === "success" && Array.isArray(result.data)) {
+  //     const patientCounts = { Walkin: 0, IP: 0, OP: 0 };
+  //     let paid = 0,
+  //       pending = 0;
+  //     let cash = 0,
+  //       card = 0,
+  //       online = 0;
+  //     const salesByDay = Array(7).fill(0);
+  //     let weeklyBillTotal = 0;
+  //     let weeklyAmountTotal = 0;
+
+  //     const now = new Date();
+  //     const startOfWeek = new Date(now);
+  //     startOfWeek.setDate(now.getDate() - now.getDay());
+  //     startOfWeek.setHours(0, 0, 0, 0);
+
+  //     const endOfWeek = new Date(startOfWeek);
+  //     endOfWeek.setDate(startOfWeek.getDate() + 6);
+  //     endOfWeek.setHours(23, 59, 59, 999);
+
+  //     result.data.forEach((bill: BillingData) => {
+  //       const billDate = new Date(bill.billDateTime ?? "");
+  //       const amount = bill.grandTotal ?? 0;
+
+  //       if (billDate >= startOfWeek && billDate <= endOfWeek) {
+  //         weeklyBillTotal++;
+  //         weeklyAmountTotal += amount;
+  //         const day = billDate.getDay();
+  //         salesByDay[day] += amount;
+  //       }
+
+  //       const type = bill.patientType;
+  //       if (type === "Walkin") patientCounts.Walkin++;
+  //       else if (type === "IP") patientCounts.IP++;
+  //       else if (type === "OP") patientCounts.OP++;
+
+  //       if (bill.paymentStatus === "paid") paid++;
+  //       else pending++;
+
+  //       const paymentType = bill.paymentType?.toLowerCase();
+
+  //       if (paymentType === "cash") cash += amount;
+  //       else if (paymentType === "credit card" || paymentType === "debit card")
+  //         card += amount;
+  //       else if (paymentType === "upi" || paymentType === "net banking")
+  //         online += amount;
+  //     });
+
+  //     setPatientSummaryData({
+  //       labels: ["Walkin", "IP", "OP"],
+  //       values: [patientCounts.Walkin, patientCounts.IP, patientCounts.OP],
+  //     });
+
+  //     setBillCountData({
+  //       labels: ["Paid", "Pending"],
+  //       values: [paid, pending],
+  //     });
+  //     setFinancialSummaryData({
+  //       labels: ["Cash", "Card", "Online"],
+  //       values: [cash, card, online],
+  //     });
+  //     setWeeklySalesData(salesByDay);
+  //     setWeeklyBillCount(weeklyBillTotal);
+  //     setWeeklyBillAmount(weeklyAmountTotal);
+
+  //     const purchaseResult = await getPurchase();
+  //     if (
+  //       purchaseResult.status === "success" &&
+  //       Array.isArray(purchaseResult.data)
+  //     ) {
+  //       let pendingInvoicesCount = 0;
+  //       let overdueInvoicesCount = 0;
+
+  //       const today = new Date();
+  //       const startOfCurrentWeek = new Date(today);
+  //       startOfCurrentWeek.setDate(today.getDate() - today.getDay());
+  //       startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+  //       const endOfCurrentWeek = new Date(startOfCurrentWeek);
+  //       endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+  //       endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+  //       const todayMidnight = new Date();
+  //       todayMidnight.setHours(0, 0, 0, 0);
+
+  //       purchaseResult.data.forEach((purchase) => {
+  //         if (!purchase.paymentDueDate) return;
+
+  //         const dueDate = new Date(purchase.paymentDueDate);
+  //         const isPaid = purchase.paymentStatus?.toLowerCase() === "paid";
+
+  //         const isInCurrentWeek =
+  //           dueDate >= startOfCurrentWeek && dueDate <= endOfCurrentWeek;
+
+  //         if (isInCurrentWeek && !isPaid) {
+  //           if (dueDate < todayMidnight) {
+  //             overdueInvoicesCount++;
+  //           } else {
+  //             pendingInvoicesCount++;
+  //           }
+  //         }
+  //       });
+
+  //       setPendingInvoices(pendingInvoicesCount);
+  //       setOverdueInvoices(overdueInvoicesCount);
+  //     }
+
+  //     const purchaseOrderResult = await getPurchaseOrder();
+  //     if (
+  //       purchaseOrderResult.status === "success" &&
+  //       Array.isArray(purchaseOrderResult.data)
+  //     ) {
+  //       let ordersDueThisWeek = 0;
+  //       let undeliveredOverdueOrders = 0;
+
+  //       const today = new Date();
+  //       today.setHours(0, 0, 0, 0);
+
+  //       const startOfCurrentWeek = new Date(today);
+  //       startOfCurrentWeek.setDate(today.getDate() - today.getDay());
+  //       startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+  //       const endOfCurrentWeek = new Date(startOfCurrentWeek);
+  //       endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+  //       endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+  //       purchaseOrderResult.data.forEach((order) => {
+  //         if (!order.intendedDeliveryDate) return;
+
+  //         const deliveryDate = new Date(order.intendedDeliveryDate);
+  //         deliveryDate.setHours(0, 0, 0, 0);
+
+  //         const isInCurrentWeek =
+  //           deliveryDate >= startOfCurrentWeek &&
+  //           deliveryDate <= endOfCurrentWeek;
+
+  //         if (isInCurrentWeek) {
+  //           ordersDueThisWeek++;
+
+  //           if (deliveryDate < today) {
+  //             undeliveredOverdueOrders++;
+  //           }
+  //         }
+  //       });
+
+  //       setDeliveryStats({
+  //         dueThisWeek: ordersDueThisWeek,
+  //         overdueUndelivered: undeliveredOverdueOrders,
+  //       });
+  //     }
+  //   } else {
+  //     console.error("Failed to load billing data:", result.message);
+  //   }
+  // };
+
+  const handleRangeChange = (range: "today" | "week" | "month") => {
+    setSelectedRange(range);
+    fetchData(range);
+  };
+
+  const fetchData = async (range: "today" | "week" | "month" = "today") => {
     const result = await getBilling();
 
     if (result.status === "success" && Array.isArray(result.data)) {
@@ -67,40 +233,63 @@ const Page = () => {
       let weeklyAmountTotal = 0;
 
       const now = new Date();
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
+      let startDate = new Date(now);
+      let endDate = new Date(now);
 
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23, 59, 59, 999);
+      if (range === "today") {
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (range === "week") {
+        const day = now.getDay();
+        startDate.setDate(now.getDate() - day);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (range === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+      }
 
       result.data.forEach((bill: BillingData) => {
         const billDate = new Date(bill.billDateTime ?? "");
+        billDate.setHours(0, 0, 0, 0); 
+
         const amount = bill.grandTotal ?? 0;
 
-        if (billDate >= startOfWeek && billDate <= endOfWeek) {
+        if (billDate >= startDate && billDate <= endDate) {
+          const type = bill.patientType;
+          if (type === "Walkin") patientCounts.Walkin++;
+          else if (type === "IP") patientCounts.IP++;
+          else if (type === "OP") patientCounts.OP++;
+
+          if (bill.paymentStatus === "paid") paid++;
+          else pending++;
+
+          const paymentType = bill.paymentType?.toLowerCase();
+          if (paymentType === "cash") cash += amount;
+          else if (
+            paymentType === "credit card" ||
+            paymentType === "debit card"
+          )
+            card += amount;
+          else if (paymentType === "upi" || paymentType === "net banking")
+            online += amount;
+        }
+
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
+        if (billDate >= weekStart && billDate <= weekEnd) {
           weeklyBillTotal++;
           weeklyAmountTotal += amount;
           const day = billDate.getDay();
           salesByDay[day] += amount;
         }
-
-        const type = bill.patientType;
-        if (type === "Walkin") patientCounts.Walkin++;
-        else if (type === "IP") patientCounts.IP++;
-        else if (type === "OP") patientCounts.OP++;
-
-        if (bill.paymentStatus === "paid") paid++;
-        else pending++;
-
-        const paymentType = bill.paymentType?.toLowerCase();
-
-        if (paymentType === "cash") cash += amount;
-        else if (paymentType === "credit card" || paymentType === "debit card")
-          card += amount;
-        else if (paymentType === "upi" || paymentType === "net banking")
-          online += amount;
       });
 
       setPatientSummaryData({
@@ -112,10 +301,12 @@ const Page = () => {
         labels: ["Paid", "Pending"],
         values: [paid, pending],
       });
+
       setFinancialSummaryData({
         labels: ["Cash", "Card", "Online"],
         values: [cash, card, online],
       });
+
       setWeeklySalesData(salesByDay);
       setWeeklyBillCount(weeklyBillTotal);
       setWeeklyBillAmount(weeklyAmountTotal);
@@ -129,13 +320,12 @@ const Page = () => {
         let overdueInvoicesCount = 0;
 
         const today = new Date();
-        const startOfCurrentWeek = new Date(today);
-        startOfCurrentWeek.setDate(today.getDate() - today.getDay());
-        startOfCurrentWeek.setHours(0, 0, 0, 0);
-
-        const endOfCurrentWeek = new Date(startOfCurrentWeek);
-        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
-        endOfCurrentWeek.setHours(23, 59, 59, 999);
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
 
         const todayMidnight = new Date();
         todayMidnight.setHours(0, 0, 0, 0);
@@ -145,16 +335,11 @@ const Page = () => {
 
           const dueDate = new Date(purchase.paymentDueDate);
           const isPaid = purchase.paymentStatus?.toLowerCase() === "paid";
+          const isInWeek = dueDate >= weekStart && dueDate <= weekEnd;
 
-          const isInCurrentWeek =
-            dueDate >= startOfCurrentWeek && dueDate <= endOfCurrentWeek;
-
-          if (isInCurrentWeek && !isPaid) {
-            if (dueDate < todayMidnight) {
-              overdueInvoicesCount++;
-            } else {
-              pendingInvoicesCount++;
-            }
+          if (isInWeek && !isPaid) {
+            if (dueDate < todayMidnight) overdueInvoicesCount++;
+            else pendingInvoicesCount++;
           }
         });
 
@@ -173,13 +358,12 @@ const Page = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const startOfCurrentWeek = new Date(today);
-        startOfCurrentWeek.setDate(today.getDate() - today.getDay());
-        startOfCurrentWeek.setHours(0, 0, 0, 0);
-
-        const endOfCurrentWeek = new Date(startOfCurrentWeek);
-        endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
-        endOfCurrentWeek.setHours(23, 59, 59, 999);
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
 
         purchaseOrderResult.data.forEach((order) => {
           if (!order.intendedDeliveryDate) return;
@@ -187,16 +371,9 @@ const Page = () => {
           const deliveryDate = new Date(order.intendedDeliveryDate);
           deliveryDate.setHours(0, 0, 0, 0);
 
-          const isInCurrentWeek =
-            deliveryDate >= startOfCurrentWeek &&
-            deliveryDate <= endOfCurrentWeek;
-
-          if (isInCurrentWeek) {
+          if (deliveryDate >= weekStart && deliveryDate <= weekEnd) {
             ordersDueThisWeek++;
-
-            if (deliveryDate < today) {
-              undeliveredOverdueOrders++;
-            }
+            if (deliveryDate < today) undeliveredOverdueOrders++;
           }
         });
 
@@ -218,7 +395,7 @@ const Page = () => {
   ]);
 
   return (
-    <main className="space-y-10">
+    <main>
       <div className="mt-3 space-y-1">
         <div className="font-semibold text-3xl text-darkPurple">
           {greeting},{" "}
@@ -231,13 +408,40 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="text-sm font-normal text-[#726C6C] flex space-x-7 pt-7 cursor-pointer ml-3">
+        <div
+          onClick={() => handleRangeChange("today")}
+          className={`hover:text-[#4B0082] ${
+            selectedRange === "today" ? "text-[#4B0082]" : ""
+          }`}
+        >
+          Today
+        </div>
+        <div
+          onClick={() => handleRangeChange("week")}
+          className={`hover:text-[#4B0082] ${
+            selectedRange === "week" ? "text-[#4B0082]" : ""
+          }`}
+        >
+          This Week
+        </div>
+        <div
+          onClick={() => handleRangeChange("month")}
+          className={`hover:text-[#4B0082] ${
+            selectedRange === "month" ? "text-[#4B0082]" : ""
+          }`}
+        >
+          This Month
+        </div>
+      </div>
+
+      <div className="flex gap-6 pt-3">
         <ChartCard title="Bill Count Summary" data={billCountData} />
         <ChartCard title="Financial Summary" data={financialSummaryData} />
         <ChartCard title="Patient Summary" data={patientSummaryData} />
       </div>
 
-      <div className="flex">
+      <div className="flex pt-7">
         <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-4 h-72 w-full">
           <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3">
             <span className="text-[#B16CE9]">

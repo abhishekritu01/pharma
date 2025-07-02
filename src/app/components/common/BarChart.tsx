@@ -75,10 +75,10 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
       },
     },
     layout: {
-    padding: {
-      top: 1, // adjust as needed
+      padding: {
+        top: 1, // adjust as needed
+      },
     },
-  },
     plugins: {
       tooltip: {
         enabled: true,
@@ -110,7 +110,7 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
         anchor: "end" as const,
         align: "end" as const,
         formatter: (_value: number, context: Context) =>
-          `₹${salesData[context.dataIndex]}`,
+          `₹${Math.round(salesData[context.dataIndex])}`,
         font: {
           weight: "bold" as const,
           size: 15,

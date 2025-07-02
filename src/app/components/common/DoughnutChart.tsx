@@ -24,16 +24,17 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({
   data,
   backgroundColors = ["#F7BA49", "#D67BA9", "#D0A7F1"],
 }) => {
+  const isAllZero = data.every((val) => val === 0);
   const chartData = {
-    labels,
+    labels: isAllZero ? ["No Data"] : labels,
     datasets: [
       {
         label: "My Dataset",
-        data,
-        backgroundColor: backgroundColors,
+        data: isAllZero ? [1] : data,
+        backgroundColor: isAllZero ? ["#e0e0e0"] : backgroundColors,
         borderWidth: 1,
         hoverOffset: 0,
-        hoverBackgroundColor: backgroundColors,
+        hoverBackgroundColor: isAllZero ? ["#e0e0e0"] : backgroundColors,
       },
     ],
   };
@@ -51,9 +52,16 @@ const DoughnutChart: React.FC<DoughnutChartProps> = ({
       datalabels: {
         color: "#311745",
         formatter: (value: number, context: Context) => {
+          const rawData = context.chart.data.datasets[0].data as number[];
+          const isNoData =
+            rawData.length === 1 &&
+            rawData[0] === 1 &&
+            context.chart.data.labels?.[0] === "No Data";
+          if (isNoData) {
+            return "0%";
+          }
           if (value === 0) return null;
-          const data = context.chart.data.datasets[0].data as number[];
-          const total = data.reduce((acc, val) => acc + val, 0);
+          const total = rawData.reduce((sum, val) => sum + val, 0);
           const percentage = Math.round((value / total) * 100);
           return `${percentage}%`;
         },
