@@ -41,11 +41,12 @@ const Page = () => {
     values: [0, 0, 0],
   });
 
-  useEffect(() => {
-    setGreeting(getGreeting());
-    initializeUser();
-    fetchData();
-  }, []);
+ useEffect(() => {
+  setGreeting(getGreeting());
+  initializeUser();
+  fetchData();
+}, [initializeUser]);
+
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -254,7 +255,7 @@ const Page = () => {
 
       result.data.forEach((bill: BillingData) => {
         const billDate = new Date(bill.billDateTime ?? "");
-        billDate.setHours(0, 0, 0, 0); 
+        billDate.setHours(0, 0, 0, 0);
 
         const amount = bill.grandTotal ?? 0;
 
@@ -269,10 +270,7 @@ const Page = () => {
 
           const paymentType = bill.paymentType?.toLowerCase();
           if (paymentType === "cash") cash += amount;
-          else if (
-            paymentType === "credit card" ||
-            paymentType === "debit card"
-          )
+          else if (paymentType === "creditcard" || paymentType === "debitcard")
             card += amount;
           else if (paymentType === "upi" || paymentType === "net banking")
             online += amount;
@@ -304,7 +302,7 @@ const Page = () => {
 
       setFinancialSummaryData({
         labels: ["Cash", "Card", "Online"],
-        values: [cash, card, online],
+        values: [Math.round(cash), Math.round(card), Math.round(online)],
       });
 
       setWeeklySalesData(salesByDay);

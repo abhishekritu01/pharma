@@ -103,7 +103,7 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
       getOptionLabel={(e) => e.label}
       getOptionValue={(e) => e.value}
       placeholder="Search item..."
-      className="w-52"
+      className="w-72"
       styles={customSelectStyles<OptionType>()}
       formatOptionLabel={(data, { context }) =>
         context === "menu" ? (

@@ -5,7 +5,7 @@ import Drawer from "@/app/components/common/Drawer";
 import Table from "@/app/components/common/Table";
 import { BillingData, BillingItemData } from "@/app/types/BillingData";
 import { ClipboardList, Plus } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Patient from "../../patient/components/Patient";
 import ItemDropdown from "@/app/components/common/ItemDropdown";
@@ -452,26 +452,49 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     setBillingItems(updatedRows);
   };
 
+  // useEffect(() => {
+  //   const fetchMobileNumbers = async () => {
+  //     try {
+  //       const patients = await getPatient();
+  //       const options = patients.map((p: PatientData) => ({
+  //         label: `${p.phone} - ${p.firstName} ${p.lastName}`,
+  //         value: p.phone,
+  //         firstName: p.firstName,
+  //         lastName: p.lastName,
+  //         gender: p.gender,
+  //         patientId: p.patientId,
+  //         patientId1: p.patientId1,
+  //       }));
+
+  //       setMobileOptions(options);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchMobileNumbers();
+  // }, []);
+
+  const fetchMobileNumbers = async () => {
+    try {
+      const patients = await getPatient();
+      const options = patients.map((p: PatientData) => ({
+        label: `${p.phone} - ${p.firstName} ${p.lastName}`,
+        value: p.phone,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        gender: p.gender,
+        patientId: p.patientId,
+        patientId1: p.patientId1,
+      }));
+
+      setMobileOptions(options);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetchMobileNumbers = async () => {
-      try {
-        const patients = await getPatient();
-        const options = patients.map((p: PatientData) => ({
-          label: `${p.phone} - ${p.firstName} ${p.lastName}`,
-          value: p.phone,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          gender: p.gender,
-          patientId: p.patientId,
-          patientId1: p.patientId1,
-        }));
-
-        setMobileOptions(options);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     fetchMobileNumbers();
   }, []);
 
@@ -657,21 +680,16 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     }));
   }, [billingItemRows]);
 
-  const prevPaymentTypeRef = useRef(formData.paymentType);
-
   useEffect(() => {
-    const prevPaymentType = prevPaymentTypeRef.current;
-
-    if (prevPaymentType === "cash" && formData.paymentType !== "cash") {
+    if (formData.paymentStatus === "pending" && formData.paymentType !== "") {
       setFormData((prev) => ({
         ...prev,
+        paymentType: "",
         receivedAmount: 0,
         balanceAmount: 0,
       }));
     }
-
-    prevPaymentTypeRef.current = formData.paymentType;
-  }, [formData.paymentType]);
+  }, [formData.paymentStatus, formData.paymentType]);
 
   const addBilling = () => {
     handleShowModal({
