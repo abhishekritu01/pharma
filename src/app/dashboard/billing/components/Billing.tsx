@@ -50,6 +50,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [, setShowDrawer] = useState<boolean>(false);
   const [, setBillingItems] = useState<BillingItemData[]>([]);
   const [mobileOptions, setMobileOptions] = useState<PatientOption[]>([]);
+  const [, setDoctorOptions] = useState<OptionType[]>([]);
 
   const [selectedMobile, setSelectedMobile] = useState<string | null>(null);
   const [patientData, setPatientData] = useState<Partial<PatientData>>({});
@@ -63,9 +64,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
   >(() => {});
-  const defaultMobileOptions = [
-    { label: "+ Add New Patient", value: "newPatient" },
-  ];
 
   const defaultDoctorOptions = [
     { label: "+ Add New Doctor", value: "newDoctor" },
@@ -504,10 +502,16 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   ) => {
     const filtered = mobileOptions.filter(
       (opt) =>
-        opt.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-        String(opt.value).toLowerCase().includes(inputValue.toLowerCase())
+        opt.label.toLowerCase().startsWith(inputValue.toLowerCase()) ||
+        String(opt.value).toLowerCase().startsWith(inputValue.toLowerCase())
     );
-    callback([...defaultMobileOptions, ...filtered]);
+
+    const addNewOption = {
+      label: "+ Add New Patient",
+      value: "newPatient",
+    };
+
+    callback([addNewOption, ...filtered]);
   };
 
   const handleMobileSelect = (
@@ -559,6 +563,23 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       handlePatientDrawer();
     }
   };
+
+  const fetchDoctorOptions = async () => {
+    try {
+      const doctors = await getDoctor();
+      const options = doctors.map((doc: DoctorData) => ({
+        label: `${doc.doctorName}`,
+        value: doc.doctorId,
+      }));
+      setDoctorOptions(options);
+    } catch (error) {
+      console.error("Failed to fetch doctor options:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctorOptions();
+  }, []);
 
   const loadDoctorOptions = async (
     inputValue: string,
@@ -761,13 +782,19 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
 
       {showPatient && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Patient"}>
-          <Patient setShowDrawer={handleCloseDrawer} />
+          <Patient
+            setShowDrawer={handleCloseDrawer}
+            onPatientAdded={fetchMobileNumbers}
+          />
         </Drawer>
       )}
 
       {showDoctor && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Doctor"}>
-          <Doctor setShowDrawer={handleCloseDrawer} />
+          <Doctor
+            setShowDrawer={handleCloseDrawer}
+            onDoctorAdded={fetchDoctorOptions}
+          />
         </Drawer>
       )}
 
@@ -828,6 +855,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     formatOptionLabel={(data, { context }) =>
                       context === "value" ? data.value : data.label
                     }
+                    // onAddNew={handlePatientDrawer}
                   />
                 </div>
               ) : (
