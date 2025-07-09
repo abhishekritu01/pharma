@@ -450,28 +450,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     setBillingItems(updatedRows);
   };
 
-  // useEffect(() => {
-  //   const fetchMobileNumbers = async () => {
-  //     try {
-  //       const patients = await getPatient();
-  //       const options = patients.map((p: PatientData) => ({
-  //         label: `${p.phone} - ${p.firstName} ${p.lastName}`,
-  //         value: p.phone,
-  //         firstName: p.firstName,
-  //         lastName: p.lastName,
-  //         gender: p.gender,
-  //         patientId: p.patientId,
-  //         patientId1: p.patientId1,
-  //       }));
-
-  //       setMobileOptions(options);
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchMobileNumbers();
-  // }, []);
 
   const fetchMobileNumbers = async () => {
     try {

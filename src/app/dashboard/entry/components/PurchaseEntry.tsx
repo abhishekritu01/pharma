@@ -34,6 +34,7 @@ import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
 import { PharmacyData } from "@/app/types/PharmacyData";
+import SelectField from "@/app/components/common/SelectField";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -133,7 +134,9 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
   const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
-
+  const defaultSupplierOptions = [
+    { label: "+ Add New Supplier", value: "newSupplier" },
+  ];
   const fetchSuppliers = async () => {
     try {
       const supplierList = await getSupplier();
@@ -146,6 +149,33 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   useEffect(() => {
     fetchSuppliers();
   }, []);
+
+   const loadSupplierOptions = async (
+    inputValue: string,
+    callback: (options: OptionType[]) => void
+  ) => {
+    try {
+      if (!inputValue) {
+        // Only show "+ New Supplier" when nothing is typed
+        callback(defaultSupplierOptions);
+        return;
+      }
+
+      const filtered = suppliers
+        .filter((sup) =>
+          sup.supplierName.toLowerCase().includes(inputValue.toLowerCase())
+        )
+        .map((sup) => ({
+          label: sup.supplierName,
+          value: sup.supplierId,
+        }));
+
+      callback([...defaultSupplierOptions, ...filtered]);
+    } catch (error) {
+      console.error("Failed to load supplier options:", error);
+      callback(defaultSupplierOptions);
+    }
+  };
 
   const fetchItems = async () => {
     try {
@@ -575,11 +605,13 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     setShowSupplier(true);
     setShowDrawer(true);
   };
+  
   const handleCloseDrawer = async () => {
     setShowDrawer(false);
     setShowItem(false);
     setShowSupplier(false);
     await fetchItems();
+      await fetchSuppliers();
   };
 
   useEffect(() => {
@@ -1158,32 +1190,31 @@ useEffect(() => {
                     >
                       {label}
                     </label>
-                    <select
-                      id={id}
-                      value={formData.supplierId || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "newSupplier") {
+                    <SelectField
+                      value={
+                        formData.supplierId && formData.supplierName
+                          ? {
+                              label: formData.supplierName,
+                              value: formData.supplierId,
+                            }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "newSupplier") {
                           handleSupplierDrawer();
-                        } else {
-                          handleInputChange(e);
+                          return;
                         }
+                        setFormData((prev) => ({
+                          ...prev,
+                          supplierId: selected?.value || "",
+                          supplierName: selected?.label || "",
+                        }));
                       }}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="supplierId"
-                    >
-                      <option value="" disabled>
-                        Select Supplier
-                      </option>
-                      <option value="newSupplier" className="text-Purple">
-                        + New Supplier
-                      </option>
-                      {suppliers.map((sup) => (
-                        <option key={sup.supplierId} value={sup.supplierId}>
-                          {sup.supplierName}
-                        </option>
-                      ))}
-                    </select>
+                      label="Supplier"
+                      loadOptions={loadSupplierOptions}
+                      defaultOptions={defaultSupplierOptions} 
+                      formatOptionLabel={(data) => data.label}
+                    />
                   </div>
                 ) : (
                   <InputField

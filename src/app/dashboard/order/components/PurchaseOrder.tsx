@@ -36,6 +36,7 @@ import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
+import SelectField from "@/app/components/common/SelectField";
 
 interface PurchaseOrderProps {
   setShowPurchasOrder: (value: boolean) => void;
@@ -69,6 +70,9 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [modalBgClass, setModalBgClass] = useState("");
 
   const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
+  const defaultSupplierOptions = [
+    { label: "+ Add New Supplier", value: "newSupplier" },
+  ];
 
   interface ModalOptions {
     message: string;
@@ -120,6 +124,33 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   useEffect(() => {
     fetchSuppliers();
   }, []);
+
+  const loadSupplierOptions = async (
+    inputValue: string,
+    callback: (options: OptionType[]) => void
+  ) => {
+    try {
+      if (!inputValue) {
+        // Only show "+ New Supplier" when nothing is typed
+        callback(defaultSupplierOptions);
+        return;
+      }
+
+      const filtered = suppliers
+        .filter((sup) =>
+          sup.supplierName.toLowerCase().includes(inputValue.toLowerCase())
+        )
+        .map((sup) => ({
+          label: sup.supplierName,
+          value: sup.supplierId,
+        }));
+
+      callback([...defaultSupplierOptions, ...filtered]);
+    } catch (error) {
+      console.error("Failed to load supplier options:", error);
+      callback(defaultSupplierOptions);
+    }
+  };
 
   const fetchItems = async () => {
     try {
@@ -506,7 +537,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
         if (!formData.pharmacyId && data.data.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            pharmacyId: data.data[0].pharmacyId, 
+            pharmacyId: data.data[0].pharmacyId,
           }));
         }
       } catch (error) {
@@ -754,32 +785,31 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                     >
                       {label}
                     </label>
-                    <select
-                      id={id}
-                      value={formData.supplierId || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "newSupplier") {
+                    <SelectField
+                      value={
+                        formData.supplierId && formData.supplierName
+                          ? {
+                              label: formData.supplierName,
+                              value: formData.supplierId,
+                            }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "newSupplier") {
                           handleSupplierDrawer();
-                        } else {
-                          handleInputChange(e);
+                          return;
                         }
+                        setFormData((prev) => ({
+                          ...prev,
+                          supplierId: selected?.value || "",
+                          supplierName: selected?.label || "",
+                        }));
                       }}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="supplierId"
-                    >
-                      <option value="" disabled>
-                        Select Supplier
-                      </option>
-                      <option value="newSupplier" className="text-Purple">
-                        + New Supplier
-                      </option>
-                      {suppliers.map((sup) => (
-                        <option key={sup.supplierId} value={sup.supplierId}>
-                          {sup.supplierName}
-                        </option>
-                      ))}
-                    </select>
+                      label="Supplier"
+                      loadOptions={loadSupplierOptions}
+                      defaultOptions={defaultSupplierOptions} // ✅ Only show "Add New Supplier"
+                      formatOptionLabel={(data) => data.label}
+                    />
                   </>
                 ) : id === "pharmacyId" ? (
                   <>
