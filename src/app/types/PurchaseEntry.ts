@@ -17,7 +17,7 @@ export interface PurchaseEntryItem {
     gstAmount: number;
     discount: number;
     amount: number;
-    pharmacyId: string;
+    pharmacyId?: string;
     pharmacyName?: string;
     supplierName?: string;
 
@@ -43,7 +43,8 @@ export interface PurchaseEntryItem {
     supplierName?: string;
     grnNo?:string;
     dueStatus?:string;
-  
+    pharmacyId?: string;
+
     stockItemDtos: PurchaseEntryItem[]; 
   }
   

@@ -6,13 +6,18 @@ import { BillingItemData } from "@/app/types/BillingData";
 import { customSelectStyles } from "./DropdownStyle";
 import EllipsisTooltip from "./EllipsisTooltip";
 
-type OptionType = {
+export type OptionType = {
   label: string;
   value: string;
   batchNo?: string;
   itemId?: string;
   packageQty?: number;
+  supplierName?: string;
+  billOnlyLabel?: string;
+  supplierId?: string;
+
 };
+
 
 interface ItemDropdownProps {
   selectedOption: OptionType | null;

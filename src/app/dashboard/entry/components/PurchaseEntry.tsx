@@ -1,6 +1,6 @@
 "use client";
 import Button from "@/app/components/common/Button";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import Table from "@/app/components/common/Table";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@/app/services/PurchaseOrderService";
 import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
 import { createPurchase } from "@/app/services/PurchaseEntryService";
-import { getPharmacyById } from "@/app/services/PharmacyService";
+import { getPharmacy, getPharmacyById } from "@/app/services/PharmacyService";
 import { getSupplier, getSupplierById } from "@/app/services/SupplierService";
 import { toast } from "react-toastify";
 import Modal from "@/app/components/common/Modal";
@@ -33,7 +33,7 @@ import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
-
+import { PharmacyData } from "@/app/types/PharmacyData";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -70,6 +70,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     OrderSuggestion[]
   >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [pharmacies, setPharmacies] = useState<PharmacyData[]>([]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -275,48 +276,48 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     className?: string;
   }[] = [
     {
-  header: "Item Name",
-  accessor: (row: PurchaseEntryItem, index: number) => (
-    <AsyncSelect
-      cacheOptions
-      defaultOptions={defaultItemOptions}
-      loadOptions={loadItemOptions}
-      isClearable={true}
-      value={
-        row.itemId
-          ? {
-              label:
-                row.itemName ||
-                items.find((i) => i.itemId === row.itemId)?.itemName ||
-                "",
-              value: row.itemId,
-            }
-          : null
-      }
-      onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
-      placeholder="Select or search item"
-      className="text-left w-full"
-      classNamePrefix="react-select"
-      styles={customSelectStyles<OptionType>()}
-      formatOptionLabel={(data, { context }) =>
-        context === "menu" ? (
-          <div className="flex flex-col font-medium leading-5 w-full">
-            <EllipsisTooltip text={data.label} className="w-full" />
-          </div>
-        ) : (
-          <EllipsisTooltip text={data.label} className="w-full" />
-        )
-      }
-      components={{
-        SingleValue: (props) => (
-          <components.SingleValue {...props}>
-            <EllipsisTooltip text={props.data.label} className="w-full" />
-          </components.SingleValue>
-        ),
-      }}
-    />
-  ),
-},
+      header: "Item Name",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <AsyncSelect
+          cacheOptions
+          defaultOptions={defaultItemOptions}
+          loadOptions={loadItemOptions}
+          isClearable={true}
+          value={
+            row.itemId
+              ? {
+                  label:
+                    row.itemName ||
+                    items.find((i) => i.itemId === row.itemId)?.itemName ||
+                    "",
+                  value: row.itemId,
+                }
+              : null
+          }
+          onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
+          placeholder="Select or search item"
+          className="text-left w-full"
+          classNamePrefix="react-select"
+          styles={customSelectStyles<OptionType>()}
+          formatOptionLabel={(data, { context }) =>
+            context === "menu" ? (
+              <div className="flex flex-col font-medium leading-5 w-full">
+                <EllipsisTooltip text={data.label} className="w-full" />
+              </div>
+            ) : (
+              <EllipsisTooltip text={data.label} className="w-full" />
+            )
+          }
+          components={{
+            SingleValue: (props) => (
+              <components.SingleValue {...props}>
+                <EllipsisTooltip text={props.data.label} className="w-full" />
+              </components.SingleValue>
+            ),
+          }}
+        />
+      ),
+    },
 
     {
       header: "Batch No",
@@ -517,7 +518,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           bgClassName: "bg-darkPurple",
           onConfirmCallback: () => resolve(true),
           onCancelCallback: () => {
-          
             setPurchaseRows((prev) =>
               prev.map((row, i) =>
                 i === idx ? { ...row, expiryDate: "" } : row
@@ -820,6 +820,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         ? new Date(formData.paymentDueDate)
         : undefined,
       supplierId: formData.supplierId,
+      pharmacyId:formData.pharmacyId,
       invoiceAmount: formData.invoiceAmount
         ? Number(formData.invoiceAmount)
         : undefined,
@@ -840,13 +841,11 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         gstAmount: row.gstAmount,
         discount: row.discount,
         amount: row.amount,
-        pharmacyId: row.pharmacyId,
+       
       })),
       paymentStatus: "",
       goodStatus: "",
     };
-
-    console.log("purchaseData----------", purchaseData);
 
     handleShowModal({
       message:
@@ -884,6 +883,30 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       },
     });
   };
+
+const hasSetPharmacy = useRef(false);
+
+useEffect(() => {
+  const fetchPharmacies = async () => {
+    try {
+      const data = await getPharmacy();
+      setPharmacies(data.data);
+
+      if (!hasSetPharmacy.current && data.data.length > 0) {
+        hasSetPharmacy.current = true;
+        setFormData((prev) => ({
+          ...prev,
+          pharmacyId: data.data[0].pharmacyId,
+        }));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchPharmacies();
+}, []);
+
 
   return (
     <>
@@ -936,6 +959,86 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           <div className="justify-start text-black text-lg font-normal leading-7">
             Basic Details
           </div>
+
+          {/* <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[
+              { id: "orderId", label: "Order ID" },
+              { id: "pharmacyName", label: "Pharmacy" },
+              { id: "purchaseBillNo", label: "Invoice Number" },
+              { id: "billDate", label: "Bill Date", type: "date" },
+            ].map(({ id, label, type }) => (
+              <div key={id} className="relative w-full">
+                {id === "orderId" ? (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="orderId"
+                      value={formData.orderId1 || ""}
+                      onChange={handleInputChange}
+                      onBlur={() =>
+                        setTimeout(() => setShowSuggestions(false), 200)
+                      }
+                      onFocus={() => {
+                        if (formData.orderId) {
+                          setFilteredSuggestions(
+                            orderSuggestions.filter((order) =>
+                              order.orderId1
+                                .toLowerCase()
+                                .includes(formData.orderId!.toLowerCase())
+                            )
+                          );
+                          setShowSuggestions(true);
+                        }
+                      }}
+                      required
+                      placeholder=" "
+                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                      data-has-value={formData.orderId1 ? "true" : "false"}
+                    />
+                    <label
+                      htmlFor="orderId"
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all 
+              peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
+              peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
+              peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
+                    >
+                      {label}
+                    </label>
+
+                    {showSuggestions && filteredSuggestions.length > 0 && (
+                      <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
+                        {filteredSuggestions.map((suggestion, index) => (
+                          <li
+                            key={index}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() =>
+                              handleSuggestionClick(
+                                suggestion.orderId,
+                                suggestion.orderId1
+                              )
+                            }
+                          >
+                            {suggestion.orderId1}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : (
+                  <InputField
+                    id={id}
+                    label={label}
+                    type={type}
+                    max={id === "billDate" ? today : undefined}
+                    value={
+                      formData[id as keyof PurchaseEntryData]?.toString() ?? ""
+                    }
+                    onChange={handleInputChange}
+                  />
+                )}
+              </div>
+            ))}
+          </div> */}
 
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[
@@ -1001,6 +1104,28 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                       </ul>
                     )}
                   </div>
+                ) : id === "pharmacyName" ? (
+                  <>
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label}
+                    </label>
+                    <input
+                      id={id}
+                      type="text"
+                      readOnly
+                      value={
+                        pharmacies.find(
+                          (ph) =>
+                            String(ph.pharmacyId) ===
+                            String(formData.pharmacyId)
+                        )?.pharmacyName || ""
+                      }
+                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
+                    />
+                  </>
                 ) : (
                   <InputField
                     id={id}

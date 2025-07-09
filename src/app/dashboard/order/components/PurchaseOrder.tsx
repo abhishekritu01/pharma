@@ -502,6 +502,13 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
       try {
         const data = await getPharmacy();
         setPharmacies(data.data);
+
+        if (!formData.pharmacyId && data.data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId, 
+          }));
+        }
       } catch (error) {
         console.error(error);
       }
@@ -730,7 +737,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[
               { id: "orderedDate", label: "Order Date", type: "date" },
-              { id: "pharmacyId", label: "Pharmacy", type: "dropdown" },
+              { id: "pharmacyId", label: "Pharmacy", type: "text" },
               { id: "supplierId", label: "Supplier", type: "dropdown" },
               {
                 id: "intendedDeliveryDate",
@@ -782,26 +789,19 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                     >
                       {label}
                     </label>
-                    <select
+                    <input
                       id={id}
-                      value={formData.pharmacyId || ""}
-                      onChange={handleInputChange}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="pharmacyId"
-                    >
-                      <option value="" disabled>
-                        Select Pharmacy
-                      </option>
-                      {Array.isArray(pharmacies) &&
-                        pharmacies.map((pharmacy) => (
-                          <option
-                            key={pharmacy.pharmacyId}
-                            value={pharmacy.pharmacyId}
-                          >
-                            {pharmacy.pharmacyName}
-                          </option>
-                        ))}
-                    </select>
+                      type="text"
+                      readOnly
+                      value={
+                        pharmacies.find(
+                          (ph) =>
+                            String(ph.pharmacyId) ===
+                            String(formData.pharmacyId)
+                        )?.pharmacyName || ""
+                      }
+                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
+                    />
                   </>
                 ) : (
                   <InputField
