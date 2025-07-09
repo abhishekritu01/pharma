@@ -131,14 +131,13 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   ) => {
     try {
       if (!inputValue) {
-        // Only show "+ New Supplier" when nothing is typed
         callback(defaultSupplierOptions);
         return;
       }
 
       const filtered = suppliers
         .filter((sup) =>
-          sup.supplierName.toLowerCase().includes(inputValue.toLowerCase())
+          sup.supplierName.toLowerCase().startsWith(inputValue.toLowerCase())
         )
         .map((sup) => ({
           label: sup.supplierName,
@@ -330,7 +329,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     { header: "Estimated Amount", accessor: "amount", className: "text-left" },
     {
       header: "Action",
-      accessor: (row: PurchaseOrderItem) => (
+      accessor: (row: PurchaseOrderItem, index) => (
         <div className="relative group">
           <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
             <BsThreeDotsVertical size={18} />
@@ -344,12 +343,12 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
               Edit Item Details
             </button>
 
-            {/* <button
+            <button
               onClick={() => handleDeleteRow(index)}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
-            </button> */}
+            </button>
           </div>
         </div>
       ),
@@ -411,25 +410,25 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     }
   };
 
-  // const handleDeleteRow = (index: number) => {
-  //   if (orderItemRows.length === 1) {
-  //     toast.error("Cannot delete the last row", {
-  //       position: "top-right",
-  //       autoClose: 3000,
-  //     });
-  //     return;
-  //   }
+  const handleDeleteRow = (index: number) => {
+    if (orderItemRows.length === 1) {
+      toast.error("Cannot delete the last row", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
 
-  //   handleShowModal({
-  //     message:
-  //       "Are you sure you want to delete this item? This action cannot be undone",
-  //     secondaryMessage: "Confirm Deletion",
-  //     bgClassName: "bg-darkRed",
-  //     onConfirmCallback: () => {
-  //       setorderItemRows(orderItemRows.filter((_, i) => i !== index));
-  //     },
-  //   });
-  // };
+    handleShowModal({
+      message:
+        "Are you sure you want to delete this item? This action cannot be undone",
+      secondaryMessage: "Confirm Deletion",
+      bgClassName: "bg-darkRed",
+      onConfirmCallback: () => {
+        setorderItemRows(orderItemRows.filter((_, i) => i !== index));
+      },
+    });
+  };
 
   const handlePurchaseOrderList = () => {
     setShowPurchasOrder(false);
@@ -528,25 +527,26 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     await fetchSuppliers();
   };
 
-  useEffect(() => {
-    const fetchPharmacies = async () => {
-      try {
-        const data = await getPharmacy();
-        setPharmacies(data.data);
+ useEffect(() => {
+  const fetchPharmacies = async () => {
+    try {
+      const data = await getPharmacy();
+      setPharmacies(data.data);
 
-        if (!formData.pharmacyId && data.data.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            pharmacyId: data.data[0].pharmacyId,
-          }));
-        }
-      } catch (error) {
-        console.error(error);
+      if (!formData.pharmacyId && data.data.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          pharmacyId: data.data[0].pharmacyId,
+        }));
       }
-    };
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-    fetchPharmacies();
-  }, []);
+  fetchPharmacies();
+}, [formData.pharmacyId]);
+
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -875,8 +875,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
 
         <div className="border h-auto w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
           {[
-            // { label: "SUB TOTAL", value: 0 },
-            // { label: "GST TOTAL", value: 0 },
+
             {
               label: "GRAND TOTAL",
               value: formData.grandTotal.toFixed(2),

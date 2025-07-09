@@ -60,7 +60,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [modalMessage, setModalMessage] = useState("");
   const [modalSecondaryMessage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
-  const [modalCancelCallback, setModalCancelCallback] = useState<() => void>(
+  const [,setModalCancelCallback] = useState<() => void>(
     () => {}
   );
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
@@ -156,14 +156,13 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   ) => {
     try {
       if (!inputValue) {
-        // Only show "+ New Supplier" when nothing is typed
         callback(defaultSupplierOptions);
         return;
       }
 
       const filtered = suppliers
         .filter((sup) =>
-          sup.supplierName.toLowerCase().includes(inputValue.toLowerCase())
+          sup.supplierName.toLowerCase().startsWith(inputValue.toLowerCase())
         )
         .map((sup) => ({
           label: sup.supplierName,
@@ -824,7 +823,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   };
 
   const handleModalCancel = () => {
-    modalCancelCallback();
     setShowModal(false);
   };
 

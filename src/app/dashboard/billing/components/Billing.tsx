@@ -480,8 +480,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   ) => {
     const filtered = mobileOptions.filter(
       (opt) =>
-        opt.label.toLowerCase().startsWith(inputValue.toLowerCase()) ||
-        String(opt.value).toLowerCase().startsWith(inputValue.toLowerCase())
+        opt.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+        String(opt.value).toLowerCase().includes(inputValue.toLowerCase())
     );
 
     const addNewOption = {

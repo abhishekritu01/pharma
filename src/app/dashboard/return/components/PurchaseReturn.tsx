@@ -72,32 +72,30 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     ],
   });
 
+  const handleDeleteRow = (index: number) => {
+    if (formData.purchaseReturnItemDtos.length === 1) {
+      toast.error("Cannot delete the last row", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
 
- const handleDeleteRow = (index: number) => {
-  if (formData.purchaseReturnItemDtos.length === 1) {
-    toast.error("Cannot delete the last row", {
-      position: "top-right",
-      autoClose: 3000,
+    handleShowModal({
+      message:
+        "Are you sure you want to delete this item? This action cannot be undone",
+      secondaryMessage: "Confirm Deletion",
+      bgClassName: "bg-darkRed",
+      onConfirmCallback: () => {
+        setFormData((prev) => ({
+          ...prev,
+          purchaseReturnItemDtos: prev.purchaseReturnItemDtos.filter(
+            (_, i) => i !== index
+          ),
+        }));
+      },
     });
-    return;
-  }
-
-  handleShowModal({
-    message:
-      "Are you sure you want to delete this item? This action cannot be undone",
-    secondaryMessage: "Confirm Deletion",
-    bgClassName: "bg-darkRed",
-    onConfirmCallback: () => {
-      setFormData((prev) => ({
-        ...prev,
-        purchaseReturnItemDtos: prev.purchaseReturnItemDtos.filter(
-          (_, i) => i !== index
-        ),
-      }));
-    },
-  });
-};
-
+  };
 
   const columns = (rowIndex: number) => [
     {
@@ -214,85 +212,6 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     setShowModal(false);
   };
 
-  // const addPurchaseReturn = () => {
-  //   const hasInvalidDiscrepancy = formData.purchaseReturnItemDtos.some(
-  //     (item, index) => {
-  //       const isInvalid =
-  //         !item.discrepancyIn ||
-  //         item.discrepancy === undefined ||
-  //         item.discrepancy === null ||
-  //         item.discrepancy === "";
-  //       if (isInvalid) {
-  //         toast.error(
-  //           `Please fill in both "Discrepancy In" and "Discrepancy" for item ${
-  //             index + 1
-  //           }`,
-  //           {
-  //             position: "top-right",
-  //             autoClose: 2000,
-  //             pauseOnHover: false,
-  //           }
-  //         );
-  //       }
-  //       return isInvalid;
-  //     }
-  //   );
-
-  //   if (hasInvalidDiscrepancy) return;
-
-  //   const purchaseReturnData: PurchaseReturnData = {
-  //     returnId: formData.returnId,
-  //     pharmacyId: formData.pharmacyId,
-  //     pharmacyName: formData.pharmacyName,
-  //     supplierId: formData.supplierId,
-  //     supplierName: formData.supplierName,
-  //     returnDate: new Date(formData.returnDate),
-  //     returnAmount: formData.returnAmount,
-  //     purchaseBillNo: formData.purchaseBillNo,
-  //     grnno: formData.grnno,
-  //     purchaseReturnItemDtos: formData.purchaseReturnItemDtos.map((item) => ({
-  //       itemId: item.itemId,
-  //       itemName: item.itemName,
-  //       batchNo: item.batchNo,
-  //       returnQuantity: item.returnQuantity,
-  //       availableQuantity: item.availableQuantity,
-  //       purchasePrice: item.purchasePrice,
-  //       returnType: item.returnType,
-  //       discrepancyIn: item.discrepancyIn,
-  //       discrepancy: item.discrepancy,
-  //     })),
-  //   };
-
-  //   handleShowModal({
-  //     message: "Are you sure you want to confirm the Return?",
-  //     secondaryMessage: "Confirm Purchase Return",
-  //     bgClassName: "bg-darkPurple",
-  //     onConfirmCallback: async () => {
-  //       try {
-  //         await createPurchaseReturn(purchaseReturnData);
-
-  //         setFormData({
-  //           returnId: "",
-  //           pharmacyId: "",
-  //           pharmacyName: "",
-  //           supplierId: "",
-  //           supplierName: "",
-  //           returnDate: new Date(),
-  //           returnAmount: 0,
-  //           purchaseBillNo: "",
-  //           grnno: "",
-  //           purchaseReturnItemDtos: [],
-  //         });
-
-  //         window.location.reload();
-  //       } catch (error) {
-  //         console.error("Failed to submit purchase return:", error);
-  //         toast.error("Failed to submit purchase return. Please try again.");
-  //       }
-  //     },
-  //   });
-  // };
-
   const addPurchaseReturn = () => {
     const hasInvalidDiscrepancy = formData.purchaseReturnItemDtos.some(
       (item, index) => {
@@ -319,7 +238,6 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
 
     if (hasInvalidDiscrepancy) return;
 
-    // 🟨 Extract top-level billNo & supplierId from the first item
     const firstItem = formData.purchaseReturnItemDtos[0] || {};
 
     const purchaseReturnData: PurchaseReturnData = {
@@ -335,7 +253,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         "",
       returnDate: new Date(formData.returnDate),
       returnAmount: formData.returnAmount,
-      purchaseBillNo: firstItem.purchaseBillNo || "", 
+      purchaseBillNo: firstItem.purchaseBillNo || "",
       grnno: formData.grnno,
       purchaseReturnItemDtos: formData.purchaseReturnItemDtos.map((item) => ({
         itemId: item.itemId,
@@ -588,18 +506,12 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         {formData.purchaseReturnItemDtos.map((row, idx) => (
           <div
             key={idx}
-            className="border border-gray-300 w-full rounded-lg p-5 flex flex-col lg:flex-row gap-8 overflow-visible"
+            className="border border-gray-300 w-full rounded-lg p-5 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-8"
           >
             {/* Left Column */}
-            <div className="w-full lg:flex-1 min-w-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="w-full min-w-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="relative w-full">
-                  {/* <label
-                    htmlFor={`itemName-${idx}`}
-                    className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                  >
-                    Item Name
-                  </label> */}
                   <ItemDropdown
                     selectedOption={row.selectedItem || null}
                     onChange={(selected) =>
@@ -801,7 +713,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
             </div>
 
             {/* Right Column */}
-            <div className="w-full lg:flex-1 min-w-0">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table
                 data={[row]}
                 columns={columns(idx)}
