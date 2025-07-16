@@ -11,6 +11,7 @@ export interface PurchaseReturnItem {
   discrepancyIn: string;
   discrepancy: string;
   packageQuantity?: number;
+  gstPercentage?: number;
   selectedItem?: OptionType | null;
   purchaseBillNo?: string;
   purchaseBillOptions?: OptionType[];
@@ -28,6 +29,8 @@ export interface PurchaseReturnData {
   returnDate: Date;
   returnReason?: string;
   refundType?: string;
+  totalAmount: number;
+  totalGst: number;
   returnAmount: number;
   purchaseBillNo?: string;
   grnno?: string;

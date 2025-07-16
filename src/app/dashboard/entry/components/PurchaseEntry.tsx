@@ -60,9 +60,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [modalMessage, setModalMessage] = useState("");
   const [modalSecondaryMessage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
-  const [,setModalCancelCallback] = useState<() => void>(
-    () => {}
-  );
+  const [, setModalCancelCallback] = useState<() => void>(() => {});
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [orderSuggestions, setOrderSuggestions] = useState<OrderSuggestion[]>(
     []
@@ -150,7 +148,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     fetchSuppliers();
   }, []);
 
-   const loadSupplierOptions = async (
+  const loadSupplierOptions = async (
     inputValue: string,
     callback: (options: OptionType[]) => void
   ) => {
@@ -370,7 +368,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           <input
             type="number"
             name="packageQuantity"
-            value={row.packageQuantity}
+            value={row.packageQuantity === 0 ? "" : row.packageQuantity}
             onKeyDown={restrictInvalidNumberKeys}
             onChange={handleNumericChange((e) => handleChange(e, index))}
             className="border border-Gray p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
@@ -604,13 +602,13 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     setShowSupplier(true);
     setShowDrawer(true);
   };
-  
+
   const handleCloseDrawer = async () => {
     setShowDrawer(false);
     setShowItem(false);
     setShowSupplier(false);
     await fetchItems();
-      await fetchSuppliers();
+    await fetchSuppliers();
   };
 
   useEffect(() => {
@@ -850,7 +848,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         ? new Date(formData.paymentDueDate)
         : undefined,
       supplierId: formData.supplierId,
-      pharmacyId:formData.pharmacyId,
+      pharmacyId: formData.pharmacyId,
       invoiceAmount: formData.invoiceAmount
         ? Number(formData.invoiceAmount)
         : undefined,
@@ -871,7 +869,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         gstAmount: row.gstAmount,
         discount: row.discount,
         amount: row.amount,
-       
       })),
       paymentStatus: "",
       goodStatus: "",
@@ -914,29 +911,28 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     });
   };
 
-const hasSetPharmacy = useRef(false);
+  const hasSetPharmacy = useRef(false);
 
-useEffect(() => {
-  const fetchPharmacies = async () => {
-    try {
-      const data = await getPharmacy();
-      setPharmacies(data.data);
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await getPharmacy();
+        setPharmacies(data.data);
 
-      if (!hasSetPharmacy.current && data.data.length > 0) {
-        hasSetPharmacy.current = true;
-        setFormData((prev) => ({
-          ...prev,
-          pharmacyId: data.data[0].pharmacyId,
-        }));
+        if (!hasSetPharmacy.current && data.data.length > 0) {
+          hasSetPharmacy.current = true;
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId,
+          }));
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    };
 
-  fetchPharmacies();
-}, []);
-
+    fetchPharmacies();
+  }, []);
 
   return (
     <>
@@ -989,86 +985,6 @@ useEffect(() => {
           <div className="justify-start text-black text-lg font-normal leading-7">
             Basic Details
           </div>
-
-          {/* <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[
-              { id: "orderId", label: "Order ID" },
-              { id: "pharmacyName", label: "Pharmacy" },
-              { id: "purchaseBillNo", label: "Invoice Number" },
-              { id: "billDate", label: "Bill Date", type: "date" },
-            ].map(({ id, label, type }) => (
-              <div key={id} className="relative w-full">
-                {id === "orderId" ? (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="orderId"
-                      value={formData.orderId1 || ""}
-                      onChange={handleInputChange}
-                      onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 200)
-                      }
-                      onFocus={() => {
-                        if (formData.orderId) {
-                          setFilteredSuggestions(
-                            orderSuggestions.filter((order) =>
-                              order.orderId1
-                                .toLowerCase()
-                                .includes(formData.orderId!.toLowerCase())
-                            )
-                          );
-                          setShowSuggestions(true);
-                        }
-                      }}
-                      required
-                      placeholder=" "
-                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                      data-has-value={formData.orderId1 ? "true" : "false"}
-                    />
-                    <label
-                      htmlFor="orderId"
-                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all 
-              peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
-              peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
-              peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
-                    >
-                      {label}
-                    </label>
-
-                    {showSuggestions && filteredSuggestions.length > 0 && (
-                      <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
-                        {filteredSuggestions.map((suggestion, index) => (
-                          <li
-                            key={index}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() =>
-                              handleSuggestionClick(
-                                suggestion.orderId,
-                                suggestion.orderId1
-                              )
-                            }
-                          >
-                            {suggestion.orderId1}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <InputField
-                    id={id}
-                    label={label}
-                    type={type}
-                    max={id === "billDate" ? today : undefined}
-                    value={
-                      formData[id as keyof PurchaseEntryData]?.toString() ?? ""
-                    }
-                    onChange={handleInputChange}
-                  />
-                )}
-              </div>
-            ))}
-          </div> */}
 
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[
@@ -1210,11 +1126,37 @@ useEffect(() => {
                       }}
                       label="Supplier"
                       loadOptions={loadSupplierOptions}
-                      defaultOptions={defaultSupplierOptions} 
+                      defaultOptions={defaultSupplierOptions}
                       formatOptionLabel={(data) => data.label}
                     />
                   </div>
                 ) : (
+                  // <InputField
+                  //   id={id}
+                  //   label={label}
+                  //   type={type}
+                  //   value={
+                  //     id === "paymentDueDate" && formData.paymentDueDate
+                  //       ? new Date(formData.paymentDueDate)
+                  //           .toISOString()
+                  //           .split("T")[0]
+                  //       : formData[id as keyof PurchaseEntryData]?.toString() ??
+                  //         ""
+                  //   }
+                  //   onChange={
+                  //     id === "paymentDueDate"
+                  //       ? () => {}
+                  //       : id === "creditPeriod" || id === "invoiceAmount"
+                  //       ? handleNumericChange(handleInputChange)
+                  //       : handleInputChange
+                  //   }
+                  //   readOnly={id === "paymentDueDate"}
+                  //   onKeyDown={
+                  //     id === "creditPeriod" || id === "invoiceAmount"
+                  //       ? restrictInvalidNumberKeys
+                  //       : undefined
+                  //   }
+                  // />
                   <InputField
                     id={id}
                     label={label}
@@ -1224,6 +1166,8 @@ useEffect(() => {
                         ? new Date(formData.paymentDueDate)
                             .toISOString()
                             .split("T")[0]
+                        : formData[id as keyof PurchaseEntryData] === 0
+                        ? ""
                         : formData[id as keyof PurchaseEntryData]?.toString() ??
                           ""
                     }

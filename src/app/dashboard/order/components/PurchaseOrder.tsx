@@ -299,7 +299,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
         <input
           type="number"
           name="packageQuantity"
-          value={row.packageQuantity}
+          value={row.packageQuantity === 0 ? "" : row.packageQuantity}
           onKeyDown={restrictInvalidNumberKeys}
           onChange={handleNumericChange((e) => handleChange(e, index))}
           className="border border-gray-300 p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"

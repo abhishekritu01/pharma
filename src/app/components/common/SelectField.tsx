@@ -5,6 +5,10 @@ import { FormatOptionLabelMeta, StylesConfig } from "react-select";
 type OptionType = {
   label: string;
   value: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: number;
+  
 };
 
 interface SelectFieldProps {

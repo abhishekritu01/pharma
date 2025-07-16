@@ -54,6 +54,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     supplierId: "",
     supplierName: "",
     returnDate: new Date(),
+    totalAmount: 0,
+    totalGst: 0,
     returnAmount: 0,
     purchaseBillNo: "",
     grnno: "",
@@ -64,6 +66,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         batchNo: "",
         returnQuantity: 0,
         availableQuantity: 0,
+        gstPercentage: 0,
         purchasePrice: 0,
         returnType: "",
         discrepancyIn: "",
@@ -149,6 +152,52 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     },
   ];
 
+  // const handleInputChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   const parts = name.split("-");
+
+  //   if (parts.length === 2) {
+  //     const field = parts[0] as keyof PurchaseReturnItem;
+  //     const idx = Number(parts[1]);
+
+  //     setFormData((prev) => {
+  //       const updatedItems = prev.purchaseReturnItemDtos.map((item, i) =>
+  //         i === idx
+  //           ? {
+  //               ...item,
+  //               [field]: field === "returnQuantity" ? Number(value) : value,
+  //             }
+  //           : item
+  //       );
+
+  //       const updatedReturnAmount = updatedItems.reduce((acc, item) => {
+  //         const qty = Number(item.returnQuantity) || 0;
+  //         const price = Number(item.purchasePrice) || 0;
+  //         console.log(
+  //           `Calculating: qty=${qty}, price=${price}, subtotal=${qty * price}`
+  //         );
+  //         return acc + qty * price;
+  //       }, 0);
+
+  //       return {
+  //         ...prev,
+  //         purchaseReturnItemDtos: updatedItems,
+  //         returnAmount: parseFloat(updatedReturnAmount.toFixed(2)),
+  //       };
+  //     });
+  //   } else {
+  //     const field = name as keyof PurchaseReturnData;
+  //     const newValue = field === "returnDate" ? new Date(value) : value;
+
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       [field]: newValue,
+  //     }));
+  //   }
+  // };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -164,24 +213,38 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           i === idx
             ? {
                 ...item,
-                [field]: field === "returnQuantity" ? Number(value) : value,
+                [field]:
+                  field === "returnQuantity" ||
+                  field === "purchasePrice" ||
+                  field === "gstPercentage"
+                    ? Number(value)
+                    : value,
               }
             : item
         );
 
-        const updatedReturnAmount = updatedItems.reduce((acc, item) => {
+        let totalAmount = 0;
+        let totalGst = 0;
+
+        updatedItems.forEach((item) => {
           const qty = Number(item.returnQuantity) || 0;
           const price = Number(item.purchasePrice) || 0;
-          console.log(
-            `Calculating: qty=${qty}, price=${price}, subtotal=${qty * price}`
-          );
-          return acc + qty * price;
-        }, 0);
+          const gst = Number(item.gstPercentage) || 0;
+          const itemTotal = qty * price;
+          const itemGstAmount = (itemTotal * gst) / 100;
+
+          totalAmount += itemTotal;
+          totalGst += itemGstAmount;
+        });
+
+        const grandTotal = totalAmount + totalGst;
 
         return {
           ...prev,
           purchaseReturnItemDtos: updatedItems,
-          returnAmount: parseFloat(updatedReturnAmount.toFixed(2)),
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          totalGst: parseFloat(totalGst.toFixed(2)),
+          returnAmount: parseFloat(grandTotal.toFixed(2)),
         };
       });
     } else {
@@ -252,6 +315,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           )?.supplierName) ||
         "",
       returnDate: new Date(formData.returnDate),
+      totalAmount: formData.totalAmount,
+      totalGst: formData.totalGst,
       returnAmount: formData.returnAmount,
       purchaseBillNo: firstItem.purchaseBillNo || "",
       grnno: formData.grnno,
@@ -283,6 +348,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
             supplierId: "",
             supplierName: "",
             returnDate: new Date(),
+            totalAmount: 0,
+            totalGst: 0,
             returnAmount: 0,
             purchaseBillNo: "",
             grnno: "",
@@ -354,8 +421,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         };
       });
 
-      // 🟨 Find the first matching item's purchasePrice (you can change this logic if needed)
       let purchasePrice = 0;
+      let gstPercentage = 0;
       for (const bill of matchingBills) {
         const matchedItem = bill.stockItemDtos.find(
           (item) =>
@@ -363,10 +430,12 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         );
         if (matchedItem?.purchasePrice) {
           purchasePrice = matchedItem.purchasePrice;
+          gstPercentage = matchedItem.gstPercentage ?? 0;
           break;
         }
       }
 
+      
       setFormData((prev) => {
         const updatedItems = [...prev.purchaseReturnItemDtos];
         updatedItems[idx] = {
@@ -377,7 +446,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           selectedItem: selected,
           purchaseBillNo: "",
           purchaseBillOptions: billNumbers,
-          purchasePrice, // ✅ set the purchase price here
+          purchasePrice,
+          gstPercentage,
         };
 
         return {
@@ -703,7 +773,9 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                     id={`returnQuantity-${idx}`}
                     name={`returnQuantity-${idx}`}
                     type="number"
-                    value={row.returnQuantity ?? ""}
+                    value={
+                      row.returnQuantity === 0 ? "" : row.returnQuantity ?? ""
+                    }
                     onKeyDown={restrictInvalidNumberKeys}
                     onChange={handleNumericChange(handleInputChange)}
                     className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
@@ -733,12 +805,19 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           ></Button>
         </div>
 
-        <div className="border h-auto w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
+        <div className="border h-full w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
           {[
             {
-              label: "RETURN AMOUNT",
-              value: formData.returnAmount.toFixed(2),
-
+              label: "SUB TOTAL",
+              value: formData.totalAmount?.toFixed(2) ?? "0.00",
+            },
+            {
+              label: "GST TOTAL",
+              value: formData.totalGst?.toFixed(2) ?? "0.00",
+            },
+            {
+              label: "GRAND TOTAL",
+              value: formData.returnAmount?.toFixed(2) ?? "0.00",
               isTotal: true,
             },
           ].map(({ label, value, isTotal }, index) => (
@@ -746,7 +825,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
               key={index}
               className={`flex justify-between ${
                 isTotal
-                  ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg"
+                  ? "font-semibold text-base bg-gray1 h-8 p-1 items-center rounded-lg"
                   : ""
               }`}
             >
