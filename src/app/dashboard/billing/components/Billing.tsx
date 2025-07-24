@@ -42,6 +42,7 @@ interface PatientOption {
   gender: string;
   patientId: string;
   patientId1: string;
+  phone: number;
 }
 
 const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
@@ -321,7 +322,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
           <input
             type="number"
             min="0"
-            value={row.packageQuantity}
+            value={row.packageQuantity === 0 ? "" : row.packageQuantity}
             className="w-20 border border-gray-300 rounded px-2 py-1 outline-none focus:ring-0 focus:outline-none"
             onChange={(e) =>
               handleBillingItemChange(
@@ -350,7 +351,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         <input
           type="number"
           min="0"
-          value={row.discountPercentage}
+          value={row.discountPercentage === 0 ? "" : row.discountPercentage}
           className="w-20 border border-gray-300 rounded px-2 py-1 outline-none focus:ring-0 focus:outline-none"
           onChange={(e) =>
             handleBillingItemChange(
@@ -450,35 +451,13 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     setBillingItems(updatedRows);
   };
 
-  // useEffect(() => {
-  //   const fetchMobileNumbers = async () => {
-  //     try {
-  //       const patients = await getPatient();
-  //       const options = patients.map((p: PatientData) => ({
-  //         label: `${p.phone} - ${p.firstName} ${p.lastName}`,
-  //         value: p.phone,
-  //         firstName: p.firstName,
-  //         lastName: p.lastName,
-  //         gender: p.gender,
-  //         patientId: p.patientId,
-  //         patientId1: p.patientId1,
-  //       }));
-
-  //       setMobileOptions(options);
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchMobileNumbers();
-  // }, []);
-
   const fetchMobileNumbers = async () => {
     try {
       const patients = await getPatient();
       const options = patients.map((p: PatientData) => ({
         label: `${p.phone} - ${p.firstName} ${p.lastName}`,
-        value: p.phone,
+        value: `${p.phone}_${p.patientId}`,
+        phone: p.phone,
         firstName: p.firstName,
         lastName: p.lastName,
         gender: p.gender,
@@ -502,8 +481,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   ) => {
     const filtered = mobileOptions.filter(
       (opt) =>
-        opt.label.toLowerCase().startsWith(inputValue.toLowerCase()) ||
-        String(opt.value).toLowerCase().startsWith(inputValue.toLowerCase())
+        opt.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+        String(opt.value).toLowerCase().includes(inputValue.toLowerCase())
     );
 
     const addNewOption = {
@@ -513,6 +492,56 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
 
     callback([addNewOption, ...filtered]);
   };
+
+  // const handleMobileSelect = (
+  //   selected: { label: string; value: string } | null
+  // ) => {
+  //   if (!selected) {
+  //     setSelectedMobile(null);
+  //     setPatientData({
+  //       phone: 0,
+  //       firstName: "",
+  //       gender: "",
+  //     });
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       patientId1: "",
+  //       patientType: "",
+  //       doctorId: "",
+  //     }));
+  //     return;
+  //   }
+
+  //   if (selected.value === "newPatient") {
+  //     handlePatientDrawer();
+  //     return;
+  //   }
+
+  //   setSelectedMobile(selected.value);
+
+  //   const found = mobileOptions.find((opt) => opt.value === selected.value);
+
+  //   if (found) {
+  //     const fullName = `${found.firstName} ${found.lastName}`;
+
+  //     setPatientData({
+  //       phone: Number(selected.value),
+  //       firstName: fullName,
+  //       gender: found.gender || "Not Available",
+  //     });
+
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       patientId: found.patientId,
+  //       patientId1: found.patientId1 || "",
+  //       patientName: fullName,
+  //       phone: Number(selected.value),
+  //       gender: found.gender || "",
+  //     }));
+  //   } else {
+  //     handlePatientDrawer();
+  //   }
+  // };
 
   const handleMobileSelect = (
     selected: { label: string; value: string } | null
@@ -540,13 +569,19 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
 
     setSelectedMobile(selected.value);
 
-    const found = mobileOptions.find((opt) => opt.value === selected.value);
+    const [phonePart, patientIdPart] = selected.value.split("_");
+
+    const found = mobileOptions.find(
+      (opt) =>
+        String(opt.phone) === phonePart &&
+        String(opt.patientId) === patientIdPart
+    );
 
     if (found) {
       const fullName = `${found.firstName} ${found.lastName}`;
 
       setPatientData({
-        phone: Number(selected.value),
+        phone: Number(found.phone),
         firstName: fullName,
         gender: found.gender || "Not Available",
       });
@@ -556,7 +591,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         patientId: found.patientId,
         patientId1: found.patientId1 || "",
         patientName: fullName,
-        phone: Number(selected.value),
+        phone: Number(found.phone),
         gender: found.gender || "",
       }));
     } else {
@@ -852,10 +887,16 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     onChange={handleMobileSelect}
                     label="Mobile Number"
                     loadOptions={loadMobileOptions}
-                    formatOptionLabel={(data, { context }) =>
-                      context === "value" ? data.value : data.label
-                    }
-                    // onAddNew={handlePatientDrawer}
+                    formatOptionLabel={(data, { context }) => {
+                      // Handle the special case of "+ Add New Patient"
+                      if (data.value === "newPatient") {
+                        return data.label;
+                      }
+
+                      return context === "value"
+                        ? data.phone
+                        : `${data.phone} - ${data.firstName} ${data.lastName}`;
+                    }}
                   />
                 </div>
               ) : (
@@ -1057,7 +1098,11 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                             ? "border-gray-300 bg-gray-100 cursor-not-allowed"
                             : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
                         }`}
-                        value={formData.receivedAmount}
+                        value={
+                          formData.receivedAmount === 0
+                            ? ""
+                            : formData.receivedAmount
+                        }
                         onKeyDown={restrictInvalidNumberKeys}
                         onChange={handleNumericChange((e) =>
                           handleInputChange(e)
@@ -1087,7 +1132,11 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                             ? "border-gray-300 bg-gray-100 cursor-not-allowed"
                             : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
                         }`}
-                        value={formData.balanceAmount}
+                        value={
+                          formData.balanceAmount === 0
+                            ? ""
+                            : formData.balanceAmount
+                        }
                         onKeyDown={restrictInvalidNumberKeys}
                         onChange={handleNumericChange((e) =>
                           handleInputChange(e)

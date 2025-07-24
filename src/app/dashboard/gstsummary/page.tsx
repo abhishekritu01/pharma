@@ -913,7 +913,7 @@ const Page = () => {
                 }`}
               >
                 {paymentStatusFilter === "paid"
-                  ? "Already Paid"
+                  ? "Paid"
                   : paymentStatusFilter === "pending"
                   ? "Pending Payment"
                   : "All"}

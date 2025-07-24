@@ -6,13 +6,18 @@ import { BillingItemData } from "@/app/types/BillingData";
 import { customSelectStyles } from "./DropdownStyle";
 import EllipsisTooltip from "./EllipsisTooltip";
 
-type OptionType = {
+export type OptionType = {
   label: string;
   value: string;
   batchNo?: string;
   itemId?: string;
   packageQty?: number;
+  supplierName?: string;
+  billOnlyLabel?: string;
+  supplierId?: string;
+
 };
+
 
 interface ItemDropdownProps {
   selectedOption: OptionType | null;
@@ -103,7 +108,7 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
       getOptionLabel={(e) => e.label}
       getOptionValue={(e) => e.value}
       placeholder="Search item..."
-      className="w-72"
+      className="w-full"
       styles={customSelectStyles<OptionType>()}
       formatOptionLabel={(data, { context }) =>
         context === "menu" ? (

@@ -1,6 +1,6 @@
 "use client";
 import Button from "@/app/components/common/Button";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
 import Table from "@/app/components/common/Table";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@/app/services/PurchaseOrderService";
 import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
 import { createPurchase } from "@/app/services/PurchaseEntryService";
-import { getPharmacyById } from "@/app/services/PharmacyService";
+import { getPharmacy, getPharmacyById } from "@/app/services/PharmacyService";
 import { getSupplier, getSupplierById } from "@/app/services/SupplierService";
 import { toast } from "react-toastify";
 import Modal from "@/app/components/common/Modal";
@@ -33,7 +33,8 @@ import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
-
+import { PharmacyData } from "@/app/types/PharmacyData";
+import SelectField from "@/app/components/common/SelectField";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -59,9 +60,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [modalMessage, setModalMessage] = useState("");
   const [modalSecondaryMessage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
-  const [modalCancelCallback, setModalCancelCallback] = useState<() => void>(
-    () => {}
-  );
+  const [, setModalCancelCallback] = useState<() => void>(() => {});
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [orderSuggestions, setOrderSuggestions] = useState<OrderSuggestion[]>(
     []
@@ -70,6 +69,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     OrderSuggestion[]
   >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [pharmacies, setPharmacies] = useState<PharmacyData[]>([]);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -132,7 +132,9 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
   const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
-
+  const defaultSupplierOptions = [
+    { label: "+ Add New Supplier", value: "newSupplier" },
+  ];
   const fetchSuppliers = async () => {
     try {
       const supplierList = await getSupplier();
@@ -145,6 +147,32 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   useEffect(() => {
     fetchSuppliers();
   }, []);
+
+  const loadSupplierOptions = async (
+    inputValue: string,
+    callback: (options: OptionType[]) => void
+  ) => {
+    try {
+      if (!inputValue) {
+        callback(defaultSupplierOptions);
+        return;
+      }
+
+      const filtered = suppliers
+        .filter((sup) =>
+          sup.supplierName.toLowerCase().startsWith(inputValue.toLowerCase())
+        )
+        .map((sup) => ({
+          label: sup.supplierName,
+          value: sup.supplierId,
+        }));
+
+      callback([...defaultSupplierOptions, ...filtered]);
+    } catch (error) {
+      console.error("Failed to load supplier options:", error);
+      callback(defaultSupplierOptions);
+    }
+  };
 
   const fetchItems = async () => {
     try {
@@ -275,48 +303,48 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     className?: string;
   }[] = [
     {
-  header: "Item Name",
-  accessor: (row: PurchaseEntryItem, index: number) => (
-    <AsyncSelect
-      cacheOptions
-      defaultOptions={defaultItemOptions}
-      loadOptions={loadItemOptions}
-      isClearable={true}
-      value={
-        row.itemId
-          ? {
-              label:
-                row.itemName ||
-                items.find((i) => i.itemId === row.itemId)?.itemName ||
-                "",
-              value: row.itemId,
-            }
-          : null
-      }
-      onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
-      placeholder="Select or search item"
-      className="text-left w-full"
-      classNamePrefix="react-select"
-      styles={customSelectStyles<OptionType>()}
-      formatOptionLabel={(data, { context }) =>
-        context === "menu" ? (
-          <div className="flex flex-col font-medium leading-5 w-full">
-            <EllipsisTooltip text={data.label} className="w-full" />
-          </div>
-        ) : (
-          <EllipsisTooltip text={data.label} className="w-full" />
-        )
-      }
-      components={{
-        SingleValue: (props) => (
-          <components.SingleValue {...props}>
-            <EllipsisTooltip text={props.data.label} className="w-full" />
-          </components.SingleValue>
-        ),
-      }}
-    />
-  ),
-},
+      header: "Item Name",
+      accessor: (row: PurchaseEntryItem, index: number) => (
+        <AsyncSelect
+          cacheOptions
+          defaultOptions={defaultItemOptions}
+          loadOptions={loadItemOptions}
+          isClearable={true}
+          value={
+            row.itemId
+              ? {
+                  label:
+                    row.itemName ||
+                    items.find((i) => i.itemId === row.itemId)?.itemName ||
+                    "",
+                  value: row.itemId,
+                }
+              : null
+          }
+          onChange={(selectedOption) => handleItemSelect(selectedOption, index)}
+          placeholder="Select or search item"
+          className="text-left w-full"
+          classNamePrefix="react-select"
+          styles={customSelectStyles<OptionType>()}
+          formatOptionLabel={(data, { context }) =>
+            context === "menu" ? (
+              <div className="flex flex-col font-medium leading-5 w-full">
+                <EllipsisTooltip text={data.label} className="w-full" />
+              </div>
+            ) : (
+              <EllipsisTooltip text={data.label} className="w-full" />
+            )
+          }
+          components={{
+            SingleValue: (props) => (
+              <components.SingleValue {...props}>
+                <EllipsisTooltip text={props.data.label} className="w-full" />
+              </components.SingleValue>
+            ),
+          }}
+        />
+      ),
+    },
 
     {
       header: "Batch No",
@@ -340,7 +368,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           <input
             type="number"
             name="packageQuantity"
-            value={row.packageQuantity}
+            value={row.packageQuantity === 0 ? "" : row.packageQuantity}
             onKeyDown={restrictInvalidNumberKeys}
             onChange={handleNumericChange((e) => handleChange(e, index))}
             className="border border-Gray p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
@@ -517,7 +545,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           bgClassName: "bg-darkPurple",
           onConfirmCallback: () => resolve(true),
           onCancelCallback: () => {
-          
             setPurchaseRows((prev) =>
               prev.map((row, i) =>
                 i === idx ? { ...row, expiryDate: "" } : row
@@ -575,11 +602,13 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     setShowSupplier(true);
     setShowDrawer(true);
   };
+
   const handleCloseDrawer = async () => {
     setShowDrawer(false);
     setShowItem(false);
     setShowSupplier(false);
     await fetchItems();
+    await fetchSuppliers();
   };
 
   useEffect(() => {
@@ -792,7 +821,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
   };
 
   const handleModalCancel = () => {
-    modalCancelCallback();
     setShowModal(false);
   };
 
@@ -820,6 +848,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         ? new Date(formData.paymentDueDate)
         : undefined,
       supplierId: formData.supplierId,
+      pharmacyId: formData.pharmacyId,
       invoiceAmount: formData.invoiceAmount
         ? Number(formData.invoiceAmount)
         : undefined,
@@ -840,13 +869,10 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         gstAmount: row.gstAmount,
         discount: row.discount,
         amount: row.amount,
-        pharmacyId: row.pharmacyId,
       })),
       paymentStatus: "",
       goodStatus: "",
     };
-
-    console.log("purchaseData----------", purchaseData);
 
     handleShowModal({
       message:
@@ -884,6 +910,29 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       },
     });
   };
+
+  const hasSetPharmacy = useRef(false);
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await getPharmacy();
+        setPharmacies(data.data);
+
+        if (!hasSetPharmacy.current && data.data.length > 0) {
+          hasSetPharmacy.current = true;
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId,
+          }));
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchPharmacies();
+  }, []);
 
   return (
     <>
@@ -1001,6 +1050,28 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                       </ul>
                     )}
                   </div>
+                ) : id === "pharmacyName" ? (
+                  <>
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label}
+                    </label>
+                    <input
+                      id={id}
+                      type="text"
+                      readOnly
+                      value={
+                        pharmacies.find(
+                          (ph) =>
+                            String(ph.pharmacyId) ===
+                            String(formData.pharmacyId)
+                        )?.pharmacyName || ""
+                      }
+                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
+                    />
+                  </>
                 ) : (
                   <InputField
                     id={id}
@@ -1033,34 +1104,59 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                     >
                       {label}
                     </label>
-                    <select
-                      id={id}
-                      value={formData.supplierId || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "newSupplier") {
+                    <SelectField
+                      value={
+                        formData.supplierId && formData.supplierName
+                          ? {
+                              label: formData.supplierName,
+                              value: formData.supplierId,
+                            }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "newSupplier") {
                           handleSupplierDrawer();
-                        } else {
-                          handleInputChange(e);
+                          return;
                         }
+                        setFormData((prev) => ({
+                          ...prev,
+                          supplierId: selected?.value || "",
+                          supplierName: selected?.label || "",
+                        }));
                       }}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="supplierId"
-                    >
-                      <option value="" disabled>
-                        Select Supplier
-                      </option>
-                      <option value="newSupplier" className="text-Purple">
-                        + New Supplier
-                      </option>
-                      {suppliers.map((sup) => (
-                        <option key={sup.supplierId} value={sup.supplierId}>
-                          {sup.supplierName}
-                        </option>
-                      ))}
-                    </select>
+                      label="Supplier"
+                      loadOptions={loadSupplierOptions}
+                      defaultOptions={defaultSupplierOptions}
+                      formatOptionLabel={(data) => data.label}
+                    />
                   </div>
                 ) : (
+                  // <InputField
+                  //   id={id}
+                  //   label={label}
+                  //   type={type}
+                  //   value={
+                  //     id === "paymentDueDate" && formData.paymentDueDate
+                  //       ? new Date(formData.paymentDueDate)
+                  //           .toISOString()
+                  //           .split("T")[0]
+                  //       : formData[id as keyof PurchaseEntryData]?.toString() ??
+                  //         ""
+                  //   }
+                  //   onChange={
+                  //     id === "paymentDueDate"
+                  //       ? () => {}
+                  //       : id === "creditPeriod" || id === "invoiceAmount"
+                  //       ? handleNumericChange(handleInputChange)
+                  //       : handleInputChange
+                  //   }
+                  //   readOnly={id === "paymentDueDate"}
+                  //   onKeyDown={
+                  //     id === "creditPeriod" || id === "invoiceAmount"
+                  //       ? restrictInvalidNumberKeys
+                  //       : undefined
+                  //   }
+                  // />
                   <InputField
                     id={id}
                     label={label}
@@ -1070,6 +1166,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                         ? new Date(formData.paymentDueDate)
                             .toISOString()
                             .split("T")[0]
+                        : formData[id as keyof PurchaseEntryData] === 0
+                        ? ""
                         : formData[id as keyof PurchaseEntryData]?.toString() ??
                           ""
                     }

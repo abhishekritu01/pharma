@@ -125,7 +125,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
       }
 
       setShowDrawer(false);
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error("Error:", error);
       if (error instanceof ZodError) {

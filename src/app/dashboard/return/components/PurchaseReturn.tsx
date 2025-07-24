@@ -1,20 +1,26 @@
 "use client";
 
 import Button from "@/app/components/common/Button";
+import ItemDropdown, { OptionType } from "@/app/components/common/ItemDropdown";
 import Modal from "@/app/components/common/Modal";
-import { handleNumericChange, restrictInvalidNumberKeys } from "@/app/components/common/RestrictedVal";
+import {
+  handleNumericChange,
+  restrictInvalidNumberKeys,
+} from "@/app/components/common/RestrictedVal";
 import Table from "@/app/components/common/Table";
-import { getItemById } from "@/app/services/ItemService";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
 import { createPurchaseReturn } from "@/app/services/PurchaseReturnService";
 import { getSupplierById } from "@/app/services/SupplierService";
+import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
 import {
   PurchaseReturnData,
   PurchaseReturnItem,
 } from "@/app/types/PurchaseReturnData";
-import { ClipboardList } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { ClipboardList, Plus } from "lucide-react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
+import AsyncSelect from "react-select/async";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 interface PurchaseReturnProps {
   setShowPurchaseReturn: (value: boolean) => void;
@@ -48,6 +54,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     supplierId: "",
     supplierName: "",
     returnDate: new Date(),
+    totalAmount: 0,
+    totalGst: 0,
     returnAmount: 0,
     purchaseBillNo: "",
     grnno: "",
@@ -58,6 +66,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         batchNo: "",
         returnQuantity: 0,
         availableQuantity: 0,
+        gstPercentage: 0,
         purchasePrice: 0,
         returnType: "",
         discrepancyIn: "",
@@ -65,6 +74,31 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
       },
     ],
   });
+
+  const handleDeleteRow = (index: number) => {
+    if (formData.purchaseReturnItemDtos.length === 1) {
+      toast.error("Cannot delete the last row", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    handleShowModal({
+      message:
+        "Are you sure you want to delete this item? This action cannot be undone",
+      secondaryMessage: "Confirm Deletion",
+      bgClassName: "bg-darkRed",
+      onConfirmCallback: () => {
+        setFormData((prev) => ({
+          ...prev,
+          purchaseReturnItemDtos: prev.purchaseReturnItemDtos.filter(
+            (_, i) => i !== index
+          ),
+        }));
+      },
+    });
+  };
 
   const columns = (rowIndex: number) => [
     {
@@ -97,8 +131,26 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         />
       ),
     },
-  ];
+    {
+      header: "Action",
+      accessor: (row: PurchaseReturnItem, index: number) => (
+        <div className="relative group">
+          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+            <BsThreeDotsVertical size={18} />
+          </button>
 
+          <div className="absolute right-0 mt-2 w-32 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+            <button
+              onClick={() => handleDeleteRow(index)}
+              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      ),
+    },
+  ];
 
   // const handleInputChange = (
   //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -109,140 +161,102 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
   //   if (parts.length === 2) {
   //     const field = parts[0] as keyof PurchaseReturnItem;
   //     const idx = Number(parts[1]);
-  //     const newValue = field === "returnQuantity" ? Number(value) : value;
 
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       purchaseReturnItemDtos: prev.purchaseReturnItemDtos.map((item, i) =>
-  //         i === idx ? { ...item, [field]: newValue } : item
-  //       ),
-  //     }));
-  //   }
-  //   else {
+  //     setFormData((prev) => {
+  //       const updatedItems = prev.purchaseReturnItemDtos.map((item, i) =>
+  //         i === idx
+  //           ? {
+  //               ...item,
+  //               [field]: field === "returnQuantity" ? Number(value) : value,
+  //             }
+  //           : item
+  //       );
+
+  //       const updatedReturnAmount = updatedItems.reduce((acc, item) => {
+  //         const qty = Number(item.returnQuantity) || 0;
+  //         const price = Number(item.purchasePrice) || 0;
+  //         console.log(
+  //           `Calculating: qty=${qty}, price=${price}, subtotal=${qty * price}`
+  //         );
+  //         return acc + qty * price;
+  //       }, 0);
+
+  //       return {
+  //         ...prev,
+  //         purchaseReturnItemDtos: updatedItems,
+  //         returnAmount: parseFloat(updatedReturnAmount.toFixed(2)),
+  //       };
+  //     });
+  //   } else {
   //     const field = name as keyof PurchaseReturnData;
   //     const newValue = field === "returnDate" ? new Date(value) : value;
 
-  //     setFormData(
-  //       (prev) =>
-  //         ({
-  //           ...prev,
-  //           [field]: newValue,
-  //         } as unknown as PurchaseReturnData)
-  //     );
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       [field]: newValue,
+  //     }));
   //   }
   // };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    const parts = name.split("-");
 
-const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
-  const parts = name.split("-");
+    if (parts.length === 2) {
+      const field = parts[0] as keyof PurchaseReturnItem;
+      const idx = Number(parts[1]);
 
-  if (parts.length === 2) {
-    const field = parts[0] as keyof PurchaseReturnItem;
-    const idx = Number(parts[1]);
-
-    if (field === "returnQuantity") {
-      const numericValue = Number(value);
-      const availableQty = formData.purchaseReturnItemDtos[idx]?.availableQuantity ?? 0;
-
-      if (numericValue > availableQty) {
-        toast.error(
-          `Return quantity cannot exceed available quantity (${availableQty})`,
-          {
-            position: "top-right",
-            autoClose: 2000,
-            pauseOnHover: false,
-          }
+      setFormData((prev) => {
+        const updatedItems = prev.purchaseReturnItemDtos.map((item, i) =>
+          i === idx
+            ? {
+                ...item,
+                [field]:
+                  field === "returnQuantity" ||
+                  field === "purchasePrice" ||
+                  field === "gstPercentage"
+                    ? Number(value)
+                    : value,
+              }
+            : item
         );
-        return;
-      }
+
+        let totalAmount = 0;
+        let totalGst = 0;
+
+        updatedItems.forEach((item) => {
+          const qty = Number(item.returnQuantity) || 0;
+          const price = Number(item.purchasePrice) || 0;
+          const gst = Number(item.gstPercentage) || 0;
+          const itemTotal = qty * price;
+          const itemGstAmount = (itemTotal * gst) / 100;
+
+          totalAmount += itemTotal;
+          totalGst += itemGstAmount;
+        });
+
+        const grandTotal = totalAmount + totalGst;
+
+        return {
+          ...prev,
+          purchaseReturnItemDtos: updatedItems,
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          totalGst: parseFloat(totalGst.toFixed(2)),
+          returnAmount: parseFloat(grandTotal.toFixed(2)),
+        };
+      });
+    } else {
+      const field = name as keyof PurchaseReturnData;
+      const newValue = field === "returnDate" ? new Date(value) : value;
 
       setFormData((prev) => ({
         ...prev,
-        purchaseReturnItemDtos: prev.purchaseReturnItemDtos.map((item, i) =>
-          i === idx ? { ...item, [field]: numericValue } : item
-        ),
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        purchaseReturnItemDtos: prev.purchaseReturnItemDtos.map((item, i) =>
-          i === idx ? { ...item, [field]: value } : item
-        ),
+        [field]: newValue,
       }));
     }
-  } else {
-    const field = name as keyof PurchaseReturnData;
-    const newValue = field === "returnDate" ? new Date(value) : value;
-
-    setFormData((prev) => ({
-      ...prev,
-      [field]: newValue,
-    }));
-  }
-};
-
-
-  const { grnno } = formData;
-
-  useEffect(() => {
-    const fetchByGrn = async () => {
-      const { grnno } = formData;
-      if (!grnno) return;
-
-      try {
-        const response = await getPurchase();
-
-        if (response.status !== "success" || !Array.isArray(response.data)) {
-          console.error(
-            "Failed to fetch purchases or unexpected data:",
-            response
-          );
-          return;
-        }
-
-        const all = response.data;
-
-        const purchase = all.find((p) => p.grnNo === grnno);
-        if (!purchase) return;
-
-        const supplier = await getSupplierById(purchase.supplierId);
-
-        const items: PurchaseReturnItem[] = await Promise.all(
-          (purchase.stockItemDtos || []).map(async (si: PurchaseReturnItem) => {
-            const item = await getItemById(si.itemId);
-
-            return {
-              itemId: si.itemId,
-              itemName: item.itemName,
-              batchNo: si.batchNo,
-              returnQuantity: 0,
-              returnType: "",
-              discrepancyIn: "",
-              discrepancy: "",
-              availableQuantity: si.packageQuantity,
-              purchasePrice: si.purchasePrice,
-            };
-          })
-        );
-
-        setFormData((prev) => ({
-          ...prev,
-          supplierId: purchase.supplierId,
-          supplierName: supplier.supplierName,
-          purchaseBillNo: purchase.purchaseBillNo,
-          purchaseReturnItemDtos: items,
-        }));
-      } catch (err) {
-        console.error("fetchByGrn:", err);
-      }
-    };
-
-    fetchByGrn();
- // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grnno]);
+  };
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -262,29 +276,49 @@ const handleInputChange = (
   };
 
   const addPurchaseReturn = () => {
-    const hasInvalidDiscrepancy = formData.purchaseReturnItemDtos.some((item, index) => {
-    const isInvalid = !item.discrepancyIn || item.discrepancy === undefined || item.discrepancy === null || item.discrepancy === "";
-    if (isInvalid) {
-      toast.error(`Please fill in both "Discrepancy In" and "Discrepancy" for item ${index + 1}`, {
-        position: "top-right",
-        autoClose: 2000,
-        pauseOnHover: false,
-      });
-    }
-    return isInvalid;
-  });
+    const hasInvalidDiscrepancy = formData.purchaseReturnItemDtos.some(
+      (item, index) => {
+        const isInvalid =
+          !item.discrepancyIn ||
+          item.discrepancy === undefined ||
+          item.discrepancy === null ||
+          item.discrepancy === "";
+        if (isInvalid) {
+          toast.error(
+            `Please fill in both "Discrepancy In" and "Discrepancy" for item ${
+              index + 1
+            }`,
+            {
+              position: "top-right",
+              autoClose: 2000,
+              pauseOnHover: false,
+            }
+          );
+        }
+        return isInvalid;
+      }
+    );
 
-  if (hasInvalidDiscrepancy) return;
-  
+    if (hasInvalidDiscrepancy) return;
+
+    const firstItem = formData.purchaseReturnItemDtos[0] || {};
+
     const purchaseReturnData: PurchaseReturnData = {
       returnId: formData.returnId,
       pharmacyId: formData.pharmacyId,
       pharmacyName: formData.pharmacyName,
-      supplierId: formData.supplierId,
-      supplierName: formData.supplierName,
+      supplierId: firstItem.supplierId || "",
+      supplierName:
+        (firstItem.supplierId &&
+          firstItem.purchaseBillOptions?.find(
+            (opt) => opt.supplierId === firstItem.supplierId
+          )?.supplierName) ||
+        "",
       returnDate: new Date(formData.returnDate),
+      totalAmount: formData.totalAmount,
+      totalGst: formData.totalGst,
       returnAmount: formData.returnAmount,
-      purchaseBillNo: formData.purchaseBillNo,
+      purchaseBillNo: firstItem.purchaseBillNo || "",
       grnno: formData.grnno,
       purchaseReturnItemDtos: formData.purchaseReturnItemDtos.map((item) => ({
         itemId: item.itemId,
@@ -307,7 +341,6 @@ const handleInputChange = (
         try {
           await createPurchaseReturn(purchaseReturnData);
 
-          // Reset form data
           setFormData({
             returnId: "",
             pharmacyId: "",
@@ -315,6 +348,8 @@ const handleInputChange = (
             supplierId: "",
             supplierName: "",
             returnDate: new Date(),
+            totalAmount: 0,
+            totalGst: 0,
             returnAmount: 0,
             purchaseBillNo: "",
             grnno: "",
@@ -330,19 +365,125 @@ const handleInputChange = (
     });
   };
 
-  useEffect(() => {
-    const total = formData.purchaseReturnItemDtos.reduce((acc, item) => {
-      const qty = Number(item.returnQuantity) || 0;
-      const price = Number(item.purchasePrice) || 0;
+  const handleItemDropdownChange = async (
+    selected: OptionType | null,
+    idx: number
+  ) => {
+    if (!selected) return;
 
-      return acc + qty * price;
-    }, 0);
+    try {
+      const purchaseResult = await getPurchase();
+      if (purchaseResult.status !== "success") {
+        throw new Error("Failed to fetch purchase data");
+      }
 
-    setFormData((prev) => ({
-      ...prev,
-      returnAmount: total,
-    }));
-  }, [formData.purchaseReturnItemDtos]);
+      const allBills: PurchaseEntryData[] = purchaseResult.data;
+
+      const matchingBills = allBills.filter((bill) =>
+        bill.stockItemDtos.some(
+          (item) =>
+            item.itemId === selected.itemId && item.batchNo === selected.batchNo
+        )
+      );
+
+      const uniqueSupplierIds = [
+        ...new Set(
+          matchingBills.map((bill) => bill.supplierId).filter(Boolean)
+        ),
+      ];
+
+      const supplierMap: Record<string, string> = {};
+
+      await Promise.all(
+        uniqueSupplierIds.map(async (supplierId) => {
+          try {
+            const supplierData = await getSupplierById(supplierId);
+            supplierMap[supplierId] =
+              supplierData?.supplierName ?? "Unknown Supplier";
+          } catch (err) {
+            console.error(`Error fetching supplier ${supplierId}:`, err);
+            supplierMap[supplierId] = "Unknown Supplier";
+          }
+        })
+      );
+
+      const billNumbers = matchingBills.map((bill) => {
+        const supplierName = bill.supplierId
+          ? supplierMap[bill.supplierId]
+          : "Unknown Supplier";
+
+        return {
+          label: `${bill.purchaseBillNo} - ${supplierName}`,
+          value: bill.purchaseBillNo,
+          supplierId: bill.supplierId,
+          supplierName,
+          billOnlyLabel: bill.purchaseBillNo,
+        };
+      });
+
+      let purchasePrice = 0;
+      let gstPercentage = 0;
+      for (const bill of matchingBills) {
+        const matchedItem = bill.stockItemDtos.find(
+          (item) =>
+            item.itemId === selected.itemId && item.batchNo === selected.batchNo
+        );
+        if (matchedItem?.purchasePrice) {
+          purchasePrice = matchedItem.purchasePrice;
+          gstPercentage = matchedItem.gstPercentage ?? 0;
+          break;
+        }
+      }
+
+      
+      setFormData((prev) => {
+        const updatedItems = [...prev.purchaseReturnItemDtos];
+        updatedItems[idx] = {
+          ...updatedItems[idx],
+          itemId: selected.itemId ?? "",
+          itemName: selected.label,
+          batchNo: selected.batchNo ?? "",
+          selectedItem: selected,
+          purchaseBillNo: "",
+          purchaseBillOptions: billNumbers,
+          purchasePrice,
+          gstPercentage,
+        };
+
+        return {
+          ...prev,
+          purchaseReturnItemDtos: updatedItems,
+        };
+      });
+    } catch (error) {
+      console.error("Error loading bill data:", error);
+    }
+  };
+
+  const addNewRow = () => {
+    setFormData((prev) => {
+      const newItem: PurchaseReturnItem = {
+        itemId: "",
+        itemName: "",
+        batchNo: "",
+        selectedItem: null,
+        purchaseBillNo: "",
+        supplierId: "",
+        purchaseBillOptions: [],
+        purchasePrice: 0,
+        availableQuantity: 0,
+        returnType: "",
+        returnQuantity: 0,
+        discrepancy: "",
+        discrepancyIn: "",
+      };
+
+      return {
+        ...prev,
+        purchaseReturnItemDtos: [...prev.purchaseReturnItemDtos, newItem],
+      };
+    });
+  };
 
   return (
     <>
@@ -372,7 +513,7 @@ const handleInputChange = (
           </div>
         </div>
 
-        <div className="border border-Gray w-full h-full rounded-lg p-5">
+        {/* <div className="border border-Gray w-full h-full rounded-lg p-5">
           <div className="justify-start text-black text-lg font-normal leading-7">
             Basic Details
           </div>
@@ -430,58 +571,23 @@ const handleInputChange = (
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {formData.purchaseReturnItemDtos.map((row, idx) => (
           <div
             key={idx}
-            className="border border-gray-300 w-full rounded-lg p-5 flex flex-col lg:flex-row gap-8"
+            className="border border-gray-300 w-full rounded-lg p-5 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-8"
           >
             {/* Left Column */}
-            <div className="space-y-5 w-full lg:w-1/2">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="w-full min-w-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="relative w-full">
-                  <label
-                    htmlFor={`itemName-${idx}`}
-                    className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                  >
-                    Item Name
-                  </label>
-                  <input
-                    id={`itemName-${idx}`}
-                    name={`itemName-${idx}`}
-                    type="text"
-                    value={row.itemName}
-                    readOnly
-                    className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                  <ItemDropdown
+                    selectedOption={row.selectedItem || null}
+                    onChange={(selected) =>
+                      handleItemDropdownChange(selected, idx)
+                    }
                   />
-                </div>
-
-                <div className="relative w-full">
-                  <label
-                    htmlFor={`returnType-${idx}`}
-                    className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                  >
-                    Return Type
-                  </label>
-                  <select
-                    id={`returnType-${idx}`}
-                    name={`returnType-${idx}`}
-                    value={row.returnType}
-                    onChange={handleInputChange}
-                    className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                  >
-                    <option value="">Select Return Type</option>
-                    <option value="Exchange product">Exchange product</option>
-                    <option value="Refund">Refund</option>
-                    <option value="Store Credit Returns">
-                      Store Credit Returns
-                    </option>
-                    <option value="Replacement Returns">
-                      Replacement Returns
-                    </option>
-                    <option value="Change Invoice">Change Invoice</option>
-                  </select>
                 </div>
 
                 <div className="relative w-full">
@@ -503,6 +609,161 @@ const handleInputChange = (
 
                 <div className="relative w-full">
                   <label
+                    htmlFor={`purchaseBillNo-${idx}`}
+                    className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all z-10"
+                  >
+                    Bill Number
+                  </label>
+
+                  <div className="peer w-full px-3 py-[6px] border border-gray-400 rounded-md bg-transparent text-black outline-none focus-within:border-purple-900 focus-within:ring-0">
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions={row.purchaseBillOptions}
+                      value={
+                        row.purchaseBillOptions?.find(
+                          (opt) => opt.value === row.purchaseBillNo
+                        ) || null
+                      }
+                      getOptionLabel={(option) =>
+                        option.billOnlyLabel || option.label
+                      }
+                      formatOptionLabel={(option, { context }) =>
+                        context === "menu"
+                          ? option.label
+                          : option.billOnlyLabel || option.label
+                      }
+                      loadOptions={(inputValue, callback) => {
+                        const filtered =
+                          row.purchaseBillOptions?.filter((option) =>
+                            option.label
+                              .toLowerCase()
+                              .includes(inputValue.toLowerCase())
+                          ) || [];
+                        callback(filtered);
+                      }}
+                      onChange={(selected) => {
+                        const billNo = selected?.value || "";
+                        const supplierId = selected?.supplierId || "";
+
+                        setFormData((prev) => {
+                          const updated = [...prev.purchaseReturnItemDtos];
+                          updated[idx] = {
+                            ...updated[idx],
+                            purchaseBillNo: billNo,
+                            supplierId,
+                          };
+                          return { ...prev, purchaseReturnItemDtos: updated };
+                        });
+                      }}
+                      placeholder="Select Bill No"
+                      isClearable
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          minHeight: "30px",
+                          border: "none",
+                          boxShadow: "none",
+                          backgroundColor: "transparent",
+                        }),
+                        valueContainer: (base) => ({
+                          ...base,
+                          padding: 0,
+                        }),
+                        indicatorsContainer: (base) => ({
+                          ...base,
+                          padding: 0,
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          zIndex: 9999,
+                          minWidth: "100%",
+                          width: "auto",
+                          overflowX: "hidden",
+                        }),
+                        menuList: (base) => ({
+                          ...base,
+                          padding: 0,
+                          overflowX: "hidden",
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor:
+                            state.isSelected || state.isFocused
+                              ? "#4B0082"
+                              : "white",
+                          color:
+                            state.isSelected || state.isFocused
+                              ? "white"
+                              : "#111827",
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "0.375rem",
+                          "&:active": {
+                            backgroundColor: "#4B0082",
+                            color: "white",
+                          },
+                        }),
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="relative w-full">
+                  <label
+                    htmlFor={`supplierName-${idx}`}
+                    className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                  >
+                    Supplier Name
+                  </label>
+                  <input
+                    id={`supplierName-${idx}`}
+                    name={`supplierName-${idx}`}
+                    type="text"
+                    value={
+                      row.supplierId
+                        ? row.purchaseBillOptions?.find(
+                            (opt) => opt.supplierId === row.supplierId
+                          )?.supplierName || ""
+                        : ""
+                    }
+                    readOnly
+                    className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                  />
+                </div>
+
+                <div className="relative w-full min-w-0">
+                  <label
+                    htmlFor={`returnType-${idx}`}
+                    className="absolute left-2 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                  >
+                    Return Type
+                  </label>
+                  <select
+                    id={`returnType-${idx}`}
+                    name={`returnType-${idx}`}
+                    value={row.returnType}
+                    onChange={handleInputChange}
+                    className="peer w-full px-3 pl-4 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
+                  >
+                    <option value="">Select Return Type</option>
+                    <option value="Exchange product">Exchange product</option>
+                    <option value="Refund">Refund</option>
+                    <option value="Store Credit Returns">
+                      Store Credit Returns
+                    </option>
+                    <option value="Replacement Returns">
+                      Replacement Returns
+                    </option>
+                    <option value="Change Invoice">Change Invoice</option>
+                  </select>
+                </div>
+
+                <div className="relative w-full">
+                  <label
                     htmlFor={`returnQuantity-${idx}`}
                     className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
                   >
@@ -512,21 +773,19 @@ const handleInputChange = (
                     id={`returnQuantity-${idx}`}
                     name={`returnQuantity-${idx}`}
                     type="number"
-                    value={row.returnQuantity}
+                    value={
+                      row.returnQuantity === 0 ? "" : row.returnQuantity ?? ""
+                    }
                     onKeyDown={restrictInvalidNumberKeys}
                     onChange={handleNumericChange(handleInputChange)}
-                    // onChange={handleInputChange}
                     className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
                   />
-                  <span className="text-sm italic">
-                    Available Qty.: {row.availableQuantity ?? "N/A"}
-                  </span>
                 </div>
               </div>
             </div>
 
             {/* Right Column */}
-            <div className="w-full lg:flex-1">
+            <div className="w-full min-w-0 overflow-x-auto">
               <Table
                 data={[row]}
                 columns={columns(idx)}
@@ -536,14 +795,29 @@ const handleInputChange = (
           </div>
         ))}
 
-        <div className="border h-auto w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
-          {[
-            // { label: "SUB TOTAL", value: 0 },
-            // { label: "GST TOTAL", value: 0 },
-            {
-              label: "RETURN AMOUNT",
-              value: formData.returnAmount.toFixed(2),
+        <div>
+          <Button
+            onClick={() => addNewRow()}
+            label="Add Item Row"
+            value=""
+            className="w-44 bg-gray h-11"
+            icon={<Plus size={15} />}
+          ></Button>
+        </div>
 
+        <div className="border h-full w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
+          {[
+            {
+              label: "SUB TOTAL",
+              value: formData.totalAmount?.toFixed(2) ?? "0.00",
+            },
+            {
+              label: "GST TOTAL",
+              value: formData.totalGst?.toFixed(2) ?? "0.00",
+            },
+            {
+              label: "GRAND TOTAL",
+              value: formData.returnAmount?.toFixed(2) ?? "0.00",
               isTotal: true,
             },
           ].map(({ label, value, isTotal }, index) => (
@@ -551,7 +825,7 @@ const handleInputChange = (
               key={index}
               className={`flex justify-between ${
                 isTotal
-                  ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg"
+                  ? "font-semibold text-base bg-gray1 h-8 p-1 items-center rounded-lg"
                   : ""
               }`}
             >

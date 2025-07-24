@@ -101,6 +101,10 @@ const Page = () => {
     },
 
     {
+      header: "Pharmacy Name",
+      accessor: "pharmacyName" as keyof PurchaseOrderData,
+    },
+    {
       header: "Supplier Name",
       accessor: "supplierName" as keyof PurchaseOrderData,
     },
@@ -179,9 +183,9 @@ const Page = () => {
         const purchaseOrderWithDetails = await Promise.all(
           purchaseOrder.map(async (purchase) => {
             const supplierName = await fetchSupplier(purchase.supplierId);
-            const pharmacyData = await getPharmacyById(purchase.pharmacyId);
+            const pharmacyResponse = await getPharmacyById(purchase.pharmacyId);
             const pharmacyName =
-              pharmacyData?.pharmacyName || "Unknown Pharmacy";
+              pharmacyResponse?.data?.pharmacyName || "Unknown Pharmacy";
 
             return {
               ...purchase,
@@ -205,29 +209,34 @@ const Page = () => {
     fetchPurchaseOrder();
   }, []);
 
-
   const filteredData = purchaseOrderData
-  .filter((item) => {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    .filter((item) => {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const orderDate = new Date(item.orderedDate);
-    return orderDate >= oneMonthAgo; // Only include if within last 1 month
-  })
-  .filter((item) => {
-    const search = searchText.toLowerCase();
+      const orderDate = new Date(item.orderedDate);
+      return orderDate >= oneMonthAgo; // Only include if within last 1 month
+    })
+    .filter((item) => {
+      const search = searchText.toLowerCase();
 
-    const orderedDateFormatted = format(new Date(item.orderedDate), "dd-MM-yyyy");
-    const deliveryDateFormatted = format(new Date(item.intendedDeliveryDate), "dd-MM-yyyy");
+      const orderedDateFormatted = format(
+        new Date(item.orderedDate),
+        "dd-MM-yyyy"
+      );
+      const deliveryDateFormatted = format(
+        new Date(item.intendedDeliveryDate),
+        "dd-MM-yyyy"
+      );
 
-    return (
-      item.orderId1?.toLowerCase().includes(search) ||
-      orderedDateFormatted.toLowerCase().includes(search) ||
-      item.supplierName?.toLowerCase().includes(search) ||
-      deliveryDateFormatted.toLowerCase().includes(search) ||
-      item.grandTotal?.toString().toLowerCase().includes(search)
-    );
-  });
+      return (
+        item.orderId1?.toLowerCase().includes(search) ||
+        orderedDateFormatted.toLowerCase().includes(search) ||
+        item.supplierName?.toLowerCase().includes(search) ||
+        deliveryDateFormatted.toLowerCase().includes(search) ||
+        item.grandTotal?.toString().toLowerCase().includes(search)
+      );
+    });
 
   return (
     <>

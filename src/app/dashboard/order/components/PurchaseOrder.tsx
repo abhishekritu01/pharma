@@ -36,6 +36,7 @@ import AsyncSelect from "react-select/async";
 import { customSelectStyles } from "@/app/components/common/DropdownStyle";
 import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
+import SelectField from "@/app/components/common/SelectField";
 
 interface PurchaseOrderProps {
   setShowPurchasOrder: (value: boolean) => void;
@@ -69,6 +70,9 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [modalBgClass, setModalBgClass] = useState("");
 
   const defaultItemOptions = [{ label: "+ Add New Item", value: "newItem" }];
+  const defaultSupplierOptions = [
+    { label: "+ Add New Supplier", value: "newSupplier" },
+  ];
 
   interface ModalOptions {
     message: string;
@@ -120,6 +124,32 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   useEffect(() => {
     fetchSuppliers();
   }, []);
+
+  const loadSupplierOptions = async (
+    inputValue: string,
+    callback: (options: OptionType[]) => void
+  ) => {
+    try {
+      if (!inputValue) {
+        callback(defaultSupplierOptions);
+        return;
+      }
+
+      const filtered = suppliers
+        .filter((sup) =>
+          sup.supplierName.toLowerCase().startsWith(inputValue.toLowerCase())
+        )
+        .map((sup) => ({
+          label: sup.supplierName,
+          value: sup.supplierId,
+        }));
+
+      callback([...defaultSupplierOptions, ...filtered]);
+    } catch (error) {
+      console.error("Failed to load supplier options:", error);
+      callback(defaultSupplierOptions);
+    }
+  };
 
   const fetchItems = async () => {
     try {
@@ -269,7 +299,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
         <input
           type="number"
           name="packageQuantity"
-          value={row.packageQuantity}
+          value={row.packageQuantity === 0 ? "" : row.packageQuantity}
           onKeyDown={restrictInvalidNumberKeys}
           onChange={handleNumericChange((e) => handleChange(e, index))}
           className="border border-gray-300 p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
@@ -299,7 +329,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     { header: "Estimated Amount", accessor: "amount", className: "text-left" },
     {
       header: "Action",
-      accessor: (row: PurchaseOrderItem) => (
+      accessor: (row: PurchaseOrderItem, index) => (
         <div className="relative group">
           <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
             <BsThreeDotsVertical size={18} />
@@ -313,12 +343,12 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
               Edit Item Details
             </button>
 
-            {/* <button
+            <button
               onClick={() => handleDeleteRow(index)}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
-            </button> */}
+            </button>
           </div>
         </div>
       ),
@@ -380,25 +410,25 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     }
   };
 
-  // const handleDeleteRow = (index: number) => {
-  //   if (orderItemRows.length === 1) {
-  //     toast.error("Cannot delete the last row", {
-  //       position: "top-right",
-  //       autoClose: 3000,
-  //     });
-  //     return;
-  //   }
+  const handleDeleteRow = (index: number) => {
+    if (orderItemRows.length === 1) {
+      toast.error("Cannot delete the last row", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
 
-  //   handleShowModal({
-  //     message:
-  //       "Are you sure you want to delete this item? This action cannot be undone",
-  //     secondaryMessage: "Confirm Deletion",
-  //     bgClassName: "bg-darkRed",
-  //     onConfirmCallback: () => {
-  //       setorderItemRows(orderItemRows.filter((_, i) => i !== index));
-  //     },
-  //   });
-  // };
+    handleShowModal({
+      message:
+        "Are you sure you want to delete this item? This action cannot be undone",
+      secondaryMessage: "Confirm Deletion",
+      bgClassName: "bg-darkRed",
+      onConfirmCallback: () => {
+        setorderItemRows(orderItemRows.filter((_, i) => i !== index));
+      },
+    });
+  };
 
   const handlePurchaseOrderList = () => {
     setShowPurchasOrder(false);
@@ -497,18 +527,26 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     await fetchSuppliers();
   };
 
-  useEffect(() => {
-    const fetchPharmacies = async () => {
-      try {
-        const data = await getPharmacy();
-        setPharmacies(data.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
+ useEffect(() => {
+  const fetchPharmacies = async () => {
+    try {
+      const data = await getPharmacy();
+      setPharmacies(data.data);
 
-    fetchPharmacies();
-  }, []);
+      if (!formData.pharmacyId && data.data.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          pharmacyId: data.data[0].pharmacyId,
+        }));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchPharmacies();
+}, [formData.pharmacyId]);
+
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -730,7 +768,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
           <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {[
               { id: "orderedDate", label: "Order Date", type: "date" },
-              { id: "pharmacyId", label: "Pharmacy", type: "dropdown" },
+              { id: "pharmacyId", label: "Pharmacy", type: "text" },
               { id: "supplierId", label: "Supplier", type: "dropdown" },
               {
                 id: "intendedDeliveryDate",
@@ -747,32 +785,31 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                     >
                       {label}
                     </label>
-                    <select
-                      id={id}
-                      value={formData.supplierId || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "newSupplier") {
+                    <SelectField
+                      value={
+                        formData.supplierId && formData.supplierName
+                          ? {
+                              label: formData.supplierName,
+                              value: formData.supplierId,
+                            }
+                          : null
+                      }
+                      onChange={(selected) => {
+                        if (selected?.value === "newSupplier") {
                           handleSupplierDrawer();
-                        } else {
-                          handleInputChange(e);
+                          return;
                         }
+                        setFormData((prev) => ({
+                          ...prev,
+                          supplierId: selected?.value || "",
+                          supplierName: selected?.label || "",
+                        }));
                       }}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="supplierId"
-                    >
-                      <option value="" disabled>
-                        Select Supplier
-                      </option>
-                      <option value="newSupplier" className="text-Purple">
-                        + New Supplier
-                      </option>
-                      {suppliers.map((sup) => (
-                        <option key={sup.supplierId} value={sup.supplierId}>
-                          {sup.supplierName}
-                        </option>
-                      ))}
-                    </select>
+                      label="Supplier"
+                      loadOptions={loadSupplierOptions}
+                      defaultOptions={defaultSupplierOptions} // ✅ Only show "Add New Supplier"
+                      formatOptionLabel={(data) => data.label}
+                    />
                   </>
                 ) : id === "pharmacyId" ? (
                   <>
@@ -782,26 +819,19 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                     >
                       {label}
                     </label>
-                    <select
+                    <input
                       id={id}
-                      value={formData.pharmacyId || ""}
-                      onChange={handleInputChange}
-                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                      name="pharmacyId"
-                    >
-                      <option value="" disabled>
-                        Select Pharmacy
-                      </option>
-                      {Array.isArray(pharmacies) &&
-                        pharmacies.map((pharmacy) => (
-                          <option
-                            key={pharmacy.pharmacyId}
-                            value={pharmacy.pharmacyId}
-                          >
-                            {pharmacy.pharmacyName}
-                          </option>
-                        ))}
-                    </select>
+                      type="text"
+                      readOnly
+                      value={
+                        pharmacies.find(
+                          (ph) =>
+                            String(ph.pharmacyId) ===
+                            String(formData.pharmacyId)
+                        )?.pharmacyName || ""
+                      }
+                      className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
+                    />
                   </>
                 ) : (
                   <InputField
@@ -845,8 +875,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
 
         <div className="border h-auto w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
           {[
-            // { label: "SUB TOTAL", value: 0 },
-            // { label: "GST TOTAL", value: 0 },
+
             {
               label: "GRAND TOTAL",
               value: formData.grandTotal.toFixed(2),
