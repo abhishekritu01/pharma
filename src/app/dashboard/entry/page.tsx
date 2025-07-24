@@ -300,14 +300,14 @@ const Page = () => {
             >
               View
             </Link>
-            {row.paymentStatus?.toLowerCase() === "pending" && (
+            {/* {row.paymentStatus?.toLowerCase() === "pending" && (
             <button
               onClick={() => console.log("Deleting Item:")}
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
             </button>
-             )}
+             )} */}
             {row.paymentStatus?.toLowerCase() === "pending" && (
               <button
                 onClick={() => handleConfirmPayment(row.invId!)}
