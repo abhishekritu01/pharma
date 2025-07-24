@@ -662,7 +662,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
           </div> */}
 
           <div className="bg-white rounded-lg shadow p-6 w-full">
-            <h2 className="text-lg font-medium text-gray-800 mb-4">
+            <h2 className="text-xl font-bold text-gray-800">
               Billed Items
             </h2>
             <Table
