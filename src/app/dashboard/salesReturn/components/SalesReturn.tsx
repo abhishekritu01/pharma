@@ -72,11 +72,11 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
   const [modalSecondaryMesaage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
   const [modalCancelCallback, setModalCancelCallback] = useState<() => void>(
-    () => {}
+    () => { }
   );
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
-  >(() => {});
+  >(() => { });
 
   const handleShowModal = (options: {
     message: string;
@@ -89,7 +89,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
     setModalSecondaryMessage(options.secondaryMessage || "");
     setModalBgClass(options.bgClassName || "");
     setModalConfirmCallback(() => options.onConfirmCallback);
-    setModalCancelCallback(() => options.onCancelCallback || (() => {}));
+    setModalCancelCallback(() => options.onCancelCallback || (() => { }));
     setShowModal(true);
   };
 
@@ -421,8 +421,8 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
     return type === "IP"
       ? "In-Patient"
       : type === "OP"
-      ? "Out-Patient"
-      : type || "N/A";
+        ? "Out-Patient"
+        : type || "N/A";
   };
 
   return (
@@ -493,8 +493,8 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
                 backgroundColor: state.isSelected
                   ? "#442060"
                   : state.isFocused
-                  ? "#F3E8FF"
-                  : base.backgroundColor,
+                    ? "#F3E8FF"
+                    : base.backgroundColor,
                 color: state.isSelected ? "white" : base.color,
                 "&:active": {
                   backgroundColor: "#E1C4F8",
@@ -520,7 +520,69 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
 
       {originalBill && (
         <>
-          <div className="bg-white rounded-lg shadow p-6 w-full border border-gray-200">
+          <div className="bg-white rounded-lg p-6 w-full border border-gray-200">
+            <div className="flex items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Patient Details</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Patient Name</label>
+                <div className="text-base text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50/50">
+                  {patientData?.firstName
+                    ? `${patientData.firstName} ${patientData.lastName || ""}`.trim()
+                    : originalBill.patientName || "--"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Bill Date</label>
+                <div className="text-base text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50/50">
+                  {originalBill?.billDateTime
+                    ? new Date(originalBill.billDateTime).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                    : "--"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Mobile Number</label>
+                <div className="text-base text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50/50">
+                  {patientData?.phone || originalBill.phone || "--"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Patient ID</label>
+                <div className="text-base text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50/50 truncate">
+                  {patientData?.patientId1 || originalBill?.patientId1 || "--"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Patient Type</label>
+                <div className="text-base text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50/50">
+                  {formatPatientType(originalBill.patientType) || "--"}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-500 mb-1">Payment Status</label>
+                <div className="text-base p-3 border border-gray-200 rounded-md bg-gray-50/50">
+                  <span className={
+                    originalBill.paymentStatus?.toLowerCase() === "paid"
+                      ? "text-green-600"
+                      : ["pending", "not paid"].includes(
+                        originalBill.paymentStatus?.toLowerCase()
+                      )
+                        ? "text-amber-500"
+                        : "text-gray-800"
+                  }>
+                    {formatPaymentStatus(originalBill.paymentStatus) || "--"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="bg-white rounded-lg shadow p-6 w-full border border-gray-200">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
               Patient Details
             </h2>
@@ -597,7 +659,8 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
+
           <div className="bg-white rounded-lg shadow p-6 w-full">
             <h2 className="text-lg font-medium text-gray-800 mb-4">
               Billed Items
