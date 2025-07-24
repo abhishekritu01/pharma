@@ -1,136 +1,76 @@
-// salesReturnData.ts
 import { BillingData } from './BillingData';
-import { PatientData } from './PatientData'; 
+import { PatientData } from './PatientData';
 
 export interface SalesReturnItemData {
-  returnItemId: string;
-  billItemId: string;
-  itemId: string;
-  itemName: string;
-  batchNo: string;
-  returnedQuantity: number;
-  returnReason: string;
-  originalPrice: number;
-  refundAmount: number;
+  billReturnItemId?: string;
+  itemId: string;   
+  batchNo: string; 
+  expiryDate?: Date | string | null;
+  packageQuantity: number; 
+  returnQuantity: number;  
+  mrpSalePricePerUnit: number; 
+  gstPercentage?: number;     
+  gstAmount?: number; 
+  grossTotal: number; 
+  netTotal: number; 
+  returnItemId?: string;        
+  billItemId?: string;       
+  itemName?: string;       
+  returnReason?: string; 
+  maxQuantity?: number;  
+  returnedQuantity?: number;    
+  originalPrice?: number;       
+  cgstPercentage: number;     
+  sgstPercentage: number;   
+  cgstAmount?: number;         
+  sgstAmount?: number;         
+  grossAmount?: number;            
+  netAmount?: number;              
+  refundAmount?: number;            
+  billedAmount?: number;            
+  discountPercentage?: number;      
 }
 
 export interface SalesReturnData {
-  returnId: string;
-  returnId1?: string;
-  originalBillId: string;
-  originalBill?: BillingData;
-  patientId: string;
-  patientName?: string;
+  billReturnId?: string;           
+  billReturnId1?: string;       
+  originalBillId: string;         
+  patientId: string;           
+  patientName?: string;           
+  billReturnDateTime: string | Date;      
+  subTotal: number;               
+  totalGst?: number;               
+  grandTotal: number;     
+  billReturnItemDtos: SalesReturnItemData[]; 
+  billId1?: string; 
+  originalBill?: BillingData; 
   patient?: PatientData;
-  returnDate: Date | string;
-  returnReason?: string;
-  subTotal?: number;          
-  totalGst?: number;          
-  totalDiscount?: number;     
-  grandTotal?: number;        
-  totalRefundAmount: number;
-  paymentStatus: 'pending' | 'processed';
+  returnItem?: SalesReturnItemData[]; 
+  paymentStatus?: 'pending' | 'processed';
   paymentMethod?: string;
-  receivedAmount?: string;   
-  balanceAmount?: string;   
+  receivedAmount?: number;
+  balanceAmount?: number;
+  totalRefundAmount?: number;   
   processedBy?: string;
   createdBy?: number;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+  BillReturnDto?: SalesReturnData[];
+  returnReason?: string; 
+  totalCgst?: number;
+  totalSgst?: number; 
+  totalDiscount?: number; 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { BillingData, BillingItemData} from './BillingData';
-
-// export interface SalesReturnItemData {
-//   returnItemId: string;
-//   billItemId: string;
-//   itemId: string;
-//   itemName: string;
-//   batchNo: string;
-//   returnedQuantity: number;
-//   returnReason: string;
-//   originalPrice: number;
-//   refundAmount: number;
-// }
-
-// export interface SalesReturnData {
-//   returnId: string;
-//   returnId1?: string;
-//   originalBillId: string;
-//   originalBill?: BillingData;
-//   returnDate: Date | string;
-//   patientId: string;
-//   patientName?: string;
-//   returnReason?: string;
-//   totalRefundAmount: number;
-//   paymentStatus: 'pending' | 'processed';
-//   paymentMethod?: string;
-//   processedBy?: string;
-//   returnItems: SalesReturnItemData[];
-//   createdAt?: Date | string;
-//   updatedAt?: Date | string;
-// }
+export interface SalesReturnListData {
+  originalBillId: string;
+  billReturnId: string;
+  billReturnId1: string;
+  billId1: string;
+  billReturnDateTime: string | Date;
+  grandTotal: number;
+  patientType: string;
+  patientId: string;
+  patientName: string;
+  returnedItem: number;
+}

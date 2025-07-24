@@ -31,7 +31,7 @@ const PurchaseOrderDetailsClient = () => {
       },
       {
         header: "Package Qty",
-        accessor: "quantity" as keyof PurchaseOrderItem,
+        accessor: "packageQuantity" as keyof PurchaseOrderItem,
       },
       {
         header: "Variant Type",

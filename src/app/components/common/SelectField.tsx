@@ -22,6 +22,7 @@ interface SelectFieldProps {
     data: OptionType,
     context: FormatOptionLabelMeta<OptionType>
   ) => React.ReactNode;
+  // onAddNew?: () => void;
 }
 
 const customStyles: StylesConfig<OptionType, false> = {
@@ -52,25 +53,22 @@ const customStyles: StylesConfig<OptionType, false> = {
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isSelected
-      ? "#4B0082"
-      : state.isFocused
-      ? "#E5D2F4"
-      : "#fff",
-    color: state.isSelected ? "#fff" : "#000",
+    backgroundColor: state.isSelected || state.isFocused ? "#4B0082" : "#fff",
+    color: state.isSelected || state.isFocused ? "#fff" : "#000",
     cursor: "pointer",
     borderRadius: "0.5rem",
     margin: "2px",
     ":active": {
-      backgroundColor: state.isSelected ? "#4B0082" : "#E5D2F4",
+      backgroundColor: "#4B0082",
+      color: "#fff",
     },
   }),
+
   menuPortal: (base) => ({
     ...base,
     zIndex: 9999,
   }),
 };
-
 
 const SelectField: React.FC<SelectFieldProps> = ({
   value,
@@ -81,6 +79,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   isDisabled = false,
   defaultOptions,
   formatOptionLabel,
+  // onAddNew,
 }) => {
   return (
     <div className="relative w-full">
@@ -99,6 +98,17 @@ const SelectField: React.FC<SelectFieldProps> = ({
         formatOptionLabel={formatOptionLabel ?? ((data) => data.label)}
         menuPortalTarget={document.body}
         menuPosition="fixed"
+        // noOptionsMessage={() => (
+        //   <div
+        //     className="px-3 py-2 cursor-pointer text-sm text-white bg-[#4B0082] rounded-md mx-1 hover:bg-[#3a006b] transition-colors"
+        //     onMouseDown={(e) => {
+        //       e.preventDefault();
+        //       onAddNew?.();
+        //     }}
+        //   >
+        //     + Add New Patient
+        //   </div>
+        // )}
       />
       <label
         className={`absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all

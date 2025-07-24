@@ -5,7 +5,7 @@ import Drawer from "@/app/components/common/Drawer";
 import Table from "@/app/components/common/Table";
 import { BillingData, BillingItemData } from "@/app/types/BillingData";
 import { ClipboardList, Plus } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Patient from "../../patient/components/Patient";
 import ItemDropdown from "@/app/components/common/ItemDropdown";
@@ -50,6 +50,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [, setShowDrawer] = useState<boolean>(false);
   const [, setBillingItems] = useState<BillingItemData[]>([]);
   const [mobileOptions, setMobileOptions] = useState<PatientOption[]>([]);
+  const [, setDoctorOptions] = useState<OptionType[]>([]);
 
   const [selectedMobile, setSelectedMobile] = useState<string | null>(null);
   const [patientData, setPatientData] = useState<Partial<PatientData>>({});
@@ -63,9 +64,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
   >(() => {});
-  const defaultMobileOptions = [
-    { label: "+ Add New Patient", value: "newPatient" },
-  ];
 
   const defaultDoctorOptions = [
     { label: "+ Add New Doctor", value: "newDoctor" },
@@ -452,26 +450,49 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     setBillingItems(updatedRows);
   };
 
+  // useEffect(() => {
+  //   const fetchMobileNumbers = async () => {
+  //     try {
+  //       const patients = await getPatient();
+  //       const options = patients.map((p: PatientData) => ({
+  //         label: `${p.phone} - ${p.firstName} ${p.lastName}`,
+  //         value: p.phone,
+  //         firstName: p.firstName,
+  //         lastName: p.lastName,
+  //         gender: p.gender,
+  //         patientId: p.patientId,
+  //         patientId1: p.patientId1,
+  //       }));
+
+  //       setMobileOptions(options);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchMobileNumbers();
+  // }, []);
+
+  const fetchMobileNumbers = async () => {
+    try {
+      const patients = await getPatient();
+      const options = patients.map((p: PatientData) => ({
+        label: `${p.phone} - ${p.firstName} ${p.lastName}`,
+        value: p.phone,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        gender: p.gender,
+        patientId: p.patientId,
+        patientId1: p.patientId1,
+      }));
+
+      setMobileOptions(options);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetchMobileNumbers = async () => {
-      try {
-        const patients = await getPatient();
-        const options = patients.map((p: PatientData) => ({
-          label: `${p.phone} - ${p.firstName} ${p.lastName}`,
-          value: p.phone,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          gender: p.gender,
-          patientId: p.patientId,
-          patientId1: p.patientId1,
-        }));
-
-        setMobileOptions(options);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     fetchMobileNumbers();
   }, []);
 
@@ -481,10 +502,16 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   ) => {
     const filtered = mobileOptions.filter(
       (opt) =>
-        opt.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-        String(opt.value).toLowerCase().includes(inputValue.toLowerCase())
+        opt.label.toLowerCase().startsWith(inputValue.toLowerCase()) ||
+        String(opt.value).toLowerCase().startsWith(inputValue.toLowerCase())
     );
-    callback([...defaultMobileOptions, ...filtered]);
+
+    const addNewOption = {
+      label: "+ Add New Patient",
+      value: "newPatient",
+    };
+
+    callback([addNewOption, ...filtered]);
   };
 
   const handleMobileSelect = (
@@ -536,6 +563,23 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       handlePatientDrawer();
     }
   };
+
+  const fetchDoctorOptions = async () => {
+    try {
+      const doctors = await getDoctor();
+      const options = doctors.map((doc: DoctorData) => ({
+        label: `${doc.doctorName}`,
+        value: doc.doctorId,
+      }));
+      setDoctorOptions(options);
+    } catch (error) {
+      console.error("Failed to fetch doctor options:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDoctorOptions();
+  }, []);
 
   const loadDoctorOptions = async (
     inputValue: string,
@@ -657,21 +701,16 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     }));
   }, [billingItemRows]);
 
-  const prevPaymentTypeRef = useRef(formData.paymentType);
-
   useEffect(() => {
-    const prevPaymentType = prevPaymentTypeRef.current;
-
-    if (prevPaymentType === "cash" && formData.paymentType !== "cash") {
+    if (formData.paymentStatus === "pending" && formData.paymentType !== "") {
       setFormData((prev) => ({
         ...prev,
+        paymentType: "",
         receivedAmount: 0,
         balanceAmount: 0,
       }));
     }
-
-    prevPaymentTypeRef.current = formData.paymentType;
-  }, [formData.paymentType]);
+  }, [formData.paymentStatus, formData.paymentType]);
 
   const addBilling = () => {
     handleShowModal({
@@ -743,13 +782,19 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
 
       {showPatient && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Patient"}>
-          <Patient setShowDrawer={handleCloseDrawer} />
+          <Patient
+            setShowDrawer={handleCloseDrawer}
+            onPatientAdded={fetchMobileNumbers}
+          />
         </Drawer>
       )}
 
       {showDoctor && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Doctor"}>
-          <Doctor setShowDrawer={handleCloseDrawer} />
+          <Doctor
+            setShowDrawer={handleCloseDrawer}
+            onDoctorAdded={fetchDoctorOptions}
+          />
         </Drawer>
       )}
 
@@ -810,6 +855,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     formatOptionLabel={(data, { context }) =>
                       context === "value" ? data.value : data.label
                     }
+                    // onAddNew={handlePatientDrawer}
                   />
                 </div>
               ) : (

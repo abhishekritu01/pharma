@@ -11,6 +11,7 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar } from "react-chartjs-2";
 import React from "react";
 import type { Context } from "chartjs-plugin-datalabels";
+import type { TooltipItem } from "chart.js";
 
 ChartJS.register(
   BarElement,
@@ -27,13 +28,18 @@ interface BarChartProps {
 const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
   const days = ["S", "M", "T", "W", "T", "F", "S"];
 
-  const adjustedSalesData = salesData.map((value) =>
-    value === 0 ? 130 : value
-  );
-  const backgroundColors = salesData.map((value) =>
+  const hasNoData = salesData.length === 0;
+  const defaultData = [0, 0, 0, 0, 0, 0, 0];
+
+  const effectiveSalesData = hasNoData ? defaultData : salesData;
+
+  const maxVal = Math.max(...effectiveSalesData);
+  const yAxisMax = maxVal === 0 ? 100 : Math.ceil(maxVal * 1.3);
+
+  const backgroundColors = effectiveSalesData.map((value) =>
     value === 0 ? "#D1D5DB" : "#D0A7F1"
   );
-  const hoverColors = salesData.map((value) =>
+  const hoverColors = effectiveSalesData.map((value) =>
     value === 0 ? "#D1D5DB" : "#9402FF"
   );
 
@@ -42,13 +48,14 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
     datasets: [
       {
         label: "Sales",
-        data: adjustedSalesData,
+        data: effectiveSalesData,
         backgroundColor: backgroundColors,
         hoverBackgroundColor: hoverColors,
         borderRadius: 12,
         borderSkipped: false,
         barPercentage: 0.6,
         categoryPercentage: 0.9,
+        minBarLength: 2,
       },
     ],
   };
@@ -71,12 +78,12 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
         display: false,
         grid: { display: false },
         min: 0,
-        max: Math.ceil(Math.max(...salesData, 10) * 1.3),
+        max: yAxisMax,
       },
     },
     layout: {
       padding: {
-        top: 1, // adjust as needed
+        top: 1,
       },
     },
     plugins: {
@@ -88,7 +95,8 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
         borderWidth: 0,
         displayColors: false,
         callbacks: {
-          label: () => "",
+          label: (context: TooltipItem<"bar">) =>
+            `₹${effectiveSalesData[context.dataIndex]}`,
           title: () => "",
         },
       },
@@ -110,7 +118,8 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
         anchor: "end" as const,
         align: "end" as const,
         formatter: (_value: number, context: Context) =>
-          `₹${Math.round(salesData[context.dataIndex])}`,
+          `₹${Math.round(effectiveSalesData[context.dataIndex])}`,
+
         font: {
           weight: "bold" as const,
           size: 15,
@@ -120,8 +129,15 @@ const BarChart: React.FC<BarChartProps> = ({ salesData }) => {
   };
 
   return (
-    <div className="h-60 w-full">
-      <Bar data={data} options={options} plugins={[ChartDataLabels]} />
+    <div className="h-60 w-full flex flex-col items-center justify-center relative">
+      <div className="w-full h-full">
+        <Bar data={data} options={options} plugins={[ChartDataLabels]} />
+      </div>
+      {effectiveSalesData.every((val) => val === 0) && (
+        <p className="absolute text-sm text-gray-400 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          No sales data this week
+        </p>
+      )}
     </div>
   );
 };

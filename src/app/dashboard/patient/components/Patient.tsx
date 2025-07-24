@@ -12,9 +12,10 @@ import { z, ZodError } from "zod";
 
 interface PatientProps {
   setShowDrawer: (value: boolean) => void;
+  onPatientAdded: () => void;
 }
 
-const Patient: React.FC<PatientProps> = ({ setShowDrawer }) => {
+const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
   const [formData, setFormData] = useState<PatientData>({
     patientId: "",
     patientId1: "",
@@ -113,6 +114,7 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer }) => {
         autoClose: 3000,
       });
 
+      onPatientAdded();
       setShowDrawer(false);
     } catch (error) {
       console.error("Error:", error);

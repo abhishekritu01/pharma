@@ -43,7 +43,7 @@ export const navigation: NavigationItem[] = [
    
 
   { name: "Billing", href: "/dashboard/billing", icon: PiReceiptFill, current: true },
-  { name: "Sales Return", href: "/dashboard/salesReturn", icon: PiReceiptFill, current: true },
+  { name: "Bill Return", href: "/dashboard/salesReturn", icon: PiReceiptFill, current: true },
   // { name: "Supplier's Payment Summary", href: "/dashboard/spaymentsummary", icon: BiSolidCreditCard , current: true },
   
   {
