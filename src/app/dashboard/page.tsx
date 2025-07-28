@@ -41,12 +41,11 @@ const Page = () => {
     values: [0, 0, 0],
   });
 
- useEffect(() => {
-  setGreeting(getGreeting());
-  initializeUser();
-  fetchData();
-}, [initializeUser]);
-
+  useEffect(() => {
+    setGreeting(getGreeting());
+    initializeUser();
+    fetchData();
+  }, [initializeUser]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -111,11 +110,22 @@ const Page = () => {
           else pending++;
 
           const paymentType = bill.paymentType?.toLowerCase();
-          if (paymentType === "cash") cash += amount;
-          else if (paymentType === "creditcard" || paymentType === "debitcard")
+          if (paymentType === "cash") {
+            cash += amount;
+          } else if (
+            paymentType === "creditcard" ||
+            paymentType === "debitcard"
+          ) {
             card += amount;
-          else if (paymentType === "upi" || paymentType === "net banking")
+          } else if (paymentType === "upi" || paymentType === "net banking") {
             online += amount;
+          } else if (paymentType === "upicash") {
+            // UPI & Cash are stored separately
+            const upiAmount = bill.upi ?? 0;
+            const cashAmount = bill.cash ?? 0;
+            online += upiAmount;
+            cash += cashAmount;
+          }
         }
 
         const weekStart = new Date(now);

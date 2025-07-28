@@ -1,7 +1,7 @@
 import api from '@/utils/api';
 
 
-export const getPharmacyById = async (pharmacyId: string) => {
+export const getPharmacyById = async (pharmacyId: number) => {
     try {        
         const response = await api.get(`pharma/pharmacy-pharmacist/getPharmacyById/${pharmacyId}`);
         return response.data;
@@ -17,7 +17,7 @@ export const getPharmacyById = async (pharmacyId: string) => {
 
   export const getPharmacy = async () => {
     try {
-        const response = await api.get('pharma/pharmacy-pharmacist/getAllPharmacies');
+        const response = await api.get('pharma/pharmacy/getAllPharmacies');
         return response.data;
     } catch (error: unknown) {
         console.error('Error fetching Pharmacy:', error);

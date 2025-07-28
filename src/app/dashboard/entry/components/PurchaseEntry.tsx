@@ -19,7 +19,7 @@ import {
 } from "@/app/services/PurchaseOrderService";
 import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
 import { createPurchase } from "@/app/services/PurchaseEntryService";
-import { getPharmacy, getPharmacyById } from "@/app/services/PharmacyService";
+import { getPharmacy} from "@/app/services/PharmacyService";
 import { getSupplier, getSupplierById } from "@/app/services/SupplierService";
 import { toast } from "react-toastify";
 import Modal from "@/app/components/common/Modal";
@@ -714,29 +714,29 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
 
         setPurchaseRows(updatedRows);
 
-        if (pharmacyId) {
-          try {
-            const response = await getPharmacyById(pharmacyId);
-            const pharmacy = response?.data;
+        // if (pharmacyId) {
+        //   try {
+        //     const response = await getPharmacyById(pharmacyId);
+        //     const pharmacy = response?.data;
 
-            setFormData((prev) => ({
-              ...prev,
-              pharmacyId,
-              pharmacyName: pharmacy?.pharmacyName || "N/A",
-            }));
-          } catch (error) {
-            console.error(
-              "Error fetching pharmacy details for pharmacyId:",
-              pharmacyId,
-              error
-            );
-            setFormData((prev) => ({
-              ...prev,
-              pharmacyId,
-              pharmacyName: "N/A",
-            }));
-          }
-        }
+        //     setFormData((prev) => ({
+        //       ...prev,
+        //       pharmacyId,
+        //       pharmacyName: pharmacy?.pharmacyName || "N/A",
+        //     }));
+        //   } catch (error) {
+        //     console.error(
+        //       "Error fetching pharmacy details for pharmacyId:",
+        //       pharmacyId,
+        //       error
+        //     );
+        //     setFormData((prev) => ({
+        //       ...prev,
+        //       pharmacyId,
+        //       pharmacyName: "N/A",
+        //     }));
+        //   }
+        // }
 
         if (supplierId) {
           try {
@@ -1067,7 +1067,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                           (ph) =>
                             String(ph.pharmacyId) ===
                             String(formData.pharmacyId)
-                        )?.pharmacyName || ""
+                        )?.name || ""
                       }
                       className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
                     />

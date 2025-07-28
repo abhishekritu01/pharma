@@ -11,7 +11,6 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import PurchaseOrder from "./components/PurchaseOrder";
 import { getSupplierById } from "@/app/services/SupplierService";
 import { getPurchaseOrder } from "@/app/services/PurchaseOrderService";
-import { getPharmacyById } from "@/app/services/PharmacyService";
 import { format } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 
@@ -100,10 +99,10 @@ const Page = () => {
       accessor: (row: PurchaseOrderData) => formatDate(row.orderedDate),
     },
 
-    {
-      header: "Pharmacy Name",
-      accessor: "pharmacyName" as keyof PurchaseOrderData,
-    },
+    // {
+    //   header: "Pharmacy Name",
+    //   accessor: "pharmacyName" as keyof PurchaseOrderData,
+    // },
     {
       header: "Supplier Name",
       accessor: "supplierName" as keyof PurchaseOrderData,
@@ -183,14 +182,14 @@ const Page = () => {
         const purchaseOrderWithDetails = await Promise.all(
           purchaseOrder.map(async (purchase) => {
             const supplierName = await fetchSupplier(purchase.supplierId);
-            const pharmacyResponse = await getPharmacyById(purchase.pharmacyId);
-            const pharmacyName =
-              pharmacyResponse?.data?.pharmacyName || "Unknown Pharmacy";
+            // const pharmacyResponse = await getPharmacyById(purchase.pharmacyId);
+            // const pharmacyName =
+            //   pharmacyResponse?.data?.pharmacyName || "Unknown Pharmacy";
 
             return {
               ...purchase,
               supplierName,
-              pharmacyName,
+              // pharmacyName,
             };
           })
         );
