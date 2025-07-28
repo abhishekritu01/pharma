@@ -9,6 +9,7 @@ import { PiReceiptFill } from "react-icons/pi";
 import { FaListAlt } from 'react-icons/fa';
 import { TbCreditCardFilled } from "react-icons/tb";
 import { RiWaterPercentFill } from "react-icons/ri";
+import { ClockAlert } from 'lucide-react';
 
 
 
@@ -52,7 +53,8 @@ export const navigation: NavigationItem[] = [
     current: false,
     children: [
       { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
-      { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true }   
+      { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true },
+      { name: "Expired Stock", href: "/dashboard/expiryReport", icon: ClockAlert , current: true } 
     ],
   },
 

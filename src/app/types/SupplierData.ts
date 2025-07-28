@@ -7,4 +7,4 @@ export interface SupplierData {
     supplierGstinNo: string;
     supplierGstType: string;
     supplierAddress: string;
-  }
+  } 
