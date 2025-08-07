@@ -1,6 +1,6 @@
 export interface PharmacyData {
-    pharmacyId: string;
-    pharmacyName: string;
+    pharmacyId: number;
+    name: string;
     address: string;
     zipCode: number;
     gstNo: string;

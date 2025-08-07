@@ -18,7 +18,7 @@ export interface PurchaseOrderItem {
   export interface PurchaseOrderData {
     orderId?: string;
     orderId1?: string;
-    pharmacyId: string;
+    pharmacyId: number;
     pharmacistId?: number;
     supplierId: string;
     supplierName?: string;

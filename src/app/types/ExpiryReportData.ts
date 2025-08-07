@@ -3,30 +3,27 @@ import { ItemData } from "./ItemData";
 import { InventoryData } from "./InventoryData";
 import { VariantData, UnitData } from "./VariantData";
 
-
-
-
-
 export interface ExpiryReportData {
+  itemId: string;
+  itemName: string;
+  batchNo: string;
   packageQuantity: number;
-    expiredStock: number;
-    currentStock: number;
-  itemId?: string;
-    itemName: string;
-    supplier: SupplierData;
-    supplierId: string;
-    supplierName: string;
-    item: ItemData;
-    inventory: InventoryData;
-    expiryDate: string;
-    quantity: number;
-    batchNo: string;
-    expiryStatus: string;
-     variantId: string;
-    variantName: string;
-    unitDtos: UnitData[];
-    unitId: string;
-    unitName: string; 
-    variantData: VariantData;
-    unit: UnitData;
-  }
+  quantity: number;
+  expiryDate: Date;
+  supplierId: string;
+  supplierName: string;
+  expiryStatus: string;
+  formattedExpiryDate?: string;
+  expiredStock?: number;
+  currentStock?: number;
+  supplier?: SupplierData;
+  item?: ItemData;
+  inventory?: InventoryData;
+  variantId?: string;
+  variantName?: string;
+  unitDtos?: UnitData[];
+  unitId?: string;
+  unitName?: string;
+  variantData?: VariantData;
+  unit?: UnitData;
+}

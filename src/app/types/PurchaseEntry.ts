@@ -43,7 +43,7 @@ export interface PurchaseEntryItem {
     supplierName?: string;
     grnNo?:string;
     dueStatus?:string;
-    pharmacyId?: string;
+    pharmacyId?: number;
 
     stockItemDtos: PurchaseEntryItem[]; 
   }

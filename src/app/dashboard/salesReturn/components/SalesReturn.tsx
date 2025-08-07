@@ -736,19 +736,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 w-full">
-            <Button
-              onClick={() =>
-                handleShowModal({
-                  message: "Are you sure you want to cancel this return?",
-                  secondaryMessage: "All entered data will be lost.",
-                  bgClassName: "bg-darkRed",
-                  onConfirmCallback: () => setShowCreateReturn(false),
-                })
-              }
-              label="Cancel"
-              className="bg-gray-200 text-gray-800 hover:bg-gray-300 px-6 py-2 rounded-lg"
-            />
+          <div className="flex justify-end">
             <MyButton
               onClick={() =>
                 handleShowModal({
@@ -759,9 +747,9 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
                   onConfirmCallback: handleSubmit,
                 })
               }
-              label={loading ? "Processing..." : "Confirm Return"}
+              label={loading ? "Processing..." : "Save"}
               disabled={loading}
-              className="bg-darkPurple text-white px-6 py-2 rounded-lg"
+              className="w-28 bg-darkPurple text-white h-11"
             />
           </div>
         </>

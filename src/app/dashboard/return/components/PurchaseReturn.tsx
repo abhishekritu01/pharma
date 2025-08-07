@@ -17,10 +17,12 @@ import {
   PurchaseReturnItem,
 } from "@/app/types/PurchaseReturnData";
 import { ClipboardList, Plus } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { getPharmacy } from "@/app/services/PharmacyService";
+import { PharmacyData } from "@/app/types/PharmacyData";
 
 interface PurchaseReturnProps {
   setShowPurchaseReturn: (value: boolean) => void;
@@ -39,6 +41,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
   const [modalMessage, setModalMessage] = useState("");
   const [modalSecondaryMessage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
+  const [, setPharmacies] = useState<PharmacyData[]>([]);
 
   interface ModalOptions {
     message: string;
@@ -435,7 +438,6 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         }
       }
 
-      
       setFormData((prev) => {
         const updatedItems = [...prev.purchaseReturnItemDtos];
         updatedItems[idx] = {
@@ -484,6 +486,29 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
       };
     });
   };
+
+  const hasSetPharmacy = useRef(false);
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await getPharmacy();
+        setPharmacies(data.data);
+
+        if (!hasSetPharmacy.current && data.data.length > 0) {
+          hasSetPharmacy.current = true;
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId,
+          }));
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchPharmacies();
+  }, []);
 
   return (
     <>
@@ -783,6 +808,12 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                 </div>
               </div>
             </div>
+
+            <input
+              type="hidden"
+              name="pharmacyId"
+              value={formData.pharmacyId}
+            />
 
             {/* Right Column */}
             <div className="w-full min-w-0 overflow-x-auto">

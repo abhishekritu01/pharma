@@ -5,7 +5,7 @@ import Drawer from "@/app/components/common/Drawer";
 import Table from "@/app/components/common/Table";
 import { BillingData, BillingItemData } from "@/app/types/BillingData";
 import { ClipboardList, Plus } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Patient from "../../patient/components/Patient";
 import ItemDropdown from "@/app/components/common/ItemDropdown";
@@ -24,6 +24,8 @@ import {
   restrictInvalidNumberKeys,
 } from "@/app/components/common/RestrictedVal";
 import { DoctorData } from "@/app/types/DoctorData";
+import { getPharmacy } from "@/app/services/PharmacyService";
+import { PharmacyData } from "@/app/types/PharmacyData";
 
 interface BillingProps {
   setShowBilling: (value: boolean) => void;
@@ -52,7 +54,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   const [, setBillingItems] = useState<BillingItemData[]>([]);
   const [mobileOptions, setMobileOptions] = useState<PatientOption[]>([]);
   const [, setDoctorOptions] = useState<OptionType[]>([]);
-
+  const [, setPharmacies] = useState<PharmacyData[]>([]);
   const [selectedMobile, setSelectedMobile] = useState<string | null>(null);
   const [patientData, setPatientData] = useState<Partial<PatientData>>({});
   const [showModal, setShowModal] = useState(false);
@@ -96,6 +98,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     paymentType: "",
     receivedAmount: 0,
     balanceAmount: 0,
+    upi: 0,
+    cash: 0,
     billItemDtos: [],
   });
 
@@ -637,15 +641,44 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     }
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
+  // const handleInputChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
+
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+
+  setFormData((prev) => {
+    const isNumberField = !["paymentStatus", "paymentType"].includes(name);
+    const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
+
+    const updatedData: typeof prev = {
       ...prev,
-      [name]: value,
-    }));
-  };
+      [name]: parsedValue,
+    };
+
+    // Only calculate if parsedValue is a number
+    if (
+      name === "receivedAmount" &&
+      prev.paymentType === "cash" &&
+      typeof parsedValue === "number"
+    ) {
+      updatedData.balanceAmount = parseFloat(
+        (parsedValue - prev.grandTotal).toFixed(2)
+      );
+    }
+
+    return updatedData;
+  });
+};
 
   const handleDeleteRow = (index: number) => {
     if (billingItemRows.length === 1) {
@@ -785,6 +818,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
             paymentType: "",
             receivedAmount: 0,
             balanceAmount: 0,
+            upi: 0,
+            cash: 0,
             billItemDtos: [],
           });
 
@@ -802,6 +837,29 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       },
     });
   };
+
+  const hasSetPharmacy = useRef(false);
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await getPharmacy();
+        setPharmacies(data.data);
+
+        if (!hasSetPharmacy.current && data.data.length > 0) {
+          hasSetPharmacy.current = true;
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId,
+          }));
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchPharmacies();
+  }, []);
 
   return (
     <>
@@ -1017,6 +1075,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
           </div>
         </div>
 
+        <input type="hidden" name="pharmacyId" value={formData.pharmacyId} />
+
         <Table
           data={billingItemRows}
           columns={columns}
@@ -1073,6 +1133,7 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                       <option value="">Select Type</option>
                       <option value="cash">Cash</option>
                       <option value="upi">UPI</option>
+                      <option value="upiCash">UPI & Cash</option>
                       <option value="creditCard">Credit Card</option>
                       <option value="debitCard">Debit Card</option>
                       <option value="net_banking">Net Banking</option>
@@ -1082,69 +1143,119 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
 
                 {index === 2 && (
                   <>
-                    <label
-                      htmlFor="receivedAmount"
-                      className="w-48 text-base font-medium"
-                    >
-                      Received Amount
-                    </label>
-                    <div className="flex flex-col">
-                      <input
-                        type="number"
-                        id="receivedAmount"
-                        name="receivedAmount"
-                        className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
-                          formData.paymentType !== "cash"
-                            ? "border-gray-300 bg-gray-100 cursor-not-allowed"
-                            : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
-                        }`}
-                        value={
-                          formData.receivedAmount === 0
-                            ? ""
-                            : formData.receivedAmount
-                        }
-                        onKeyDown={restrictInvalidNumberKeys}
-                        onChange={handleNumericChange((e) =>
-                          handleInputChange(e)
-                        )}
-                        // onChange={handleInputChange}
-                        disabled={formData.paymentType !== "cash"}
-                      />
-                    </div>
+                    {formData.paymentType === "upiCash" ? (
+                      <>
+                        <label
+                          htmlFor="upi"
+                          className="w-48 text-base font-medium"
+                        >
+                          UPI
+                        </label>
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            id="upi"
+                            name="upi"
+                            className="w-60 h-10 p-2 border border-Gray rounded-md bg-white text-black outline-none text-base focus:border-purple-900 focus:ring-0"
+                            value={formData.upi || ""}
+                            onKeyDown={restrictInvalidNumberKeys}
+                            onChange={handleNumericChange((e) =>
+                              handleInputChange(e)
+                            )}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <label
+                          htmlFor="receivedAmount"
+                          className="w-48 text-base font-medium"
+                        >
+                          Received Amount
+                        </label>
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            id="receivedAmount"
+                            name="receivedAmount"
+                            className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
+                              formData.paymentType !== "cash"
+                                ? "border-gray-300 bg-gray-100 cursor-not-allowed"
+                                : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
+                            }`}
+                            value={
+                              formData.receivedAmount === 0
+                                ? ""
+                                : formData.receivedAmount
+                            }
+                            onKeyDown={restrictInvalidNumberKeys}
+                            onChange={handleNumericChange((e) =>
+                              handleInputChange(e)
+                            )}
+                            disabled={formData.paymentType !== "cash"}
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
                 {index === 3 && (
                   <>
-                    <label
-                      htmlFor="balanceAmount"
-                      className="w-48 text-base font-medium"
-                    >
-                      Balance Amount
-                    </label>
-                    <div className="flex flex-col">
-                      <input
-                        type="number"
-                        id="balanceAmount"
-                        name="balanceAmount"
-                        className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
-                          formData.paymentType !== "cash"
-                            ? "border-gray-300 bg-gray-100 cursor-not-allowed"
-                            : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
-                        }`}
-                        value={
-                          formData.balanceAmount === 0
-                            ? ""
-                            : formData.balanceAmount
-                        }
-                        onKeyDown={restrictInvalidNumberKeys}
-                        onChange={handleNumericChange((e) =>
-                          handleInputChange(e)
-                        )}
-                        // onChange={handleInputChange}
-                        disabled={formData.paymentType !== "cash"}
-                      />
-                    </div>
+                    {formData.paymentType === "upiCash" ? (
+                      <>
+                        <label
+                          htmlFor="cash"
+                          className="w-48 text-base font-medium"
+                        >
+                          Cash
+                        </label>
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            id="cash"
+                            name="cash"
+                            className="w-60 h-10 p-2 border border-Gray rounded-md bg-white text-black outline-none text-base focus:border-purple-900 focus:ring-0"
+                            value={formData.cash || ""}
+                            onKeyDown={restrictInvalidNumberKeys}
+                            onChange={handleNumericChange((e) =>
+                              handleInputChange(e)
+                            )}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <label
+                          htmlFor="balanceAmount"
+                          className="w-48 text-base font-medium"
+                        >
+                          Balance Amount
+                        </label>
+                        <div className="flex flex-col">
+                          <input
+                            type="number"
+                            id="balanceAmount"
+                            name="balanceAmount"
+                            className={`w-60 h-10 p-2 border rounded-md text-black outline-none text-base ${
+                              formData.paymentType !== "cash"
+                                ? "border-gray-300 bg-gray-100 cursor-not-allowed"
+                                : "border-Gray bg-white focus:border-purple-900 focus:ring-0"
+                            }`}
+                            value={
+                              formData.balanceAmount === 0
+                                ? ""
+                                : formData.balanceAmount
+                            }
+                            onKeyDown={restrictInvalidNumberKeys}
+                            onChange={handleNumericChange((e) =>
+                              handleInputChange(e)
+                            )}
+                            disabled={formData.paymentType !== "cash"}
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
               </div>

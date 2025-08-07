@@ -84,7 +84,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [formData, setFormData] = useState<PurchaseOrderData>({
     orderId: "",
     orderId1: "",
-    pharmacyId: "",
+    pharmacyId: 0,
     supplierId: "",
     supplierName: "",
     orderedDate: new Date(),
@@ -602,7 +602,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
           setFormData({
             orderId: "",
             orderId1: "",
-            pharmacyId: "",
+            pharmacyId: 0,
             supplierId: "",
             supplierName: "",
             orderedDate: new Date(),
@@ -807,7 +807,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                       }}
                       label="Supplier"
                       loadOptions={loadSupplierOptions}
-                      defaultOptions={defaultSupplierOptions} // ✅ Only show "Add New Supplier"
+                      defaultOptions={defaultSupplierOptions} 
                       formatOptionLabel={(data) => data.label}
                     />
                   </>
@@ -828,7 +828,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                           (ph) =>
                             String(ph.pharmacyId) ===
                             String(formData.pharmacyId)
-                        )?.pharmacyName || ""
+                        )?.name || ""
                       }
                       className="w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md text-black outline-none"
                     />
