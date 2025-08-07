@@ -11,6 +11,7 @@ import {
   getPurchase,
 } from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
+import Button from "@/app/components/common/Button";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import {
@@ -24,11 +25,12 @@ import {
   isSameDay,
 } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { FiDownload, FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
 import { toast } from "react-toastify";
+import { BiExport } from "react-icons/bi";
+import { FiPrinter } from "react-icons/fi";
 
 const Page = () => {
   const [showPurchasEntry, setShowPurchasEntry] = useState(false);
@@ -110,7 +112,7 @@ const Page = () => {
       case "custom":
         if (startDate && endDate) {
           const adjustedEndDate = new Date(endDate);
-          adjustedEndDate.setHours(23, 59, 59, 999); 
+          adjustedEndDate.setHours(23, 59, 59, 999);
 
           return data.filter((item) =>
             isWithinInterval(normalizeDate(new Date(item.purchaseDate)), {
@@ -541,14 +543,16 @@ const Page = () => {
                     icon={<Search size={18} />}
                   />
                 </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[14px] rounded-[24px] bg-[#4B0082] text-white cursor-pointer hover:bg-[#4B0082]/90 transition-colors">
-                  <FiDownload size={18} />
-                  <span className="text-base font-medium">Export as CSV</span>
-                </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[6px] rounded-[24px] border border-[#9F9C9C] cursor-pointer hover:bg-gray-50 transition-colors">
-                  <FiPrinter size={18} />
-                  <span className="text-base font-medium">Print</span>
-                </div>
+                <Button
+                  label="Export as CSV"
+                  className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+                  icon={<BiExport size={18} />}
+                />
+                <Button
+                  label="Print"
+                  className="px-4 border border-gray-400 hover:bg-gray-50"
+                  icon={<FiPrinter size={18} />}
+                />
               </div>
             </div>
           </div>
@@ -574,8 +578,8 @@ const Page = () => {
                     }
                   }}
                   className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
-                      ? "bg-purple-800 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-darkPurple text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                 >
                   {filter.label}
@@ -647,8 +651,8 @@ const Page = () => {
                             }}
                             disabled={!startDate || !endDate}
                             className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-purple-800 text-white hover:bg-purple-700"
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-purple-800 text-white hover:bg-purple-700"
                               }`}
                           >
                             Apply

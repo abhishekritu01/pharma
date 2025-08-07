@@ -443,7 +443,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
         <div>
           <Button
             onClick={() => setShowCreateReturn(false)}
-            label="Sales Return List"
+            label="Bill Return List"
             value=""
             className="w-48 bg-darkPurple text-white h-11"
             icon={<ClipboardList size={15} />}

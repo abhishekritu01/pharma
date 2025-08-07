@@ -9,6 +9,7 @@ import { getPurchase } from "@/app/services/PurchaseEntryService";
 import Table from "@/app/components/common/Table";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import Button from "@/app/components/common/Button";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 
 
@@ -59,8 +60,8 @@ const formatDate = (dateStr: string): string => {
     return isNaN(date.getTime())
       ? "--"
       : `${String(date.getDate()).padStart(2, "0")}/${String(
-          date.getMonth() + 1
-        ).padStart(2, "0")}/${date.getFullYear()}`;
+        date.getMonth() + 1
+      ).padStart(2, "0")}/${date.getFullYear()}`;
   } catch {
     return "--";
   }
@@ -175,11 +176,10 @@ export default function Page() {
       accessor: (row: { purchaseBillNo: string; invId: string }) => (
         <Link
           href={`/dashboard/orderSummary?id=${row.invId}`}
-          className={`block w-full px-4 py-2 text-left ${
-            row.invId
+          className={`block w-full px-4 py-2 text-left ${row.invId
               ? "text-gray-700 hover:text-purple-600 hover:underline"
               : "text-gray-400 cursor-not-allowed"
-          } transition-colors duration-200`}
+            } transition-colors duration-200`}
         >
           {row.purchaseBillNo}
         </Link>
@@ -315,7 +315,7 @@ export default function Page() {
 
         const res = await getPurchase();
         const purchases: PurchaseEntryData[] = res.data;
-       
+
         const records = purchases.flatMap((entry) =>
           entry.stockItemDtos
             .filter((item) => item.itemId === itemId)
@@ -389,9 +389,9 @@ export default function Page() {
 
 
   return (
-    <div className="w-full max-w-[1136px] p-6">
+    <div className="w-full">
       {/* Header */}
-      <div className="w-full py-6">
+      <div className="w-full">
         <h1 className="text-[28px] font-medium text-[#442060]">
           Stock Details
         </h1>
@@ -497,16 +497,13 @@ export default function Page() {
         />
       </div>
 
-
-      {/* Back Button */}
       <div className="flex justify-end">
-        <button
+        <Button
           type="button"
           onClick={() => window.history.back()}
-          className="flex w-[120px] h-[48px] px-[14px] py-[4px] justify-center items-center gap-[6px] rounded-[24px] border border-[#9F9C9C] text-[#433E3F] font-medium text-[14px] leading-[161.8%] font-inter hover:bg-[#E1C4F8] hover:border-[#7A7A7A] active:bg-[#EBEBEB] active:border-[#5E5E5E] transition-colors duration-200"
-        >
-          Back
-        </button>
+          label="Back"
+          className="px-4 border border-gray-400 text-gray-700 hover:bg-purple-50 hover:border-gray-500"
+        />
       </div>
     </div>
   );

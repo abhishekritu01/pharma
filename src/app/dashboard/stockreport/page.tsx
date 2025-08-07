@@ -360,14 +360,14 @@ const Page = () => {
 
 
   return (
-    <>
+    <div className="w-full">
+      {/* Header */}
       {!showStocksDetails && (
         <main className="space-y-10">
           <div className="flex justify-between">
             <div className="justify-start text-darkPurple text-3xl font-medium leading-10">
               Stocks Report
             </div>
-
 
             <div>
               <Input
@@ -381,7 +381,6 @@ const Page = () => {
             </div>
           </div>
 
-
           <Table
             data={getSortedData()}
             columns={columns}
@@ -389,7 +388,7 @@ const Page = () => {
           />
         </main>
       )}
-    </>
+    </div>
   );
 };
 

@@ -16,6 +16,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
 import Image from "next/image";
+import Button from "@/app/components/common/Button";
 
 const Page = () => {
   const [summaryData, setSummaryData] = useState<BillingSummaryData | null>(null);
@@ -87,14 +88,16 @@ const Page = () => {
             Daily Closing Report - {format(selectedDate, "MMMM dd, yyyy")}
           </h2>
           <div className="flex items-center gap-4">
-            <button className="flex h-11 px-6 py-2 items-center gap-2 rounded-full bg-purple-800 text-white hover:bg-purple-900 transition-colors">
-              <BiExport size={18} />
-              <span className="text-base font-medium">Export as CSV</span>
-            </button>
-            <button className="flex h-11 px-6 py-2 items-center gap-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors">
-              <FiPrinter size={18} />
-              <span className="text-base font-medium">Print</span>
-            </button>
+            <Button
+                  label="Export as CSV"
+                  className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+                  icon={<BiExport size={18} />}
+                />
+                <Button
+                  label="Print"
+                  className="px-4 border border-gray-400 hover:bg-gray-50"
+                  icon={<FiPrinter size={18} />}
+                />
           </div>
         </div>
 
@@ -106,7 +109,7 @@ const Page = () => {
               setSelectedDate(new Date());
             }}
             className={`px-4 py-2 rounded-md text-sm font-medium ${dateFilter === "today"
-                ? "bg-purple-800 text-white"
+                ? "bg-darkPurple text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
           >
@@ -120,7 +123,7 @@ const Page = () => {
               setSelectedDate(yesterday);
             }}
             className={`px-4 py-2 rounded-md text-sm font-medium ${dateFilter === "yesterday"
-                ? "bg-purple-800 text-white"
+                ? "bg-darkPurple text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
           >
@@ -130,7 +133,7 @@ const Page = () => {
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
               className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === "custom"
-                  ? "bg-purple-800 text-white"
+                  ? "bg-darkPurple text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
             >

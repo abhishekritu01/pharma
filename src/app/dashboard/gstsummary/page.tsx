@@ -10,6 +10,7 @@ import Table from "@/app/components/common/Table";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import Button from "@/app/components/common/Button";
 import Link from "next/link";
 import {
   format,
@@ -360,11 +361,9 @@ const Page = () => {
 
 
   const formatNumber = (num: number): string => {
-  // Check if the number is an integer
   if (Number.isInteger(num)) {
     return num.toString();
   }
-  // Otherwise, show up to 2 decimal places
   return num.toFixed(2);
 };
 
@@ -621,14 +620,16 @@ const Page = () => {
                     icon={<Search size={18} />}
                   />
                 </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[14px] rounded-[24px] bg-[#4B0082] text-white cursor-pointer hover:bg-[#4B0082]/90 transition-colors">
-                  <BiExport size={18} />
-                  <span className="text-base font-medium">Export as CSV</span>
-                </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[6px] rounded-[24px] border border-[#9F9C9C] cursor-pointer hover:bg-gray-50 transition-colors">
-                  <FiPrinter size={18} />
-                  <span className="text-base font-medium">Print</span>
-                </div>
+                <Button
+                  label="Export as CSV"
+                  className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+                  icon={<BiExport size={18} />}
+                />
+                <Button
+                  label="Print"
+                  className="px-4 border border-gray-400 hover:bg-gray-50"
+                  icon={<FiPrinter size={18} />}
+                />
               </div>
             </div>
           </div>
@@ -650,7 +651,7 @@ const Page = () => {
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium ${
                   dateFilter === filter.value && !selectedQuarter
-                    ? "bg-purple-800 text-white"
+                    ? "bg-darkPurple text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -775,7 +776,7 @@ const Page = () => {
                         className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
                           selectedQuarter === index &&
                           dateFilter === "financialYearQuarter"
-                            ? "bg-purple-100"
+                            ? "bg-purple-200"
                             : ""
                         }`}
                         onClick={() => {

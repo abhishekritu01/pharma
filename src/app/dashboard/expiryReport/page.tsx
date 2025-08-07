@@ -16,11 +16,13 @@ import {
   isSameDay
 } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { FiDownload, FiPrinter } from "react-icons/fi";
+import {FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
+import Button from "@/app/components/common/Button";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
 import { toast } from "react-toastify";
+import { BiExport } from 'react-icons/bi';
 
 const Page = () => {
   const [expiryReport, setExpiryReport] = useState<ExpiryReportData[]>([]);
@@ -71,9 +73,9 @@ const Page = () => {
             ? response.data
             : [];
 
-        if (!items.length) {
-          throw new Error("No expired stock data found");
-        }
+        // if (!items.length) {
+        //   throw new Error("No expired stock data found");
+        // }
 
         const reportsWithFormattedDates = items.map((item: ExpiryReportData) => {
           const expiryDate = new Date(item.expiryDate);
@@ -353,15 +355,17 @@ const Page = () => {
                     icon={<Search size={18} />}
                   />
                 </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[14px] rounded-[24px] bg-[#4B0082] text-white cursor-pointer hover:bg-[#4B0082]/90 transition-colors">
-                  <FiDownload size={18} />
-                  <span className="text-base font-medium">Export as CSV</span>
-                </div>
-                <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[6px] rounded-[24px] border border-[#9F9C9C] cursor-pointer hover:bg-gray-50 transition-colors">
-                  <FiPrinter size={18} />
-                  <span className="text-base font-medium">Print</span>
-                </div>
-              </div>
+                <Button
+                  label="Export as CSV"
+                  className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+                  icon={<BiExport size={18} />}
+                />
+                <Button
+                  label="Print"
+                  className="px-4 border border-gray-400 hover:bg-gray-50"
+                  icon={<FiPrinter size={18} />}
+                />
+              </div> 
             </div>
           </div>
 
@@ -385,7 +389,7 @@ const Page = () => {
                     }
                   }}
                   className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
-                    ? "bg-purple-800 text-white"
+                    ? "bg-darkPurple text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                 >
