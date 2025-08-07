@@ -22,24 +22,19 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 };
 
 
+
 export const register = async (data: RegisterData): Promise<RegisterResponse> => {      
   try {
     const response = await api.post<RegisterResponse>('/public/register', data);
     return response.data; 
   } catch (error: unknown) {
-    // const message = error.response?.data?.message || 'An error occurred during registration.';
-    // throw new Error(message);
-
-    if (error instanceof AxiosError) {
-      const message = error.response?.data?.message || 'An error occurred during login.';
-      throw new Error(message);
+     if (error instanceof AxiosError) {
+    const message = error.response?.data?.message || 'An error occurred during registration.';
+    throw new Error(message);
     }
-    throw new Error('An unexpected error occurred.');
-  
+     throw new Error('An unexpected error occurred.');
   }
 }
-
-
 
 
 

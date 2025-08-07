@@ -28,6 +28,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+  
   const [formData, setFormData] = useState<SupplierData>({
     supplierId: "",
     supplierName: "",
@@ -225,7 +226,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               { id: "supplierGstinNo", label: "GSTIN Number", maxLength: 15 },
-              { id: "supplierGstType", label: "GST Type", type: "select" }, // ✅ Mark as a dropdown
+              { id: "supplierGstType", label: "GST Type", type: "select" }, 
             ].map(({ id, label, maxLength }) => (
               <div key={id} className="relative w-72">
                 {id === "supplierGstType" ? (

@@ -2,11 +2,11 @@
 
 import { NavigationItem } from '@/app/types/NavigationItem'
 import { MdDashboard, MdInventory, MdAssignmentReturn, MdOutlineInventory,MdBarChart  } from "react-icons/md";
-import { IoPeople } from "react-icons/io5";
+import { IoPeople, IoSettings } from "react-icons/io5";
 import { RiMedicineBottleFill} from "react-icons/ri";
-import { FaNotesMedical, FaStore} from "react-icons/fa6";
+import { FaHouseChimneyMedical, FaNotesMedical, FaStore} from "react-icons/fa6";
 import { PiKeyReturnFill, PiReceiptFill } from "react-icons/pi";
-import { FaListAlt } from 'react-icons/fa';
+import { FaListAlt, FaUsers } from 'react-icons/fa';
 import { TbCreditCardFilled } from "react-icons/tb";
 import { RiWaterPercentFill } from "react-icons/ri";
 import { ClockAlert } from 'lucide-react';
@@ -72,13 +72,14 @@ export const navigation: NavigationItem[] = [
   },
    
 
-  // {
-  //   name: "Settings",
-  //   icon: IoSettings,
-  //   current: false,
-  //   children: [
-  //     { name: "User Profile", href: "/dashboard/profile", current: false, icon: HiUser },
-  //     { name: "Pharmacy", href: "/dashboard/lab", current: false, icon: FaHouseChimneyMedical },
-  //   ],
-  // },
+  {
+    name: "Settings",
+    icon: IoSettings,
+    current: false,
+    children: [
+      { name: "User Management", href: "/dashboard/userManagement", current: false, icon: FaUsers},
+      // { name: "User Profile", href: "/dashboard/profile", current: false, icon: HiUser },
+      { name: "Pharmacy", href: "/dashboard/pharmacy", current: false, icon: FaHouseChimneyMedical },
+    ],
+  },
 ];
