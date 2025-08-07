@@ -200,6 +200,7 @@ const Page = () => {
         const paymentTypeMap: Record<string, string> = {
           cash: "Cash",
           upi: "UPI",
+          upiCash: "UPI & Cash",
           creditCard: "Credit Card",
           debitCard: "Debit Card",
           net_banking: "Net Banking",

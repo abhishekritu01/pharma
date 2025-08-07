@@ -24,7 +24,7 @@ const Register: React.FC = () => {
     state: '',
     zip: '',
     country: '',
-    modules: [1],
+    // modules: [1],
     verified: false,
   });
 

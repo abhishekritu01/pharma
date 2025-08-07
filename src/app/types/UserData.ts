@@ -1,15 +1,17 @@
-export interface RegisterData {
+export interface UserData {
+    id: number;
     username: string;
     password: string;
     email: string;
+    phone: string;
     firstName: string;
     lastName: string;
-    phone: string;
     address: string;
     city: string;
     state: string;
     zip: string;
     country: string;
-    // modules: number[];
-    verified: boolean;
-    }
+    roles: string[];
+    enabled?: boolean;
+    pharmacyId?: number;
+  }

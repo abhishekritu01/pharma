@@ -665,7 +665,6 @@ const handleInputChange = (
       [name]: parsedValue,
     };
 
-    // Only calculate if parsedValue is a number
     if (
       name === "receivedAmount" &&
       prev.paymentType === "cash" &&
