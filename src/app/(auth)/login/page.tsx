@@ -56,13 +56,13 @@ const Page: React.FC = () => {
       <div className="w-[30%] flex flex-col items-center justify-center text-white px-10 space-y-10">
         <div className="mt-10 flex space-x-4">
           <Image
-            src="/tiamedsicons.svg"
+            src="/TiamedsIconOne.svg"
             alt="Company Logo"
             width={80}
             height={40}
           />
           <Image
-            src="/TiamedsLogo1.svg"
+            src="/TiaMedsLogoOne.svg"
             alt="Company Logo"
             width={150}
             height={40}
@@ -71,7 +71,7 @@ const Page: React.FC = () => {
 
         <div>
           <Image
-            src="/TiamedsLogo2.svg"
+            src="/TiaMedsLogoTwo.svg"
             alt="Company Logo"
             width={280}
             height={40}
