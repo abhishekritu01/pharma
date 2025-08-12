@@ -56,7 +56,7 @@ const Page: React.FC = () => {
       <div className="w-[30%] flex flex-col items-center justify-center text-white px-10 space-y-10">
         <div className="mt-10 flex space-x-4">
           <Image
-            src="/TIAMEDSICON1.svg"
+            src="/tiamedsicons.svg"
             alt="Company Logo"
             width={80}
             height={40}
