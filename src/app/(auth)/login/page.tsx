@@ -7,13 +7,15 @@ import { login } from "@/app/services/auth.Service";
 import { toast } from "react-toastify";
 // import { FaClinicMedical } from "react-icons/fa";
 import UserRegister from "../userRegister/page";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 const Page: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [showRegister, setShowRegister] = useState(false);
   const [showRegister] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const router = useRouter();
 
@@ -43,18 +45,24 @@ const Page: React.FC = () => {
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // stop navigation
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000); // hide after 3 seconds
+  };
+
   return (
     <div className="flex h-screen bg-darkPurple">
       <div className="w-[30%] flex flex-col items-center justify-center text-white px-10 space-y-10">
         <div className="mt-10 flex space-x-4">
           <Image
-            src="/tiamedsIcon1.svg"
+            src="/TiamedsIconOne.svg"
             alt="Company Logo"
             width={80}
             height={40}
           />
           <Image
-            src="/tiamedsLogo1.svg"
+            src="/TiaMedsLogoOne.svg"
             alt="Company Logo"
             width={150}
             height={40}
@@ -63,7 +71,7 @@ const Page: React.FC = () => {
 
         <div>
           <Image
-            src="/tiamedsLogo2.svg"
+            src="/TiaMedsLogoTwo.svg"
             alt="Company Logo"
             width={280}
             height={40}
@@ -76,61 +84,90 @@ const Page: React.FC = () => {
           {!showRegister ? (
             <>
               <h2 className="text-2xl font-semibold text-gray-900">Login</h2>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault(); // prevent page reload
+                  handleLogin();
+                }}
+              >
+                <div className="mt-5 space-y-2">
+                  <label className="block text-sm font-medium text-gray">
+                    User Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
 
-              <div className="mt-5 space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  User Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="username"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
+                <div className="mt-5 space-y-2">
+                  <label className="block text-sm font-medium text-gray">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"} // ✅ use password type by default
+                      placeholder="Enter password"
+                      className="w-full px-3 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? (
+                        <AiOutlineEyeInvisible size={20} />
+                      ) : (
+                        <AiOutlineEye size={20} />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-              <div className="mt-4 space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="password123"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+                <div className="flex items-center justify-between mt-4">
+                  {/* <label className="flex items-center text-sm text-gray">
+                  <input
+                    type="checkbox"
+                    className="mr-2 cursor-pointer"
+                    checked={rememberMe}
+                    onChange={() => setRememberMe(!rememberMe)}
+                  />
+                  Remember me
+                </label> */}
+                  <a
+                    href="#"
+                    onClick={handleClick}
+                    className="text-sm text-darkPurple hover:underline"
+                  >
+                    Forgot Password?
+                  </a>
 
-              {/* <div className="flex items-center justify-between mt-4">
-            <label className="flex items-center text-sm text-gray-700">
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={rememberMe}
-                onChange={() => setRememberMe(!rememberMe)}
-              />
-              Remember me
-            </label>
-            <a href="#" className="text-sm text-purple-900 hover:underline">
-              Forgot Password?
-            </a>
-          </div> */}
+                  {showToast && (
+                    <div className="fixed top-5 right-5 bg-gray-700 text-white px-4 py-2 rounded shadow-lg text-sm">
+                      Feature coming soon 🚀
+                    </div>
+                  )}
+                </div>
 
-              <div>
-                <button
-                  className={`w-96 bg-darkPurple text-white px-4 py-2 rounded-3xl cursor-pointer ${
-                    isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  onClick={handleLogin}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Logging in..." : "Log In"}
-                </button>
-              </div>
-{/*               
-              <div>
+                <div className="mt-3">
+                  <button
+                    type="submit"
+                    className={`w-96 bg-darkPurple text-white px-4 py-2 rounded-3xl cursor-pointer ${
+                      isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Logging in..." : "Log In"}
+                  </button>
+                </div>
+              </form>
+
+              {/* <div>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
@@ -141,7 +178,6 @@ const Page: React.FC = () => {
                     </span>
                   </div>
                 </div>
-
                 <div>
                   <button
                     className="group w-full flex justify-center items-center px-4 py-2 rounded-3xl cursor-pointer border border-gray-300 hover:bg-[#4B0082] hover:text-white transition"

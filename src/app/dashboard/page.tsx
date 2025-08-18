@@ -14,11 +14,19 @@ import { getPurchaseOrder } from "../services/PurchaseOrderService";
 const Page = () => {
   const { user, initializeUser } = useUserStore();
   const [greeting, setGreeting] = useState("");
-  const [weeklyBillCount, setWeeklyBillCount] = useState<number>(0);
-  const [weeklyBillAmount, setWeeklyBillAmount] = useState<number>(0);
-  const [pendingInvoices, setPendingInvoices] = useState<number>(0);
-  const [overdueInvoices, setOverdueInvoices] = useState<number>(0);
-  const [deliveryStats, setDeliveryStats] = useState({
+  // const [weeklyBillCount, setWeeklyBillCount] = useState<number>(0);
+  // const [weeklyBillAmount, setWeeklyBillAmount] = useState<number>(0);
+  // const [pendingInvoices, setPendingInvoices] = useState<number>(0);
+  // const [overdueInvoices, setOverdueInvoices] = useState<number>(0);
+  // const [deliveryStats, setDeliveryStats] = useState({
+  //   dueThisWeek: 0,
+  //   overdueUndelivered: 0,
+  // });
+  const [,setWeeklyBillCount] = useState<number>(0);
+  const [,setWeeklyBillAmount] = useState<number>(0);
+  const [, setPendingInvoices] = useState<number>(0);
+  const [, setOverdueInvoices] = useState<number>(0);
+  const [, setDeliveryStats] = useState({
     dueThisWeek: 0,
     overdueUndelivered: 0,
   });
@@ -304,7 +312,7 @@ const Page = () => {
           </div>
         </div>
 
-        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full space-y-6">
+        {/* <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full space-y-6">
           <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3">
             <span className="text-[#FCA258]">
               <AiFillAlert />
@@ -331,6 +339,65 @@ const Page = () => {
               {deliveryStats.overdueUndelivered} orders are undelivered past the
               expected delivery date
             </span>
+          </div>
+
+        </div> */}
+
+        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full">
+          <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3 mb-4">
+            <span className="text-[#FCA258]">
+              <AiFillAlert />
+            </span>
+            <span>Important Alerts</span>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="text-sm font-medium text-[#433E3F] space-y-6 overflow-y-auto h-[calc(100%-2.5rem)] pr-2">
+            <div className="space-y-2">
+              <div>Inventory Alerts</div>
+              <div className="space-y-2 text-gray-600 px-3">
+                <p>48 SKUs OOS</p>
+                <p>15 SKUs Low</p>
+                <p>12 SKUs No sales</p>
+                <p>5 SKUs Added this week</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div>Billing & Invoices</div>
+              <div className="space-y-2 text-gray-600 px-3">
+                <p>112 Auto-matched invoices</p>
+                <p>Mismatched flagged</p>
+                <p>7 credit notes pending</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div>Sales & Revenue</div>
+              <div className="space-y-2 text-gray-600 px-3">
+                <p>Sales down 8% MoM</p>
+                <p>Avg order +5%</p>
+                <p>4 hot SKUs OOS</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div>Delivery & Logistics</div>
+              <div className="space-y-2 text-gray-600 px-3">
+                <p>Returns in transit</p>
+                <p>Delayed &gt;48 hrs</p>
+                <p>Damaged on delivery</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div>User & Activity</div>
+              <div className="space-y-2 text-gray-600 px-3">
+                <p>26 New customers</p>
+                <p>9 Inactive &gt;30 days</p>
+                <p>Seller under review</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -26,6 +26,11 @@ const Page = () => {
   const [, setLoading] = useState<boolean>(true);
   const [, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (invId?: string) => {
+    setOpenMenuId((prev) => (prev === invId ? null : invId || null));
+  };
 
   const fetchSupplier = async (supplierId: string): Promise<string> => {
     try {
@@ -289,34 +294,28 @@ const Page = () => {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseEntryData) => (
         <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer" onClick={() => toggleMenu(row.invId)}>
             <BsThreeDotsVertical size={18} />
           </button>
 
-          <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap">
-            <Link
-              href={`/dashboard/orderSummary?id=${row.invId}`}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              View
-            </Link>
-            {/* {row.paymentStatus?.toLowerCase() === "pending" && (
-            <button
-              onClick={() => console.log("Deleting Item:")}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              Delete
-            </button>
-             )} */}
-            {row.paymentStatus?.toLowerCase() === "pending" && (
-              <button
-                onClick={() => handleConfirmPayment(row.invId!)}
+          {openMenuId === row.invId && (
+            <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap">
+              <Link
+                href={`/dashboard/orderSummary?id=${row.invId}`}
                 className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
               >
-                Confirm Payment
-              </button>
-            )}
-          </div>
+                View
+              </Link>
+              {row.paymentStatus?.toLowerCase() === "pending" && (
+                <button
+                  onClick={() => handleConfirmPayment(row.invId!)}
+                  className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+                >
+                  Confirm Payment
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ),
     },

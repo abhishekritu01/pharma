@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 export const itemSchema = z.object({
   itemName: z
-    .string()
-    .min(3, { message: "Item Name is Mandatory" })
-    .max(50, { message: "Item Name cannot exceed 50 characters." })
-    .refine((val) => /^[A-Za-z\s]+$/.test(val), {
-      message: "Item Name must contain only alphabets",
-    }),
+  .string()
+  .min(3, { message: "Item Name is Mandatory" })
+  .max(50, { message: "Item Name cannot exceed 50 characters." })
+  .refine((val) => /^[A-Za-z0-9\s]+$/.test(val), {
+    message: "Item Name must be Alphanumeric",
+  }),
 
   purchaseUnit: z
     .number({
@@ -44,12 +44,12 @@ export const itemSchema = z.object({
 
   gstPercentage: z
     .number({
-      invalid_type_error: "CGST Percentage must be an integer",
-      required_error: "CGST Percentage is Mandatory",
+      invalid_type_error: "GST Percentage must be an integer",
+      required_error: "GST Percentage is Mandatory",
     })
-    .int({ message: "CGST Percentage must be an integer" })
-    .min(1, { message: "CGST Percentage is Mandatory" })
-    .max(99, { message: "CGST Percentage must be 2 digit" }),
+    .int({ message: "GST Percentage must be an integer" })
+    .min(1, { message: "GST Percentage is Mandatory" })
+    .max(99, { message: "GST Percentage must be 2 digit" }),
 
 
   manufacturer: z.string().min(1, { message: 'Manufacturer is Mandatory' })
