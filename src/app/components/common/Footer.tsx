@@ -27,7 +27,7 @@ const Footer = () => {
           </div>
           <div className="text-base">
             <span className="font-medium">Powered by</span>
-            <span className="font-bold"> TiaMeds Technology Pvt Ltd</span>
+            <span className="font-bold"> TiaMeds Technologies Pvt. Ltd</span>
           </div>
         </div>
         <div className="mt-9 flex space-x-5">

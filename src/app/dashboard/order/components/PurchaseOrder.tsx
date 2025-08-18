@@ -60,6 +60,9 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  // const [purchaseOrderItems, setPurchaseOrderItems] = useState<
+  //   PurchaseOrderItem[]
+  // >([]);
 
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
@@ -442,19 +445,19 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     }));
   }, []);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { id, value } = e.target;
+  // const handleInputChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //   const { id, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [id]:
-        id === "orderedDate" || id === "intendedDeliveryDate"
-          ? new Date(value)
-          : value,
-    }));
-  };
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [id]:
+  //       id === "orderedDate" || id === "intendedDeliveryDate"
+  //         ? new Date(value)
+  //         : value,
+  //   }));
+  // };
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -527,26 +530,25 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     await fetchSuppliers();
   };
 
- useEffect(() => {
-  const fetchPharmacies = async () => {
-    try {
-      const data = await getPharmacy();
-      setPharmacies(data.data);
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      try {
+        const data = await getPharmacy();
+        setPharmacies(data.data);
 
-      if (!formData.pharmacyId && data.data.length > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          pharmacyId: data.data[0].pharmacyId,
-        }));
+        if (!formData.pharmacyId && data.data.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            pharmacyId: data.data[0].pharmacyId,
+          }));
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    };
 
-  fetchPharmacies();
-}, [formData.pharmacyId]);
-
+    fetchPharmacies();
+  }, [formData.pharmacyId]);
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -566,6 +568,15 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   };
 
   const addPurchaseOrder = () => {
+    if (!formData.supplierId || !formData.supplierName?.trim()) {
+      toast.error("Please select a supplier before saving the purchase order.");
+      return;
+    }
+
+    if (!validatePurchaseOrder(orderItemRows)) {
+      return;
+    }
+
     const purchaseOrderData: PurchaseOrderData = {
       pharmacyId: formData.pharmacyId,
       supplierId: formData.supplierId,
@@ -712,6 +723,21 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     });
   };
 
+  const validatePurchaseOrder = (items: typeof orderItemRows) => {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.itemId || !item.itemName?.trim()) {
+        toast.error(`Item Name is required in row ${i + 1}`);
+        return false;
+      }
+      if (!item.packageQuantity || item.packageQuantity <= 0) {
+        toast.error(`Order Qty is required in row ${i + 1}`);
+        return false;
+      }
+    }
+    return true;
+  };
+
   return (
     <>
       {showModal && (
@@ -807,7 +833,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                       }}
                       label="Supplier"
                       loadOptions={loadSupplierOptions}
-                      defaultOptions={defaultSupplierOptions} 
+                      defaultOptions={defaultSupplierOptions}
                       formatOptionLabel={(data) => data.label}
                     />
                   </>
@@ -838,10 +864,27 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                     id={id}
                     label={label}
                     type={type}
+                    min={
+                      id === "intendedDeliveryDate"
+                        ? new Date().toISOString().split("T")[0]
+                        : undefined
+                    }
+                    max={
+                      id === "intendedDeliveryDate"
+                        ? undefined
+                        : id === "orderedDate"
+                        ? new Date().toISOString().split("T")[0]
+                        : undefined
+                    }
                     value={
-                      id === "orderedDate" || id === "intendedDeliveryDate"
-                        ? formData[id as keyof PurchaseOrderData] instanceof
-                          Date
+                      id === "orderedDate"
+                        ? new Date().toISOString().split("T")[0] // Always today's date
+                        : id === "intendedDeliveryDate"
+                        ? typeof formData[id as keyof PurchaseOrderData] ===
+                          "string"
+                          ? (formData[id as keyof PurchaseOrderData] as string)
+                          : formData[id as keyof PurchaseOrderData] instanceof
+                            Date
                           ? (formData[id as keyof PurchaseOrderData] as Date)
                               .toISOString()
                               .split("T")[0]
@@ -849,7 +892,16 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                         : formData[id as keyof PurchaseOrderData]?.toString() ??
                           ""
                     }
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      if (id !== "orderedDate") {
+                        setFormData((prev) => ({
+                          ...prev,
+                          [id]: e.target.value,
+                        }));
+                      }
+                    }}
+                    readOnly={id === "orderedDate"} // Prevents typing
+                    disabled={id === "orderedDate"} // Disables date picker too
                   />
                 )}
               </div>
@@ -875,7 +927,6 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
 
         <div className="border h-auto w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
           {[
-
             {
               label: "GRAND TOTAL",
               value: formData.grandTotal.toFixed(2),

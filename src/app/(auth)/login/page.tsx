@@ -14,7 +14,7 @@ const Page: React.FC = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showRegister, ] = useState(false);
+  const [showRegister] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const router = useRouter();
@@ -84,72 +84,53 @@ const Page: React.FC = () => {
           {!showRegister ? (
             <>
               <h2 className="text-2xl font-semibold text-gray-900">Login</h2>
-
-              <div className="mt-5 space-y-2">
-                <label className="block text-sm font-medium text-gray">
-                  User Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="username"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-
-              {/* <div className="mt-5 space-y-2 relative">
-                <label className="block text-sm font-medium text-gray">
-                  Password
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? (
-                    <AiOutlineEyeInvisible size={20} />
-                  ) : (
-                    <AiOutlineEye size={20} />
-                  )}
-                </button>
-              </div> */}
-
-              <div className="mt-5 space-y-2">
-                <label className="block text-sm font-medium text-gray">
-                  Password
-                </label>
-                <div className="relative">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault(); // prevent page reload
+                  handleLogin();
+                }}
+              >
+                <div className="mt-5 space-y-2">
+                  <label className="block text-sm font-medium text-gray">
+                    User Name
+                  </label>
                   <input
-                    type={showPassword ? "text" : "password"} // ✅ use password type by default
-                    placeholder="Enter password"
-                    className="w-full px-3 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    type="text"
+                    placeholder="username"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? (
-                      <AiOutlineEyeInvisible size={20} />
-                    ) : (
-                      <AiOutlineEye size={20} />
-                    )}
-                  </button>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between mt-4">
-                {/* <label className="flex items-center text-sm text-gray">
+                <div className="mt-5 space-y-2">
+                  <label className="block text-sm font-medium text-gray">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"} // ✅ use password type by default
+                      placeholder="Enter password"
+                      className="w-full px-3 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4B0082]"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? (
+                        <AiOutlineEyeInvisible size={20} />
+                      ) : (
+                        <AiOutlineEye size={20} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-4">
+                  {/* <label className="flex items-center text-sm text-gray">
                   <input
                     type="checkbox"
                     className="mr-2 cursor-pointer"
@@ -158,32 +139,34 @@ const Page: React.FC = () => {
                   />
                   Remember me
                 </label> */}
-                <a
-                  href="#"
-                  onClick={handleClick}
-                  className="text-sm text-darkPurple hover:underline"
-                >
-                  Forgot Password?
-                </a>
+                  <a
+                    href="#"
+                    onClick={handleClick}
+                    className="text-sm text-darkPurple hover:underline"
+                  >
+                    Forgot Password?
+                  </a>
 
-                {showToast && (
-                  <div className="fixed top-5 right-5 bg-gray-700 text-white px-4 py-2 rounded shadow-lg text-sm">
-                    Feature coming soon 🚀
-                  </div>
-                )}
-              </div>
+                  {showToast && (
+                    <div className="fixed top-5 right-5 bg-gray-700 text-white px-4 py-2 rounded shadow-lg text-sm">
+                      Feature coming soon 🚀
+                    </div>
+                  )}
+                </div>
 
-              <div>
-                <button
-                  className={`w-96 bg-darkPurple text-white px-4 py-2 rounded-3xl cursor-pointer ${
-                    isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  onClick={handleLogin}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Logging in..." : "Log In"}
-                </button>
-              </div>
+                <div className="mt-3">
+                  <button
+                    type="submit"
+                    className={`w-96 bg-darkPurple text-white px-4 py-2 rounded-3xl cursor-pointer ${
+                      isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Logging in..." : "Log In"}
+                  </button>
+                </div>
+              </form>
+
               {/* <div>
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">

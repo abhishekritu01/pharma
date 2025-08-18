@@ -1,16 +1,33 @@
-import React from 'react'
+import React from "react";
 
 const InputField: React.FC<{
-  type?:string
+  type?: string;
   id: string;
   name?: string;
   maxLength?: number;
   label: React.ReactNode;
   value?: string;
   readOnly?: boolean;
-  max?:string;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void; 
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ type,id, label, value, onChange, maxLength, readOnly, max, onKeyDown }) => (
+  max?: string;
+  min?: string;
+  disabled?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+}> = ({
+  type,
+  id,
+  label,
+  value,
+  onChange,
+  maxLength,
+  readOnly,
+  max,
+  min,
+  onKeyDown,
+  onBlur,
+  disabled,
+}) => (
   <div className="relative">
     <input
       type={type}
@@ -22,7 +39,10 @@ const InputField: React.FC<{
       required
       placeholder=" "
       max={max}
+      min={min}
       onKeyDown={onKeyDown}
+      onBlur={onBlur}
+      disabled={disabled}
       className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
       data-has-value={value ? "true" : "false"}
     />
@@ -38,4 +58,4 @@ const InputField: React.FC<{
   </div>
 );
 
-export default InputField
+export default InputField;
