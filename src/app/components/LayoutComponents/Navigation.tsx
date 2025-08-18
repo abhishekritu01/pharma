@@ -12,6 +12,7 @@ import { RiWaterPercentFill } from "react-icons/ri";
 import { ClockAlert } from 'lucide-react';
 import { BsCashStack } from 'react-icons/bs';
 import { IoMdListBox } from "react-icons/io";
+import { FaFileInvoice } from "react-icons/fa6";
 
 
 
@@ -64,6 +65,7 @@ export const navigation: NavigationItem[] = [
     current: false,
     children: [
       { name: "Daily Closing Report", href: "/dashboard/billingSummary", icon: BsCashStack, current: true },
+      { name: "Sales GST Report", href: "/dashboard/salesGstReport", icon: FaFileInvoice, current: true },
     ],
   },
 

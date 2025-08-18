@@ -31,6 +31,8 @@ import { CiCalendar } from "react-icons/ci";
 import { toast } from "react-toastify";
 import { BiExport } from "react-icons/bi";
 import { FiPrinter } from "react-icons/fi";
+import { exportAsCSVService } from "@/app/services/ExportAsCSVService";
+
 
 const Page = () => {
   const [showPurchasEntry, setShowPurchasEntry] = useState(false);
@@ -523,6 +525,83 @@ const Page = () => {
     },
   ];
 
+
+
+  const prepareExportData = () => {
+    return getSortedData().map(item => ({
+      "Supplier Name": item.supplierName,
+      "Bill No": item.purchaseBillNo,
+      "Purchase Date": formatDate(item.purchaseDate),
+      "Payment Due Date": item.paymentDueDate ? formatDate(item.paymentDueDate) : "—",
+      "Due Status": item.dueStatus,
+      "Bill Amount": item.grandTotal || 0,
+      "Payment Status": item.paymentStatus
+    }));
+  };
+
+
+  const handleExport = async () => {
+    try {
+      // toast.info("Preparing CSV export...");
+
+      const dataToExport = prepareExportData();
+      let filenameSuffix;
+      const today = new Date();
+
+      switch (dateFilter) {
+        case "today":
+          filenameSuffix = format(today, 'dd_MM_yyyy');
+          break;
+        case "yesterday":
+          filenameSuffix = format(subDays(today, 1), 'dd_MM_yyyy');
+          break;
+        case "thisWeek":
+          filenameSuffix = `week_${format(startOfWeek(today), 'dd_MM_yyyy')}_to_${format(endOfWeek(today), 'dd_MM_yyyy')}`;
+          break;
+        case "thisMonth":
+          filenameSuffix = format(today, 'MM_yyyy');
+          break;
+        case "pastDue":
+          filenameSuffix = "past_due";
+          break;
+        case "custom":
+          if (startDate && endDate) {
+            filenameSuffix = `${format(startDate, 'dd_MM_yyyy')}_to_${format(endDate, 'dd_MM_yyyy')}`;
+          } else {
+            filenameSuffix = "custom_range";
+          }
+          break;
+        default:
+          filenameSuffix = format(today, 'dd_MM_yyyy');
+      }
+
+      await exportAsCSVService.exportData(
+        dataToExport,
+        'csv',
+        {
+          filename: `supplier_payments_${filenameSuffix}`,
+          headers: {
+            "Supplier Name": "Supplier Name",
+            "Bill No": "Bill Number",
+            "Purchase Date": "Purchase Date",
+            "Payment Due Date": "Payment Due Date",
+            "Due Status": "Due Status",
+            "Bill Amount": "Bill Amount (Rs.)",
+            "Payment Status": "Payment Status"
+          },
+          csv: {
+            delimiter: ','
+          }
+        }
+      );
+
+      toast.success("CSV exported successfully!");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to export CSV");
+    }
+  };
+
   return (
     <>
       {!showPurchasEntry && (
@@ -545,8 +624,9 @@ const Page = () => {
                 </div>
                 <Button
                   label="Export as CSV"
-                  className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+                  className="px-6 bg-darkPurple text-white hover:bg-darkPurple"
                   icon={<BiExport size={18} />}
+                  onClick={handleExport}
                 />
                 <Button
                   label="Print"
@@ -688,8 +768,22 @@ export default Page;
 
 
 
-// "use client";
 
+
+
+
+
+
+
+
+
+
+
+
+//........................Final Code without export as csv functioning............................
+
+
+// "use client";
 
 // import Input from "@/app/components/common/Input";
 // import { Search } from "lucide-react";
@@ -702,6 +796,7 @@ export default Page;
 //   getPurchase,
 // } from "@/app/services/PurchaseEntryService";
 // import { getSupplierById } from "@/app/services/SupplierService";
+// import Button from "@/app/components/common/Button";
 // import { BsThreeDotsVertical } from "react-icons/bs";
 // import Link from "next/link";
 // import {
@@ -715,18 +810,16 @@ export default Page;
 //   isSameDay,
 // } from "date-fns";
 // import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-// import { FiDownload, FiPrinter } from "react-icons/fi";
 // import DatePicker from "react-datepicker";
 // import "react-datepicker/dist/react-datepicker.css";
 // import { CiCalendar } from "react-icons/ci";
 // import { toast } from "react-toastify";
-
+// import { BiExport } from "react-icons/bi";
+// import { FiPrinter } from "react-icons/fi";
 
 // const Page = () => {
 //   const [showPurchasEntry, setShowPurchasEntry] = useState(false);
-//   const [purchaseEntryData, setPurchaseEntryData] = useState<
-//     PurchaseEntryData[]
-//   >([]);
+//   const [purchaseEntryData, setPurchaseEntryData] = useState<PurchaseEntryData[]>([]);
 //   const [, setLoading] = useState<boolean>(true);
 //   const [, setError] = useState<string | null>(null);
 //   const [searchText, setSearchText] = useState<string>("");
@@ -735,17 +828,14 @@ export default Page;
 //   const [endDate, setEndDate] = useState<Date | null>(null);
 //   const [showDatePicker, setShowDatePicker] = useState(false);
 
-
 //   const fetchSupplier = async (
 //     supplierId: string | null | undefined
 //   ): Promise<string> => {
 //     try {
-//       // Handle cases where supplierId is null, undefined, or not a string
 //       if (!supplierId || typeof supplierId !== "string") {
 //         console.warn(`Invalid supplier ID: ${supplierId}`);
 //         return "Unknown Supplier";
 //       }
-
 
 //       const trimmedId = supplierId.trim();
 //       if (!trimmedId) {
@@ -753,15 +843,12 @@ export default Page;
 //         return "Unknown Supplier";
 //       }
 
-
 //       const supplier = await getSupplierById(trimmedId);
-
 
 //       if (!supplier || !supplier.supplierName) {
 //         console.warn(`Supplier not found for ID: ${supplierId}`);
 //         return "Unknown Supplier";
 //       }
-
 
 //       return supplier.supplierName;
 //     } catch (error) {
@@ -770,13 +857,66 @@ export default Page;
 //     }
 //   };
 
+//   const normalizeDate = (date: Date) => {
+//     const newDate = new Date(date);
+//     newDate.setHours(0, 0, 0, 0);
+//     return newDate;
+//   };
+
+//   const filterByDateRange = (data: PurchaseEntryData[]) => {
+//     const today = normalizeDate(new Date());
+
+//     switch (dateFilter) {
+//       case "today":
+//         return data.filter((item) =>
+//           isSameDay(normalizeDate(new Date(item.purchaseDate)), today)
+//         );
+//       case "yesterday":
+//         return data.filter((item) =>
+//           isSameDay(normalizeDate(new Date(item.purchaseDate)), subDays(today, 1))
+//         );
+//       case "thisWeek":
+//         return data.filter((item) =>
+//           isWithinInterval(normalizeDate(new Date(item.purchaseDate)), {
+//             start: startOfWeek(today),
+//             end: endOfWeek(today),
+//           })
+//         );
+//       case "thisMonth":
+//         return data.filter((item) =>
+//           isWithinInterval(normalizeDate(new Date(item.purchaseDate)), {
+//             start: startOfMonth(today),
+//             end: endOfMonth(today),
+//           })
+//         );
+//       case "pastDue":
+//         return data.filter((item) => {
+//           if (!item.paymentDueDate) return false;
+//           return normalizeDate(new Date(item.paymentDueDate)) < today;
+//         });
+//       case "custom":
+//         if (startDate && endDate) {
+//           const adjustedEndDate = new Date(endDate);
+//           adjustedEndDate.setHours(23, 59, 59, 999);
+
+//           return data.filter((item) =>
+//             isWithinInterval(normalizeDate(new Date(item.purchaseDate)), {
+//               start: normalizeDate(startDate),
+//               end: adjustedEndDate,
+//             })
+//           );
+//         }
+//         return data;
+//       default:
+//         return data;
+//     }
+//   };
 
 //   useEffect(() => {
 //     if (dateFilter === "custom" && startDate && endDate) {
 //       setDateFilter("custom");
 //     }
 //   }, [startDate, endDate, dateFilter]);
-
 
 //   useEffect(() => {
 //     const fetchPurchaseEntry = async () => {
@@ -786,15 +926,10 @@ export default Page;
 //           throw new Error("Failed to fetch purchases");
 //         }
 
-
 //         const purchases: PurchaseEntryData[] = response.data;
 //         const purchasesWithSuppliers = await Promise.all(
 //           purchases.map(async (purchase) => {
-//             // Skip if no supplierId or if it's not a string
-//             if (
-//               !purchase.supplierId ||
-//               typeof purchase.supplierId !== "string"
-//             ) {
+//             if (!purchase.supplierId || typeof purchase.supplierId !== "string") {
 //               return {
 //                 ...purchase,
 //                 supplierName: "Unknown Supplier",
@@ -802,34 +937,26 @@ export default Page;
 //               };
 //             }
 
-
 //             const supplierName = await fetchSupplier(purchase.supplierId);
 //             let dueStatus: string = "—";
-
 
 //             if (purchase.paymentStatus === "Paid") {
 //               dueStatus = "Payment Cleared";
 //             } else if (purchase.paymentDueDate) {
-//               const dueDate = new Date(purchase.paymentDueDate);
-//               const currentDate = new Date();
-//               dueDate.setHours(0, 0, 0, 0);
-//               currentDate.setHours(0, 0, 0, 0);
-
+//               const dueDate = normalizeDate(new Date(purchase.paymentDueDate));
+//               const currentDate = normalizeDate(new Date());
 
 //               const timeDiff = dueDate.getTime() - currentDate.getTime();
 //               const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
 
 //               if (daysLeft < 0) dueStatus = "Overdue";
 //               else if (daysLeft === 0) dueStatus = "Due Today";
 //               else dueStatus = `${daysLeft} day${daysLeft > 1 ? "s" : ""}`;
 //             }
 
-
 //             return { ...purchase, supplierName, dueStatus };
 //           })
 //         );
-
 
 //         setPurchaseEntryData(purchasesWithSuppliers.reverse());
 //       } catch (error) {
@@ -842,10 +969,8 @@ export default Page;
 //       }
 //     };
 
-
 //     fetchPurchaseEntry();
 //   }, []);
-
 
 //   const handleConfirmPayment = async (invId: string) => {
 //     try {
@@ -855,15 +980,14 @@ export default Page;
 //         autoClose: 3000,
 //       });
 
-
 //       setPurchaseEntryData((prevData) =>
 //         prevData.map((item) =>
 //           item.invId === invId
 //             ? {
-//                 ...item,
-//                 paymentStatus: "Paid",
-//                 dueStatus: "Payment Cleared",
-//               }
+//               ...item,
+//               paymentStatus: "Paid",
+//               dueStatus: "Payment Cleared",
+//             }
 //             : item
 //         )
 //       );
@@ -876,18 +1000,15 @@ export default Page;
 //     }
 //   };
 
-
 //   const formatDate = (date: string | Date): string => {
 //     const parsedDate = typeof date === "string" ? new Date(date) : date;
 //     return format(parsedDate, "dd-MM-yyyy");
 //   };
 
-
 //   const [sortConfig, setSortConfig] = useState<{
 //     key: keyof PurchaseEntryData | null;
 //     direction: "asc" | "desc";
 //   }>({ key: null, direction: "asc" });
-
 
 //   const handleSort = (key: keyof PurchaseEntryData) => {
 //     setSortConfig((prev) => {
@@ -901,14 +1022,12 @@ export default Page;
 //     });
 //   };
 
-
 //   const getSortedData = () => {
 //     const sorted = [...filteredData];
 //     if (sortConfig.key) {
 //       sorted.sort((a, b) => {
 //         const aValue = a[sortConfig.key!];
 //         const bValue = b[sortConfig.key!];
-
 
 //         if (sortConfig.key === "dueStatus") {
 //           const getDaysValue = (status: string) => {
@@ -919,14 +1038,11 @@ export default Page;
 //             return daysMatch ? parseInt(daysMatch[0]) : Infinity;
 //           };
 
-
 //           const aDays = getDaysValue(a.dueStatus || "");
 //           const bDays = getDaysValue(b.dueStatus || "");
 
-
 //           return sortConfig.direction === "asc" ? aDays - bDays : bDays - aDays;
 //         }
-
 
 //         if (
 //           sortConfig.key === "purchaseDate" ||
@@ -937,13 +1053,11 @@ export default Page;
 //           return sortConfig.direction === "asc" ? aDate - bDate : bDate - aDate;
 //         }
 
-
 //         if (typeof aValue === "string" && typeof bValue === "string") {
 //           return sortConfig.direction === "asc"
 //             ? aValue.localeCompare(bValue)
 //             : bValue.localeCompare(aValue);
 //         }
-
 
 //         if (typeof aValue === "number" && typeof bValue === "number") {
 //           return sortConfig.direction === "asc"
@@ -951,62 +1065,31 @@ export default Page;
 //             : bValue - aValue;
 //         }
 
-
 //         return 0;
 //       });
 //     }
 //     return sorted;
 //   };
 
+//   const filteredData = filterByDateRange(
+//     purchaseEntryData.filter((item) => {
+//       const search = searchText.toLowerCase();
+//       const purchaseDateFormatted = format(
+//         new Date(item.purchaseDate),
+//         "dd-MM-yyyy"
+//       );
 
-//   const filterByDateRange = (data: PurchaseEntryData[]) => {
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
-
-
-//     switch (dateFilter) {
-//       case "today":
-//         return data.filter((item) =>
-//           isSameDay(new Date(item.purchaseDate), today)
-//         );
-//       case "yesterday":
-//         return data.filter((item) =>
-//           isSameDay(new Date(item.purchaseDate), subDays(today, 1))
-//         );
-//       case "thisWeek":
-//         return data.filter((item) =>
-//           isWithinInterval(new Date(item.purchaseDate), {
-//             start: startOfWeek(today),
-//             end: endOfWeek(today),
-//           })
-//         );
-//       case "thisMonth":
-//         return data.filter((item) =>
-//           isWithinInterval(new Date(item.purchaseDate), {
-//             start: startOfMonth(today),
-//             end: endOfMonth(today),
-//           })
-//         );
-//       case "pastDue":
-//         return data.filter((item) => {
-//           if (!item.paymentDueDate) return false;
-//           return new Date(item.paymentDueDate) < today;
-//         });
-//       case "custom":
-//         if (startDate && endDate) {
-//           return data.filter((item) =>
-//             isWithinInterval(new Date(item.purchaseDate), {
-//               start: startDate,
-//               end: endDate,
-//             })
-//           );
-//         }
-//         return data;
-//       default:
-//         return data;
-//     }
-//   };
-
+//       return (
+//         item.grnNo?.toLowerCase().includes(search) ||
+//         item.supplierName?.toLowerCase().includes(search) ||
+//         purchaseDateFormatted.toLowerCase().includes(search) ||
+//         item.purchaseBillNo?.toLowerCase().includes(search) ||
+//         item.grandTotal?.toString().toLowerCase().includes(search) ||
+//         item.paymentStatus?.toString().toLowerCase().includes(search) ||
+//         item.goodStatus?.toString().toLowerCase().includes(search)
+//       );
+//     })
+//   );
 
 //   const columns = [
 //     {
@@ -1116,19 +1199,18 @@ export default Page;
 //           status === "due today"
 //             ? "text-warning"
 //             : status === "overdue"
-//             ? "text-danger"
-//             : status === "payment cleared"
-//             ? "text-green"
-//             : "";
+//               ? "text-danger"
+//               : status === "payment cleared"
+//                 ? "text-green"
+//                 : "";
 //         const bgClass =
 //           status === "due today"
 //             ? "bg-warning2"
 //             : status === "overdue"
-//             ? "bg-danger"
-//             : status === "payment cleared"
-//             ? "bg-green2"
-//             : "";
-
+//               ? "bg-danger"
+//               : status === "payment cleared"
+//                 ? "bg-green2"
+//                 : "";
 
 //         return (
 //           <>
@@ -1187,7 +1269,6 @@ export default Page;
 //         const bgClass = isPending ? "bg-warning" : "bg-green";
 //         const textClass = isPending ? "text-warning" : "text-green";
 
-
 //         return (
 //           <span
 //             className={`px-2 py-1 rounded-xl text-sm font-medium ${bgClass} ${textClass}`}
@@ -1227,29 +1308,6 @@ export default Page;
 //     },
 //   ];
 
-
-//   const filteredData = filterByDateRange(
-//     purchaseEntryData.filter((item) => {
-//       const search = searchText.toLowerCase();
-//       const purchaseDateFormatted = format(
-//         new Date(item.purchaseDate),
-//         "dd-MM-yyyy"
-//       );
-
-
-//       return (
-//         item.grnNo?.toLowerCase().includes(search) ||
-//         item.supplierName?.toLowerCase().includes(search) ||
-//         purchaseDateFormatted.toLowerCase().includes(search) ||
-//         item.purchaseBillNo?.toLowerCase().includes(search) ||
-//         item.grandTotal?.toString().toLowerCase().includes(search) ||
-//         item.paymentStatus?.toString().toLowerCase().includes(search) ||
-//         item.goodStatus?.toString().toLowerCase().includes(search)
-//       );
-//     })
-//   );
-
-
 //   return (
 //     <>
 //       {!showPurchasEntry && (
@@ -1270,18 +1328,19 @@ export default Page;
 //                     icon={<Search size={18} />}
 //                   />
 //                 </div>
-//                 <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[14px] rounded-[24px] bg-[#4B0082] text-white cursor-pointer hover:bg-[#4B0082]/90 transition-colors">
-//                   <FiDownload size={18} />
-//                   <span className="text-base font-medium">Export as CSV</span>
-//                 </div>
-//                 <div className="flex h-[48px] px-[28px] py-[10px] justify-center items-center gap-[6px] rounded-[24px] border border-[#9F9C9C] cursor-pointer hover:bg-gray-50 transition-colors">
-//                   <FiPrinter size={18} />
-//                   <span className="text-base font-medium">Print</span>
-//                 </div>
+//                 <Button
+//                   label="Export as CSV"
+//                   className="px-6 bg-darkPurple text-white hover:bg-purple-800"
+//                   icon={<BiExport size={18} />}
+//                 />
+//                 <Button
+//                   label="Print"
+//                   className="px-4 border border-gray-400 hover:bg-gray-50"
+//                   icon={<FiPrinter size={18} />}
+//                 />
 //               </div>
 //             </div>
 //           </div>
-
 
 //           <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">
 //             {[
@@ -1303,16 +1362,14 @@ export default Page;
 //                       setEndDate(null);
 //                     }
 //                   }}
-//                   className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${
-//                     dateFilter === filter.value
-//                       ? "bg-purple-800 text-white"
-//                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-//                   }`}
+//                   className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
+//                     ? "bg-darkPurple text-white"
+//                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+//                     }`}
 //                 >
 //                   {filter.label}
 //                   {filter.value === "custom" && <CiCalendar size={18} />}
 //                 </button>
-
 
 //                 {dateFilter === "custom" &&
 //                   filter.value === "custom" &&
@@ -1339,7 +1396,6 @@ export default Page;
 //                           </div>
 //                         </div>
 
-
 //                         <div>
 //                           <label className="block text-sm text-gray-600 mb-1">
 //                             To
@@ -1361,7 +1417,6 @@ export default Page;
 //                           </div>
 //                         </div>
 
-
 //                         <div className="flex justify-between pt-2">
 //                           <button
 //                             onClick={() => {
@@ -1380,11 +1435,10 @@ export default Page;
 //                               }
 //                             }}
 //                             disabled={!startDate || !endDate}
-//                             className={`px-3 py-1 text-sm rounded ${
-//                               !startDate || !endDate
-//                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-//                                 : "bg-purple-800 text-white hover:bg-purple-700"
-//                             }`}
+//                             className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
+//                               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+//                               : "bg-purple-800 text-white hover:bg-purple-700"
+//                               }`}
 //                           >
 //                             Apply
 //                           </button>
@@ -1396,7 +1450,6 @@ export default Page;
 //             ))}
 //           </div>
 
-
 //           <Table
 //             data={getSortedData()}
 //             columns={columns}
@@ -1405,7 +1458,6 @@ export default Page;
 //         </main>
 //       )}
 
-
 //       {showPurchasEntry && (
 //         <PurchaseEntry setShowPurchaseEntry={setShowPurchasEntry} />
 //       )}
@@ -1413,8 +1465,4 @@ export default Page;
 //   );
 // };
 
-
 // export default Page;
-
-
-

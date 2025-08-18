@@ -1,4 +1,3 @@
-// types/BillingSummaryData.ts
 export interface BillingSummaryData {
   totalReturnAmount: number | null;
   totalReturnBills: number;
@@ -28,5 +27,22 @@ export interface PaymentSummaryData {
 export interface PaymentSummaryResponse {
   status: 'success' | 'error';
   data?: PaymentSummaryData;
+  message?: string;
+}
+
+
+
+export interface BillingGstSummaryItem {
+  formattedBillDate?: string;
+  billId1: string;
+  billDate: string;
+  subTotal: number;
+  totalGst: number;
+  grandTotal: number;
+}
+
+export interface BillingGstSummaryResponse {
+  status: 'success' | 'error';
+  data?: BillingGstSummaryItem[];
   message?: string;
 }
