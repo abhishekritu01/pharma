@@ -7,7 +7,7 @@ import { BillingGstSummaryItem } from "@/app/types/BillingSummaryData";
 import { getBillingGstSummary } from "@/app/services/BillingSummaryService";
 import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { FiPrinter } from "react-icons/fi";
+// import { FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import Button from "@/app/components/common/Button";
 import "react-datepicker/dist/react-datepicker.css";
@@ -237,11 +237,11 @@ const Page = () => {
                   }
                 }}
               />
-              <Button
+              {/* <Button
                 label="Print"
                 className="px-4 border border-gray-400 hover:bg-gray-50"
                 icon={<FiPrinter size={18} />}
-              />
+              /> */}
             </div>
           </div>
           <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">

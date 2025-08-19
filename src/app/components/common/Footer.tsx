@@ -2,11 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
-import Button from "./Button";
-import { useRouter } from "next/navigation";
+// import Button from "./Button";
+// import { useRouter } from "next/navigation";
 
 const Footer = () => {
-  const router = useRouter();
+  // const router = useRouter();
   return (
     <>
       <div className="flex justify-between">
@@ -30,7 +30,7 @@ const Footer = () => {
             <span className="font-bold"> TiaMeds Technologies Pvt. Ltd</span>
           </div>
         </div>
-        <div className="mt-9 flex space-x-5">
+        {/* <div className="mt-9 flex space-x-5">
           <div>
             <Button
               label="Print"
@@ -47,7 +47,7 @@ const Footer = () => {
               onClick={() => router.back()}
             ></Button>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

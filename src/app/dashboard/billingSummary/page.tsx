@@ -11,7 +11,7 @@ import {
   PaymentSummaryData
 } from "@/app/types/BillingSummaryData";
 import { BiExport } from "react-icons/bi";
-import { FiPrinter } from "react-icons/fi";
+// import { FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
@@ -151,11 +151,11 @@ const Page = () => {
               icon={<BiExport size={18} />}
               onClick={handleExport}
             />
-            <Button
+            {/* <Button
               label="Print"
               className="px-4 border border-gray-400 hover:bg-gray-50"
               icon={<FiPrinter size={18} />}
-            />
+            /> */}
           </div>
         </div>
 
