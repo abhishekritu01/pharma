@@ -8,6 +8,7 @@ import Button from "@/app/components/common/Button";
 import { getItemById } from "@/app/services/ItemService";
 import { ItemData } from "@/app/types/ItemData";
 import { getPatientById } from "@/app/services/PatientService";
+import Footer from "@/app/components/common/Footer";
 
 interface BillingSummaryProps {
   billId: string;
@@ -265,34 +266,9 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
         <div className="flex justify-end pt-25 px-5">Q P Signature</div>
 
         <div className="flex justify-between">
-          <div className="space-y-3">
-            <div className="text-lg font-semibold flex space-x-3">
-              <Image
-                src="/TiamedsIcon.svg"
-                alt="Company Logo"
-                width={45}
-                height={32}
-              />
-              <Image
-                src="/TiamedsLogo.svg"
-                alt="Company Logo"
-                width={90}
-                height={32}
-              />
-            </div>
-            <div className="text-base">
-              <span className="font-medium">Powered by</span>
-              <span className="font-bold"> TiaMeds Technology Pvt Ltd</span>
-            </div>
-          </div>
+          <Footer />
 
           <div className="mt-9 flex space-x-5">
-            <Button
-              label="Billing List"
-              value=""
-              className="w-28 text-black"
-              onClick={onClose}
-            ></Button>
             <Button
               label="Print"
               value=""
@@ -300,10 +276,10 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
               onClick={() => window.print()}
             ></Button>
             <Button
-              label="Thermal Print"
+              label="Back"
               value=""
-              className="w-28 text-black"
-              onClick={() => window.print()}
+              className="w-20 text-black"
+              onClick={onClose}
             ></Button>
           </div>
         </div>
