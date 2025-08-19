@@ -22,6 +22,11 @@ const Page = () => {
   const [, setLoading] = useState<boolean>(true);
   const [, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (returnId1?: string) => {
+    setOpenMenuId((prev) => (prev === returnId1 ? null : returnId1 || null));
+  };
 
   const handlePurchesReturn = () => {
     setShowPurchaseReturn(true);
@@ -172,56 +177,60 @@ const Page = () => {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseReturnData, index: number) => (
         <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"  onClick={() => toggleMenu(row.returnId1)} >
             <BsThreeDotsVertical size={18} />
           </button>
 
-          <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            <Link
-              href={`/dashboard/return/components/${row.returnId}`}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              View
-            </Link>
-            <button
-              onClick={() => console.log("Deleting Item:", index)}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              Delete
-            </button>
-          </div>
+          {openMenuId === row.returnId1 && (
+            <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+              <Link
+                href={`/dashboard/return/components/${row.returnId}`}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                View
+              </Link>
+              <button
+                onClick={() => console.log("Deleting Item:", index)}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       ),
     },
   ];
 
   const filteredData = purchaseReturnData
-  .filter((item) => {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    .filter((item) => {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const returnDate = new Date(item.returnDate);
-    return returnDate >= oneMonthAgo;
-  })
-  .filter((item) => {
-    const search = searchText.toLowerCase();
+      const returnDate = new Date(item.returnDate);
+      return returnDate >= oneMonthAgo;
+    })
+    .filter((item) => {
+      const search = searchText.toLowerCase();
 
-    const returnDateFormatted = format(new Date(item.returnDate), "dd-MM-yyyy");
-    
-    const returnQuantity = item.purchaseReturnItemDtos?.reduce(
-      (acc, i) => acc + (i.returnQuantity || 0),
-      0
-    );
+      const returnDateFormatted = format(
+        new Date(item.returnDate),
+        "dd-MM-yyyy"
+      );
 
-    return (
-      returnDateFormatted.toLowerCase().includes(search) ||
-      item.returnId1?.toLowerCase().includes(search) ||
-      item.supplierName?.toLowerCase().includes(search) ||
-      returnQuantity?.toString().toLowerCase().includes(search)||
-      item.returnAmount?.toString().toLowerCase().includes(search)
-    );
-  });
+      const returnQuantity = item.purchaseReturnItemDtos?.reduce(
+        (acc, i) => acc + (i.returnQuantity || 0),
+        0
+      );
 
+      return (
+        returnDateFormatted.toLowerCase().includes(search) ||
+        item.returnId1?.toLowerCase().includes(search) ||
+        item.supplierName?.toLowerCase().includes(search) ||
+        returnQuantity?.toString().toLowerCase().includes(search) ||
+        item.returnAmount?.toString().toLowerCase().includes(search)
+      );
+    });
 
   return (
     <>

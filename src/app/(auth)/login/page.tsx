@@ -8,12 +8,14 @@ import { toast } from "react-toastify";
 // import { FaClinicMedical } from "react-icons/fa";
 import UserRegister from "../userRegister/page";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+// import { FaClinicMedical } from "react-icons/fa";
 
 const Page: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [showRegister, setShowRegister] = useState(false);
   const [showRegister] = useState(false);
   const [showToast, setShowToast] = useState(false);
 

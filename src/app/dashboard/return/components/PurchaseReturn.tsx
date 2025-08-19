@@ -123,7 +123,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
       ),
     },
     {
-      header: "Discrepancy",
+      header: "Discrepancy Details",
       accessor: (item: PurchaseReturnItem) => (
         <input
           type="text"
@@ -155,6 +155,8 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     },
   ];
 
+
+
   // const handleInputChange = (
   //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   // ) => {
@@ -170,24 +172,38 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
   //         i === idx
   //           ? {
   //               ...item,
-  //               [field]: field === "returnQuantity" ? Number(value) : value,
+  //               [field]:
+  //                 field === "returnQuantity" ||
+  //                 field === "purchasePrice" ||
+  //                 field === "gstPercentage"
+  //                   ? Number(value)
+  //                   : value,
   //             }
   //           : item
   //       );
 
-  //       const updatedReturnAmount = updatedItems.reduce((acc, item) => {
+  //       let totalAmount = 0;
+  //       let totalGst = 0;
+
+  //       updatedItems.forEach((item) => {
   //         const qty = Number(item.returnQuantity) || 0;
   //         const price = Number(item.purchasePrice) || 0;
-  //         console.log(
-  //           `Calculating: qty=${qty}, price=${price}, subtotal=${qty * price}`
-  //         );
-  //         return acc + qty * price;
-  //       }, 0);
+  //         const gst = Number(item.gstPercentage) || 0;
+  //         const itemTotal = qty * price;
+  //         const itemGstAmount = (itemTotal * gst) / 100;
+
+  //         totalAmount += itemTotal;
+  //         totalGst += itemGstAmount;
+  //       });
+
+  //       const grandTotal = totalAmount + totalGst;
 
   //       return {
   //         ...prev,
   //         purchaseReturnItemDtos: updatedItems,
-  //         returnAmount: parseFloat(updatedReturnAmount.toFixed(2)),
+  //         totalAmount: parseFloat(totalAmount.toFixed(2)),
+  //         totalGst: parseFloat(totalGst.toFixed(2)),
+  //         returnAmount: parseFloat(grandTotal.toFixed(2)),
   //       };
   //     });
   //   } else {
@@ -201,65 +217,86 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
   //   }
   // };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    const parts = name.split("-");
 
-    if (parts.length === 2) {
-      const field = parts[0] as keyof PurchaseReturnItem;
-      const idx = Number(parts[1]);
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  const parts = name.split("-");
 
-      setFormData((prev) => {
-        const updatedItems = prev.purchaseReturnItemDtos.map((item, i) =>
-          i === idx
-            ? {
-                ...item,
-                [field]:
-                  field === "returnQuantity" ||
-                  field === "purchasePrice" ||
-                  field === "gstPercentage"
-                    ? Number(value)
-                    : value,
-              }
-            : item
-        );
+  if (parts.length === 2) {
+    const field = parts[0] as keyof PurchaseReturnItem;
+    const idx = Number(parts[1]);
 
-        let totalAmount = 0;
-        let totalGst = 0;
+    let showToast = false; // flag for toast message
 
-        updatedItems.forEach((item) => {
-          const qty = Number(item.returnQuantity) || 0;
-          const price = Number(item.purchasePrice) || 0;
-          const gst = Number(item.gstPercentage) || 0;
-          const itemTotal = qty * price;
-          const itemGstAmount = (itemTotal * gst) / 100;
+    setFormData((prev) => {
+      const updatedItems = [...prev.purchaseReturnItemDtos];
+      const currentItem = updatedItems[idx];
 
-          totalAmount += itemTotal;
-          totalGst += itemGstAmount;
-        });
+      // 🔍 Validation for returnQuantity > availableQuantity
+      if (field === "returnQuantity") {
+        const newQty = Number(value) || 0;
+        const available = currentItem.availableQuantity ?? 0;
 
-        const grandTotal = totalAmount + totalGst;
+        if (newQty > available) {
+          showToast = true; // set flag
+          return prev; // ❌ skip state update
+        }
+      }
 
-        return {
-          ...prev,
-          purchaseReturnItemDtos: updatedItems,
-          totalAmount: parseFloat(totalAmount.toFixed(2)),
-          totalGst: parseFloat(totalGst.toFixed(2)),
-          returnAmount: parseFloat(grandTotal.toFixed(2)),
-        };
+      // ✅ Normal update
+      updatedItems[idx] = {
+        ...currentItem,
+        [field]:
+          field === "returnQuantity" ||
+          field === "purchasePrice" ||
+          field === "gstPercentage"
+            ? Number(value)
+            : value,
+      };
+
+      let totalAmount = 0;
+      let totalGst = 0;
+
+      updatedItems.forEach((item) => {
+        const qty = Number(item.returnQuantity) || 0;
+        const price = Number(item.purchasePrice) || 0;
+        const gst = Number(item.gstPercentage) || 0;
+        const itemTotal = qty * price;
+        const itemGstAmount = (itemTotal * gst) / 100;
+
+        totalAmount += itemTotal;
+        totalGst += itemGstAmount;
       });
-    } else {
-      const field = name as keyof PurchaseReturnData;
-      const newValue = field === "returnDate" ? new Date(value) : value;
 
-      setFormData((prev) => ({
+      const grandTotal = totalAmount + totalGst;
+
+      return {
         ...prev,
-        [field]: newValue,
-      }));
+        purchaseReturnItemDtos: updatedItems,
+        totalAmount: parseFloat(totalAmount.toFixed(2)),
+        totalGst: parseFloat(totalGst.toFixed(2)),
+        returnAmount: parseFloat(grandTotal.toFixed(2)),
+      };
+    });
+
+    // ✅ trigger toast AFTER state update
+    if (showToast) {
+      toast.error("Return quantity cannot exceed available quantity!");
     }
-  };
+  } else {
+    const field = name as keyof PurchaseReturnData;
+    const newValue = field === "returnDate" ? new Date(value) : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: newValue,
+    }));
+  }
+};
+
+
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -450,6 +487,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           purchaseBillOptions: billNumbers,
           purchasePrice,
           gstPercentage,
+          availableQuantity: selected?.packageQty ?? 0,
         };
 
         return {
@@ -601,7 +639,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         {formData.purchaseReturnItemDtos.map((row, idx) => (
           <div
             key={idx}
-            className="border border-gray-300 w-full rounded-lg p-5 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-8"
+            className="border border-gray-300 w-full rounded-lg px-5 pt-5 pb-1 flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:gap-8"
           >
             {/* Left Column */}
             <div className="w-full min-w-0 space-y-4">
@@ -780,10 +818,10 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                     <option value="Store Credit Returns">
                       Store Credit Returns
                     </option>
-                    <option value="Replacement Returns">
+                    {/* <option value="Replacement Returns">
                       Replacement Returns
                     </option>
-                    <option value="Change Invoice">Change Invoice</option>
+                    <option value="Change Invoice">Change Invoice</option> */}
                   </select>
                 </div>
 
@@ -804,7 +842,10 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                     onKeyDown={restrictInvalidNumberKeys}
                     onChange={handleNumericChange(handleInputChange)}
                     className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                  />
+                  />{" "}
+                  <span className="text-xs text-gray-500 mt-1">
+                    Available Quantity: {row.availableQuantity ?? 0}
+                  </span>
                 </div>
               </div>
             </div>
