@@ -4,9 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import Table from "@/app/components/common/Table";
-import {
-  PurchaseReturnData,
-} from "@/app/types/PurchaseReturnData";
+import { PurchaseReturnData } from "@/app/types/PurchaseReturnData";
 import { getPurchaseReturnById } from "@/app/services/PurchaseReturnService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import { getItemById } from "@/app/services/ItemService";
@@ -25,11 +23,11 @@ const Page = () => {
   const columns = [
     {
       header: "Discrepancy In",
-      accessor: "discrepancyIn" as const, 
+      accessor: "discrepancyIn" as const,
     },
     {
       header: "Discrepancy",
-      accessor: "discrepancy" as const, 
+      accessor: "discrepancy" as const,
     },
   ];
 
@@ -84,7 +82,7 @@ const Page = () => {
     <>
       <main className="space-y-10">
         <div className="justify-start text-darkPurple text-3xl font-medium leading-10">
-          Purchase Order Details
+          Purchase Return Details
         </div>
 
         <div className="flex space-x-4">
@@ -127,7 +125,7 @@ const Page = () => {
           <div className="w-full h-24 border border-Gray rounded-lg flex items-center px-6 space-x-4">
             <div>
               <Image
-                src="/Supplier.svg"
+                src="/Rupees.svg"
                 alt="Company Logo"
                 width={45}
                 height={32}
@@ -135,25 +133,10 @@ const Page = () => {
             </div>
             <div className="grid">
               <span className="font-normal text-sm text-gray">
-                Supplier Name
+                Return Amount
               </span>
-              <span className="font-normal text-base">{supplier}</span>
-            </div>
-          </div>
-
-          <div className="w-full h-24 border border-Gray rounded-lg flex items-center px-6 space-x-4">
-            <div>
-              <Image
-                src="/OrderId.svg"
-                alt="Company Logo"
-                width={45}
-                height={32}
-              />
-            </div>
-            <div className="grid">
-              <span className="font-normal text-sm text-gray">Bill Number</span>
               <span className="font-normal text-base">
-                {purchaseReturnData?.purchaseBillNo}
+                {purchaseReturnData?.returnAmount.toFixed(2)}
               </span>
             </div>
           </div>
@@ -169,15 +152,8 @@ const Page = () => {
                 <div className="grid">
                   <div className="font-normal text-sm text-gray">Item Name</div>
                   <div className="font-normal text-base">
-                    {(item).itemName || "Unknown Item"}
+                    {item.itemName || "Unknown Item"}
                   </div>
-                </div>
-
-                <div className="grid">
-                  <div className="font-normal text-sm text-gray">
-                    Return Type
-                  </div>
-                  <div className="font-normal text-base">{item.returnType}</div>
                 </div>
 
                 <div className="grid">
@@ -185,6 +161,27 @@ const Page = () => {
                     Batch Number
                   </div>
                   <div className="font-normal text-base">{item.batchNo}</div>
+                </div>
+
+                <div className="grid">
+                  <div className="font-normal text-sm text-gray">
+                    Bill Number
+                  </div>
+                  <div className="font-normal text-base">
+                    {purchaseReturnData?.purchaseBillNo || "N/A"}
+                  </div>
+                </div>
+
+                <div className="grid">
+                  <div className="font-normal text-sm text-gray">Supplier</div>
+                  <div className="font-normal text-base">{supplier}</div>
+                </div>
+
+                <div className="grid">
+                  <div className="font-normal text-sm text-gray">
+                    Return Type
+                  </div>
+                  <div className="font-normal text-base">{item.returnType}</div>
                 </div>
 
                 <div className="grid">
@@ -212,28 +209,6 @@ const Page = () => {
             </div>
           </div>
         ))}
-
-        <div className="border h-full w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
-          {[
-            {
-              label: "RETURN AMOUNT",
-              value: purchaseReturnData?.returnAmount.toFixed(2),
-              isTotal: true,
-            },
-          ].map(({ label, value, isTotal }, index) => (
-            <div
-              key={index}
-              className={`flex justify-between ${
-                isTotal
-                  ? "font-semibold text-base bg-gray h-8 p-1 items-center rounded-lg"
-                  : ""
-              }`}
-            >
-              <div>{label}</div>
-              <div>₹{value}</div>
-            </div>
-          ))}
-        </div>
 
         <Footer />
       </main>

@@ -534,8 +534,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
     const fetchPharmacies = async () => {
       try {
         const data = await getPharmacy();
-        setPharmacies(data.data);
-
+        setPharmacies(data?.data || []);
         if (!formData.pharmacyId && data.data.length > 0) {
           setFormData((prev) => ({
             ...prev,
@@ -850,7 +849,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                       type="text"
                       readOnly
                       value={
-                        pharmacies.find(
+                        (pharmacies ?? []).find(
                           (ph) =>
                             String(ph.pharmacyId) ===
                             String(formData.pharmacyId)

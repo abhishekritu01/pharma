@@ -196,7 +196,7 @@ const UserRegister = () => {
                 verified: false,
               });
               setCurrentStep(1);
-              window.location.href = "/user-login";
+              window.location.href = "/login";
             },
           }
         );
