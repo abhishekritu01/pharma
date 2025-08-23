@@ -2,26 +2,20 @@
 
 import Drawer from "@/app/components/common/Drawer";
 import Input from "@/app/components/common/Input";
-import PaginationTable from "@/app/components/common/PaginationTable";
+import Table from "@/app/components/common/Table";
 import { getSupplier } from "@/app/services/SupplierService";
 import { SupplierData } from "@/app/types/SupplierData";
 import { Plus, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AddSupplier from "./component/AddSupplier";
 import Button from "@/app/components/common/Button";
-
-import Loader from "@/app/components/common/Loader";
-
 import { BsThreeDotsVertical } from "react-icons/bs";
-
 
 type Action = "edit" | "delete";
 
 const Page = () => {
   const [searchText, setSearchText] = useState<string>("");
   const [supplierData, setSupplierData] = useState<SupplierData[]>([]);
-  const [loading] = useState<boolean>(true);
-  const [error,] = useState<string | null>(null);
   const [showSupplier, setShowSupplier] = useState(false);
   const [, setShowDrawer] = useState<boolean>(false);
   const [currentSupplierId, setCurrentSupplierId] = useState<string | null>(
@@ -102,22 +96,6 @@ const Page = () => {
     );
   });
 
-
-  // useEffect(() => {
-  //   const fetchSuppliers = async () => {
-  //     setLoading(true);
-  //     setError(null);
-  //     try {
-  //       const data = await getSupplier();
-  //       setSupplierData(data);
-  //     } catch (error) {
-  //       console.error("Failed to fetch suppliers:", error);
-  //       setError("Failed to load supplier data");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
   const fetchSuppliers = async () => {
     try {
       const data = await getSupplier();
@@ -126,7 +104,6 @@ const Page = () => {
       console.error("Failed to fetch suppliers:", error);
     }
   };
-
 
   useEffect(() => {
     fetchSuppliers();
@@ -192,22 +169,11 @@ const Page = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
-            <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
-          </div>
-        ) : error ? (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            <strong>Error!</strong> {error}
-          </div>
-        ) : (
-          <PaginationTable
-            data={filteredData}
-            columns={columns}
-            noDataMessage="No records found"
-          />
-        )}
+        <Table
+          data={filteredData}
+          columns={columns}
+          noDataMessage="No records found"
+        />
       </main>
     </>
   );
