@@ -1,20 +1,82 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { getUsersPharma } from "@/app/services/PharmacyService";
+import { PharmacyData } from "@/app/types/PharmacyData";
+import { getUserById } from "@/app/services/UserService";
 
 const Page = () => {
-  const infoItems = [
-    { icon: "/icons/person.svg", label: "Pharmacy Owner", value: "Cristofer Rosser" },
-    { icon: "/icons/mail.svg", label: "Email", value: "aakash@company.com" },
-    { icon: "/icons/phone.svg", label: "Phone Number", value: "9825378273" },
-    { icon: "/icons/address.svg", label: "Address", value: "456 Harmony Lane, Suite 200, Wellness Town, WT 67890" },
+
+    const [pharmacyData, setPharmacyData] = useState<PharmacyData[]>([]);
+  
+
+    // const fetchPharmacyDetails = async () => {
+    //   try {
+    //     const data = await getUsersPharma();
+    //     console.log("Pharmacy Data", data);
+        
+    //     setPharmacyData(data);
+    //   } catch (error) {
+    //     console.error("Failed to fetch pharmacy:", error);
+    //   }
+    // };
+  
+    // useEffect(() => {
+    //   fetchPharmacyDetails();
+    // }, []);
+
+  const [ownerName, setOwnerName] = useState<string>("N/A");
+
+  const fetchPharmacyDetails = async () => {
+    try {
+      const data = await getUsersPharma();
+      console.log("Pharmacy Data", data);
+
+      setPharmacyData(data);
+
+      if (data.length > 0) {
+        const pharmacy = data[0]; // first pharmacy
+        if (pharmacy.createdBy && pharmacy.pharmacyId) {
+          // fetch user details
+          const userResponse = await getUserById(
+            pharmacy.createdBy,
+            pharmacy.pharmacyId
+          );
+
+          if (userResponse?.data) {
+            const { firstName, lastName } = userResponse.data;
+            setOwnerName(`${firstName} ${lastName}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch pharmacy:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPharmacyDetails();
+  }, []);
+
+  
+     const pharmacy = pharmacyData.length > 0 ? pharmacyData[0] : null;
+
+     const infoItems = [
+    { icon: "/icons/person.svg", label: "Pharmacy Owner", value: ownerName || "N/A" },
+    { icon: "/icons/mail.svg", label: "Email", value: pharmacy?.pharmaEmail || "N/A" },
+    { icon: "/icons/phone.svg", label: "Phone Number", value: pharmacy?.pharmaPhone || "N/A" },
+    { icon: "/icons/address.svg", label: "Address", value: pharmacy
+      ? `${pharmacy.address || ""}, ${pharmacy.city || ""}, ${pharmacy.pharmaZip || ""}, ${pharmacy.state || ""},  ${pharmacy.pharmaCountry || ""}`
+      : "N/A", },
   ];
 
   const compliance = [
-    { icon: "/icons/dl.svg", label: "Drug Licence Number", value: "1928394749372901938" },
-    { icon: "/icons/gstin.svg", label: "GSTIN", value: "GHIKF739463" },
+    { icon: "/icons/dl.svg", label: "Drug Licence Number", value: pharmacy?.licenseNo || "N/A" },
+    { icon: "/icons/gstin.svg", label: "GSTIN", value: pharmacy?.gstNo || "N/A" },
   ];
+
+
 
   return (
     <>
@@ -36,73 +98,11 @@ const Page = () => {
               />
             </div>
           </div>
-          <div className="font-bold text-lg mt-4 text-center">Pharmacy Name</div>
+          <div className="font-bold text-lg mt-4 text-center">{pharmacy?.name}</div>
         </div>
         <div className="border border-[#CCCBCB] w-full h-full rounded-2xl p-6">
           <div className="font-bold text-lg">Contact Details</div>
-          {/* <div>
-            <div className="flex gap-48 mt-5">
-              <div className="flex gap-3">
-                <span>
-                  <Image
-                    src="/icons/person.svg"
-                    alt="Pharmacy Owner Icon"
-                    width={15}
-                    height={15}
-                  />
-                </span>
-                <span className="text-gray">Pharmacy Owner</span>
-              </div>
-              <div>Data</div>
-            </div>
-
-            <div className="flex gap-48 mt-5">
-              <div className="flex gap-3">
-                <span>
-                  <Image
-                    src="/icons/mail.svg"
-                    alt="Email"
-                    width={15}
-                    height={15}
-                  />
-                </span>
-                <span className="text-gray">Email</span>
-              </div>
-              <div>Data</div>
-            </div>
-
-            <div className="flex gap-48 mt-5">
-              <div className="flex gap-3">
-                <span>
-                  <Image
-                    src="/icons/phone.svg"
-                    alt="Phone"
-                    width={15}
-                    height={15}
-                  />
-                </span>
-                <span className="text-gray">Phone Number</span>
-              </div>
-              <div>Data</div>
-            </div>
-
-                <div className="flex gap-48 mt-5">
-              <div className="flex gap-3">
-                <span>
-                  <Image
-                    src="/icons/address.svg"
-                    alt="Address"
-                    width={15}
-                    height={15}
-                  />
-                </span>
-                <span className="text-gray">Address</span>
-              </div>
-              <div>Data</div>
-            </div>
-
-          </div> */}
-
+        
           <div className="space-y-5 mt-5">
             {infoItems.map(({ icon, label, value }, idx) => (
               <div

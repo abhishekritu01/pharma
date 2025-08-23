@@ -22,6 +22,25 @@ const Page = () => {
   const [searchText, setSearchText] = useState<string>("");
   const [currentBillId, setCurrentBillId] = useState<string | null>(null);
   const [showBillSummary, setShowBillSummary] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (billId?: string) => {
+    setOpenMenuId((prev) => (prev === billId ? null : billId || null));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const formatDate = (date: string | Date): string => {
     const parsedDate = typeof date === "string" ? new Date(date) : date;
@@ -217,25 +236,32 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: BillingData) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+        <div className="relative group  menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.billId)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
-
-          <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            <button
-              onClick={() => handleBillingSummary(row.billId)}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              View
-            </button>
-            <button
-              onClick={() => handleBillingSummary(row.billId)}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              Delete
-            </button>
-          </div>
+          {openMenuId === row.billId && (
+            <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg transition-opacity duration-200 z-10 whitespace-nowrap">
+              <button
+                onClick={() => handleBillingSummary(row.billId)}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                View
+              </button>
+              <button className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg">
+                Edit
+              </button>
+              <button
+                // onClick={() => handleBillingSummary(row.billId)}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       ),
     },

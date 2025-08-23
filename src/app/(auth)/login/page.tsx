@@ -5,18 +5,15 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { login } from "@/app/services/auth.Service";
 import { toast } from "react-toastify";
-// import { FaClinicMedical } from "react-icons/fa";
-import UserRegister from "../userRegister/page";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-// import { FaClinicMedical } from "react-icons/fa";
+import UserRegister from "../userRegister/component/UserRegister";
 
 const Page: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [showRegister, setShowRegister] = useState(false);
-  const [showRegister] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const router = useRouter();
@@ -48,9 +45,9 @@ const Page: React.FC = () => {
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // stop navigation
+    e.preventDefault();
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000); // hide after 3 seconds
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   return (
@@ -167,32 +164,22 @@ const Page: React.FC = () => {
                     {isSubmitting ? "Logging in..." : "Log In"}
                   </button>
                 </div>
-              </form>
 
-              {/* <div>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200"></div>
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="px-2 bg-white text-sm text-gray-500">
-                      New to our platform?
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <button
-                    className="group w-full flex justify-center items-center px-4 py-2 rounded-3xl cursor-pointer border border-gray-300 hover:bg-[#4B0082] hover:text-white transition"
+                <div className="flex justify-center mt-3 text-sm font-medium space-x-2">
+                  <div>Don’t have an account?</div>
+                  <div
+                    className="text-Purple hover:underline cursor-pointer"
                     onClick={() => setShowRegister(true)}
                   >
-                    <FaClinicMedical className="mr-2 text-Purple group-hover:text-white transition" />
-                    Register Pharmacy
-                  </button>
+                    Sign Up
+                  </div>
                 </div>
-              </div> */}
+              </form>
+             
             </>
           ) : (
-            <UserRegister />
+            <UserRegister setShowRegister={setShowRegister} />
+
           )}
         </div>
       </div>

@@ -18,12 +18,14 @@ interface SupplierProps {
   setShowDrawer: (value: boolean) => void;
   supplierId?: string | null;
   action?: "edit" | "delete";
+  onSuccess?: () => void;
 }
 
 const AddSupplier: React.FC<SupplierProps> = ({
   setShowDrawer,
   supplierId,
   action,
+  onSuccess,
 }) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
@@ -126,7 +128,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
       }
 
       setShowDrawer(false);
-      // window.location.reload();
+      onSuccess?.();
     } catch (error) {
       console.error("Error:", error);
       if (error instanceof ZodError) {

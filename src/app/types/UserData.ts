@@ -14,4 +14,6 @@ export interface UserData {
     roles: string[];
     enabled?: boolean;
     pharmacyId?: number;
+    is_verified?: boolean;
+    modules?:  null;
   }

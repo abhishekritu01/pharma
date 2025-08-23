@@ -19,9 +19,10 @@ interface ItemProps {
   setShowDrawer: (value: boolean) => void;
   itemId?: string | null;
   action?: "edit" | "delete";
+  onSuccess?: () => void;
 }
 
-const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
+const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess }) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -196,6 +197,7 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action }) => {
       }
 
       setShowDrawer(false);
+      onSuccess?.();
     } catch (error) {
       console.error("Error:", error);
 

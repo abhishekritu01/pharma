@@ -697,7 +697,6 @@ const OrderSummaryClient = () => {
         </main>
       </div>
 
-      {/* Buttons container */}
       <div className="flex justify-end gap-4 mt-6 print-hidden">
         <Button
           label="Back"
