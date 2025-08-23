@@ -8,21 +8,22 @@ import { ItemData } from "@/app/types/ItemData";
 import { Plus, Search, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AddItem from "./components/AddItem";
-import { getItem } from "@/app/services/ItemService";
-import { getVariantById } from "@/app/services/VariantService";
-<<<<<<< HEAD
+// import { getItem } from "@/app/services/ItemService";
+// import { getVariantById } from "@/app/services/VariantService";
 import Loader from "@/app/components/common/Loader";
-=======
+
 import { BsThreeDotsVertical } from "react-icons/bs";
->>>>>>> c2808fe33c940fde31b7ef6ccff6dd3b7f7b72fc
 
 type Action = "edit" | "delete";
 
 const Page = () => {
   const [searchText, setSearchText] = useState<string>("");
-  const [itemData, setItemData] = useState<ItemData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [itemData, setItemData] = useState<ItemData[]>([]);
+  // const [loading, setLoading] = useState<boolean>(true);
+  // const [error, setError] = useState<string | null>(null);
+  const [itemData] = useState<ItemData[]>([]);
+  const [loading] = useState<boolean>(true);
+  const [error] = useState<string | null>(null);
   const [showItem, setShowItem] = useState(false);
   const [, setShowDrawer] = useState<boolean>(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
@@ -106,52 +107,52 @@ const Page = () => {
     );
   });
 
-  const fetchItemsWithVariants = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const items = await getItem();
+//   const fetchItemsWithVariants = async () => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const items = await getItem();
 
-      const itemsWithVariants = await Promise.all(
-        items.map(async (item: ItemData) => {
-          if (!item.variantId || !item.unitId) return item;
+//       const itemsWithVariants = await Promise.all(
+//         items.map(async (item: ItemData) => {
+//           if (!item.variantId || !item.unitId) return item;
 
-          try {
-            const variantData = await getVariantById(item.variantId);
+//           try {
+//             const variantData = await getVariantById(item.variantId);
 
-            const matchingUnit = variantData.unitDtos?.find(
-              (unit: ItemData) => unit.unitId === item.unitId
-            );
+//             const matchingUnit = variantData.unitDtos?.find(
+//               (unit: ItemData) => unit.unitId === item.unitId
+//             );
 
-            return {
-              ...item,
-              variantName: variantData.variantName,
-              unitName: matchingUnit?.unitName || "N/A",
-            };
-          } catch (err) {
-            console.error("Error fetching variant for item:", item.itemId, err);
-            return item;
-          }
-        })
-      );
+//             return {
+//               ...item,
+//               variantName: variantData.variantName,
+//               unitName: matchingUnit?.unitName || "N/A",
+//             };
+//           } catch (err) {
+//             console.error("Error fetching variant for item:", item.itemId, err);
+//             return item;
+//           }
+//         })
+//       );
 
-      setItemData(itemsWithVariants);
-    } catch (error) {
-      console.error("Failed to fetch items:", error);
-      setError("Failed to load item data");
-    } finally {
-      setLoading(false);
-    }
-  };
+//       setItemData(itemsWithVariants);
+//     } catch (error) {
+//       console.error("Failed to fetch items:", error);
+//       setError("Failed to load item data");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-<<<<<<< HEAD
-  fetchItemsWithVariants();
-}, []);
-=======
-  useEffect(() => {
-    fetchItemsWithVariants();
-  }, []);
->>>>>>> c2808fe33c940fde31b7ef6ccff6dd3b7f7b72fc
+
+//   fetchItemsWithVariants();
+// }, []);
+
+//   useEffect(() => {
+//     fetchItemsWithVariants();
+//   }, []);
+
 
   const handleSupplierDrawer = (itemId?: string, action?: Action) => {
     if (itemId) {
@@ -178,7 +179,7 @@ const Page = () => {
             setShowDrawer={handleCloseDrawer}
             itemId={currentItemId}
             action={action}
-            onSuccess={fetchItemsWithVariants}
+            // onSuccess={fetchItemsWithVariants}
           />
         </Drawer>
       )}
