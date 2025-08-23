@@ -30,6 +30,20 @@ const Page = () => {
     setOpenMenuId((prev) => (prev === orderId ? null : orderId || null));
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const formatDate = (date: string | Date): string => {
     const parsedDate = typeof date === "string" ? new Date(date) : date;
     return format(parsedDate, "dd-MM-yyyy");
@@ -150,7 +164,7 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseOrderData) => (
-        <div className="relative">
+        <div className="relative menu-container">
           <button
             className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
             onClick={() => toggleMenu(row.orderId)}
@@ -166,8 +180,11 @@ const Page = () => {
               >
                 View
               </Link>
+              <button className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg">
+                Edit
+              </button>
               <button
-                onClick={() => handlePurchesOrder(row.orderId)}
+                // onClick={() => handlePurchesOrder(row.orderId)}
                 className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
               >
                 Delete

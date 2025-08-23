@@ -33,6 +33,20 @@ const Page = () => {
     setOpenMenuId((prev) => (prev === invId ? null : invId || null));
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const fetchSupplier = async (supplierId: string): Promise<string> => {
     try {
       const supplier = await getSupplierById(supplierId.trim());
@@ -296,13 +310,16 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseEntryData) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer" onClick={() => toggleMenu(row.invId)}>
+        <div className="relative menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.invId)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
 
           {openMenuId === row.invId && (
-            <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 whitespace-nowrap">
+            <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg transition-opacity duration-200 z-10 whitespace-nowrap">
               <Link
                 href={`/dashboard/orderSummary?id=${row.invId}`}
                 className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
@@ -317,6 +334,14 @@ const Page = () => {
                   Confirm Payment
                 </button>
               )}
+
+              <button className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg">
+                Edit
+              </button>
+
+              <button className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg">
+                Delete
+              </button>
             </div>
           )}
         </div>

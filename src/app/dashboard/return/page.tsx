@@ -29,6 +29,20 @@ const Page = () => {
     setOpenMenuId((prev) => (prev === returnId1 ? null : returnId1 || null));
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handlePurchesReturn = () => {
     setShowPurchaseReturn(true);
   };
@@ -179,19 +193,28 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseReturnData, index: number) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"  onClick={() => toggleMenu(row.returnId1)} >
+        <div className="relative group  menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.returnId1)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
 
           {openMenuId === row.returnId1 && (
-            <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+            <div className="absolute right-0 mt-2 min-w-[160px] bg-white shadow-xl rounded-lg transition-opacity duration-200 z-10 whitespace-nowrap">
               <Link
                 href={`/dashboard/return/components/${row.returnId}`}
                 className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
               >
                 View
               </Link>
+              <button
+                onClick={() => console.log("Edit Item:", index)}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                Edit
+              </button>
               <button
                 onClick={() => console.log("Deleting Item:", index)}
                 className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"

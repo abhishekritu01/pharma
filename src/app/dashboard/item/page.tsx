@@ -7,11 +7,14 @@ import PaginationTable from "@/app/components/common/PaginationTable";
 import { ItemData } from "@/app/types/ItemData";
 import { Plus, Search, Upload } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import {MdEdit } from "react-icons/md";
 import AddItem from "./components/AddItem";
 import { getItem } from "@/app/services/ItemService";
 import { getVariantById } from "@/app/services/VariantService";
+<<<<<<< HEAD
 import Loader from "@/app/components/common/Loader";
+=======
+import { BsThreeDotsVertical } from "react-icons/bs";
+>>>>>>> c2808fe33c940fde31b7ef6ccff6dd3b7f7b72fc
 
 type Action = "edit" | "delete";
 
@@ -24,6 +27,25 @@ const Page = () => {
   const [, setShowDrawer] = useState<boolean>(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [action, setAction] = useState<Action | undefined>(undefined);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (orderId?: string) => {
+    setOpenMenuId((prev) => (prev === orderId ? null : orderId || null));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const columns = [
     {
@@ -45,24 +67,29 @@ const Page = () => {
     {
       header: "Action",
       accessor: (row: ItemData) => (
-        <div className="space-x-3">
+        <div className="relative menu-container">
           <button
-            className="cursor-pointer hover:opacity-80 transition"
-            onClick={() =>
-              row.itemId && handleSupplierDrawer(row.itemId, "edit")
-            }
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.itemId)}
           >
-            <MdEdit size={19} color="228B22" />
+            <BsThreeDotsVertical size={18} />
           </button>
 
-          {/* <button
-            className="cursor-pointer hover:opacity-80 transition"
-            onClick={() =>
-              row.itemId && handleSupplierDrawer(row.itemId, "delete")
-            }
-          >
-            <MdDelete size={20} color="B30000" />
-          </button> */}
+          {openMenuId === row.itemId && (
+            <div className="absolute right-0 mt-2 w-full bg-white shadow-xl rounded-lg z-10">
+              <button
+                onClick={() => {
+                  if (row.itemId) {
+                    handleSupplierDrawer(row.itemId, "edit");
+                  }
+                  setOpenMenuId(null);
+                }}
+                className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+              >
+                Edit
+              </button>
+            </div>
+          )}
         </div>
       ),
     },
@@ -79,7 +106,6 @@ const Page = () => {
     );
   });
 
- useEffect(() => {
   const fetchItemsWithVariants = async () => {
     setLoading(true);
     setError(null);
@@ -118,8 +144,14 @@ const Page = () => {
     }
   };
 
+<<<<<<< HEAD
   fetchItemsWithVariants();
 }, []);
+=======
+  useEffect(() => {
+    fetchItemsWithVariants();
+  }, []);
+>>>>>>> c2808fe33c940fde31b7ef6ccff6dd3b7f7b72fc
 
   const handleSupplierDrawer = (itemId?: string, action?: Action) => {
     if (itemId) {
@@ -128,7 +160,7 @@ const Page = () => {
       setCurrentItemId(null);
     }
 
-    setAction(action); 
+    setAction(action);
     setShowItem(true);
     setShowDrawer(true);
   };
@@ -146,6 +178,7 @@ const Page = () => {
             setShowDrawer={handleCloseDrawer}
             itemId={currentItemId}
             action={action}
+            onSuccess={fetchItemsWithVariants}
           />
         </Drawer>
       )}
