@@ -119,3 +119,38 @@ export const checkDuplicateItem = async (data: {
     }
   }
 };
+
+
+// The code below is added for CSV upload functionality but is currently not functional................
+
+// export const uploadItemsCsv = async (file: File): Promise<void> => {
+//   try {
+//     const token = localStorage.getItem('token'); // Assuming you store JWT token in localStorage
+    
+//     if (!token) {
+//       throw new Error('Authentication token not found');
+//     }
+
+//     const formData = new FormData();
+//     formData.append('file', file);
+
+//     const response = await fetch('/api/items/csv/upload', {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Bearer ${token}`,
+//       },
+//       body: formData,
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       throw new Error(errorData.message || 'Failed to upload CSV file');
+//     }
+
+//     const result = await response.json();
+//     return result;
+//   } catch (error) {
+//     console.error('Error uploading CSV:', error);
+//     throw error;
+//   }
+// };

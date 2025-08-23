@@ -11,8 +11,9 @@ import { PharmacyData } from "@/app/types/PharmacyData";
 import { getPharmacy } from "@/app/services/PharmacyService";
 import { getUserOfPharmacy } from "@/app/services/UserService";
 import { toast } from "react-toastify";
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import Loader from "@/app/components/common/Loader";
 
 type Action = "edit" | "delete";
 
@@ -53,6 +54,8 @@ const Page = () => {
   const [action, setAction] = useState<Action | undefined>(undefined);
   const [, setPharmacies] = useState<PharmacyData[]>([]);
   const [user, setUser] = useState([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const columns = [
     {
@@ -107,6 +110,8 @@ const Page = () => {
 
   useEffect(() => {
     const fetchPharmacies = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const res = await getPharmacy();
 
@@ -115,13 +120,15 @@ const Page = () => {
         setPharmacies(pharmacies);
 
         if (pharmacies.length > 0 && pharmacies[0]?.pharmacyId) {
-
           fetchUser(pharmacies[0].pharmacyId);
         } else {
           console.warn("No valid pharmacyId found.");
+          setLoading(false);
         }
       } catch (error) {
         console.error("Failed to fetch pharmacies:", error);
+        setError("Failed to load pharmacy data");
+        setLoading(false);
       }
     };
 
@@ -137,10 +144,11 @@ const Page = () => {
     } catch (error) {
       toast.error("Failed to fetch members");
       console.error("Failed to fetch users:", error);
+      setError("Failed to load user data");
+    } finally {
+      setLoading(false);
     }
   };
-
-  
 
   const handleUserDrawer = (id?: number, action?: Action) => {
     if (id) {
@@ -222,7 +230,18 @@ const Page = () => {
       </div>
 
       <div className="mt-5">
-        <Table data={user} columns={columns} noDataMessage="No records found" />
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+            <Loader type="spinner" size="md" text="User List is loading ..." fullScreen={false} />
+          </div>
+        ) : error ? (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <strong>Error!</strong> {error}
+          </div>
+        ) : (
+          <PaginationTable data={user} columns={columns} noDataMessage="No records found" />
+        )}
       </div>
     </>
   );

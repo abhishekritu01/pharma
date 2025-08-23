@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import Button from "@/app/components/common/Button";
 import PurchaseReturn from "./components/PurchaseReturn";
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import Link from "next/link";
 import { PurchaseReturnData } from "@/app/types/PurchaseReturnData";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -13,14 +13,15 @@ import { getSupplierById } from "@/app/services/SupplierService";
 import { getReturnAll } from "@/app/services/PurchaseReturnService";
 import { format } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
+import Loader from "@/app/components/common/Loader";
 
 const Page = () => {
   const [showPurchaseReturn, setShowPurchaseReturn] = useState(false);
   const [purchaseReturnData, setPurchaseReturnData] = useState<
     PurchaseReturnData[]
   >([]);
-  const [, setLoading] = useState<boolean>(true);
-  const [, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -50,6 +51,8 @@ const Page = () => {
 
   useEffect(() => {
     const fetchPurchaseReturn = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const response = await getReturnAll();
 
@@ -266,11 +269,22 @@ const Page = () => {
             </div>
           </div>
 
-          <Table
-            data={getSortedData()}
-            columns={columns}
-            noDataMessage="No purchase records found"
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+              <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
+            </div>
+          ) : error ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <strong>Error!</strong> {error}
+            </div>
+          ) : (
+            <PaginationTable
+              data={getSortedData()}
+              columns={columns}
+              noDataMessage="No purchase records found"
+            />
+          )}
         </main>
       ) : (
         <PurchaseReturn setShowPurchaseReturn={setShowPurchaseReturn} />

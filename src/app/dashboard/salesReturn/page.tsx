@@ -1,7 +1,7 @@
 "use client";
 import Button from "@/app/components/common/Button";
 import Input from "@/app/components/common/Input";
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import { SalesReturnListData } from "@/app/types/SalesReturnData";
 import { format } from "date-fns";
 import { Plus, Search } from "lucide-react";
@@ -14,6 +14,7 @@ import { getBilling } from "@/app/services/BillingService";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import Modal from "@/app/components/common/Modal";
+import Loader from "@/app/components/common/Loader";
 
 const Page = () => {
   const [showSalesReturn, setShowSalesReturn] = useState(false);
@@ -363,14 +364,15 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-darkPurple"></div>
+              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+              <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               <strong>Error!</strong> {error}
             </div>
           ) : (
-            <Table
+            <PaginationTable
               data={getSortedData()}
               columns={columns}
               noDataMessage="No sales returns found"

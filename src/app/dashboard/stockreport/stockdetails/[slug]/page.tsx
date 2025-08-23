@@ -6,11 +6,12 @@ import { getItemById } from "@/app/services/ItemService";
 import { useEffect, useState } from "react";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
 // import { getSupplierById } from "@/app/services/SupplierService"
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import Button from "@/app/components/common/Button";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
+import Loader from "@/app/components/common/Loader";
 
 
 interface PurchaseEntryItem {
@@ -177,8 +178,8 @@ export default function Page() {
         <Link
           href={`/dashboard/orderSummary?id=${row.invId}`}
           className={`block w-full px-4 py-2 text-left ${row.invId
-              ? "text-gray-700 hover:text-purple-600 hover:underline"
-              : "text-gray-400 cursor-not-allowed"
+            ? "text-gray-700 hover:text-purple-600 hover:underline"
+            : "text-gray-400 cursor-not-allowed"
             } transition-colors duration-200`}
         >
           {row.purchaseBillNo}
@@ -350,7 +351,8 @@ export default function Page() {
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+        <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
       </div>
     );
 
@@ -490,7 +492,7 @@ export default function Page() {
             </div>
           </div>
         </div>
-        <Table
+        <PaginationTable
           data={getSortedData()}
           columns={columns}
           noDataMessage="No stock records found for this item"

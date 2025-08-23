@@ -6,7 +6,7 @@ import { Plus, Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import PurchaseEntry from "./components/PurchaseEntry";
 import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import {
   confirmPurchasePayment,
   getPurchase,
@@ -17,14 +17,15 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import { toast } from "react-toastify";
+import Loader from "@/app/components/common/Loader";
 
 const Page = () => {
   const [showPurchasEntry, setShowPurchasEntry] = useState(false);
   const [purchaseEntryData, setPurchaseEntryData] = useState<
     PurchaseEntryData[]
   >([]);
-  const [, setLoading] = useState<boolean>(true);
-  const [, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -50,6 +51,8 @@ const Page = () => {
 
   useEffect(() => {
     const fetchPurchaseEntry = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const response = await getPurchase();
 
@@ -221,19 +224,19 @@ const Page = () => {
           status === "due today"
             ? "text-warning"
             : status === "overdue"
-            ? "text-danger"
-            : status === "payment cleared"
-            ? "text-green"
-            : "";
+              ? "text-danger"
+              : status === "payment cleared"
+                ? "text-green"
+                : "";
 
         const bgClass =
           status === "due today"
             ? "bg-warning2"
             : status === "overdue"
-            ? "bg-danger"
-            : status === "payment cleared"
-            ? "bg-green2"
-            : "";
+              ? "bg-danger"
+              : status === "payment cleared"
+                ? "bg-green2"
+                : "";
 
         return (
           <>
@@ -391,11 +394,22 @@ const Page = () => {
             </div>
           </div>
 
-          <Table
-            data={getSortedData()}
-            columns={columns}
-            noDataMessage="No purchase records found"
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+              <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
+            </div>
+          ) : error ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <strong>Error!</strong> {error}
+            </div>
+          ) : (
+            <PaginationTable
+              data={getSortedData()}
+              columns={columns}
+              noDataMessage="No purchase records found"
+            />
+          )}
         </main>
       )}
 

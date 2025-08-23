@@ -1,6 +1,6 @@
 "use client";
 import Input from "@/app/components/common/Input";
-import Table from "@/app/components/common/Table";
+import PaginationTable from "@/app/components/common/PaginationTable";
 import { getExpiredStock, getInventory } from "@/app/services/InventoryService";
 import { getItemById } from "@/app/services/ItemService";
 import { InventoryData } from "@/app/types/InventoryData";
@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-
+import Loader from "@/app/components/common/Loader";
 
 interface ExtendedInventoryData extends InventoryData {
   genericName: string;
@@ -22,17 +22,19 @@ interface ExtendedInventoryData extends InventoryData {
   currentStock: number;
 }
 
-
 const Page = () => {
   const [searchText, setSearchText] = useState<string>("");
   const [inventoryData, setInventoryData] = useState<ExtendedInventoryData[]>(
     []
   );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const showStocksDetails = false;
   const [sortConfig, setSortConfig] = useState<{
     key: keyof ExtendedInventoryData | null;
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
+  
   const handleSort = (key: keyof ExtendedInventoryData) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -44,15 +46,14 @@ const Page = () => {
       return { key, direction: "asc" };
     });
   };
+  
   const getSortedData = () => {
     const sorted = [...filteredData];
-
 
     if (sortConfig.key) {
       sorted.sort((a, b) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
-
 
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "asc"
@@ -60,19 +61,18 @@ const Page = () => {
             : bValue.localeCompare(aValue);
         }
 
-
         if (typeof aValue === "number" && typeof bValue === "number") {
           return sortConfig.direction === "asc"
             ? aValue - bValue
             : bValue - aValue;
         }
 
-
         return 0;
       });
     }
     return sorted;
   };
+  
   const columns = [
     {
       header: (
@@ -94,7 +94,7 @@ const Page = () => {
       ),
       accessor: "itemName" as keyof ExtendedInventoryData,
     },
-     {
+    {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -116,7 +116,7 @@ const Page = () => {
         <span className="p-2">{row.genericName ?? "--"}</span>
       ),
     },
-     {
+    {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -136,7 +136,7 @@ const Page = () => {
       ),
       accessor: "manufacturer" as keyof ExtendedInventoryData,
     },
-     {
+    {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -151,14 +151,14 @@ const Page = () => {
             )
           ) : (
             <FaArrowDown />
-          )}
+            )}
         </div>
       ),
       accessor: (row: ExtendedInventoryData) => (
         <span className="p-2">{row.variantName ?? "--"}</span>
       ),
     },
-     {
+    {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -207,7 +207,7 @@ const Page = () => {
           <span className="p-2">{row.expiredStock?.toLocaleString()}</span>
         ),
     },
-     {
+    {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
@@ -262,7 +262,6 @@ const Page = () => {
     },
   ];
 
-
   const filteredData = inventoryData.filter((item) => {
     const search = searchText.toLowerCase();
     return (
@@ -276,7 +275,6 @@ const Page = () => {
     );
   });
 
-
   const fetchItem = async (
     itemId: string
   ): Promise<{
@@ -287,7 +285,6 @@ const Page = () => {
   }> => {
     try {
       const item: ItemData = await getItemById(itemId);
-
 
       console.log(item, "item");
       return {
@@ -307,9 +304,10 @@ const Page = () => {
     }
   };
 
-
   useEffect(() => {
     const fetchInventory = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const inventoryResponseRaw = await getInventory();
         const expiredStockResponseRaw = await getExpiredStock();
@@ -327,7 +325,6 @@ const Page = () => {
             item.packageQuantity,
           ])
         );
-
 
         const inventoryWithData = await Promise.all(
           inventoryResponse.map(async (inventory) => {
@@ -348,16 +345,16 @@ const Page = () => {
         setInventoryData(inventoryWithData);
       } catch (error) {
         console.error("Error fetching inventory:", error);
-        toast.error(
-          error instanceof Error ? error.message : "An unknown error occurred"
-        );
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+        setError(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
       }
     };
 
-
     fetchInventory();
   }, []);
-
 
   return (
     <div className="w-full">
@@ -381,19 +378,26 @@ const Page = () => {
             </div>
           </div>
 
-          <Table
-            data={getSortedData()}
-            columns={columns}
-            noDataMessage="No records found"
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
+              <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
+            </div>
+          ) : error ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <strong>Error!</strong> {error}
+            </div>
+          ) : (
+            <PaginationTable
+              data={getSortedData()}
+              columns={columns}
+              noDataMessage="No records found"
+            />
+          )}
         </main>
       )}
     </div>
   );
 };
 
-
 export default Page;
-
-
-

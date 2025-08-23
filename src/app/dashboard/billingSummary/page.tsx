@@ -19,6 +19,7 @@ import Image from "next/image";
 import Button from "@/app/components/common/Button";
 import { exportAsCSVService } from "@/app/services/ExportAsCSVService";
 import { toast } from "react-toastify";
+import Loader from "@/app/components/common/Loader";
 
 const Page = () => {
   const [summaryData, setSummaryData] = useState<BillingSummaryData | null>(null);
@@ -74,30 +75,30 @@ const Page = () => {
   };
 
   const prepareExportData = () => {
-  if (!summaryData || !paymentSummaryData) return [];
+    if (!summaryData || !paymentSummaryData) return [];
 
-  const formattedDate = format(selectedDate, "dd-MM-yyyy");
+    const formattedDate = format(selectedDate, "dd-MM-yyyy");
 
-  // All data in horizontal format
-  return [
-    {
-      "Type of Report": "Daily Closing Report",
-      "Date": formattedDate,
-      "Net sales (in Rs.)": formatNumber((summaryData.paidTotalAmount || 0) + (summaryData.unpaidTotalAmount || 0)),
-      "Total bill count": (summaryData.paidTotalBills || 0) + (summaryData.unpaidTotalBills || 0),
-      "Total Paid amount (in Rs.)": formatNumber(summaryData.paidTotalAmount),
-      "Bill count for Paid": summaryData.paidTotalBills || 0,
-      "Total Unpaid amount (in Rs.)": formatNumber(summaryData.unpaidTotalAmount),
-      "Bill count for Unpaid": summaryData.unpaidTotalBills || 0,
-      "Payment type (Cash)": formatNumber(paymentSummaryData.cashTotal),
-      "Payment type (UPI)": formatNumber(paymentSummaryData.upiNetTotal),
-      "Payment type (Card)": formatNumber(paymentSummaryData.cardTotal),
-      "Payment type (Cash+UPI)": formatNumber(paymentSummaryData.upiCashTotal),
-      "Total Refund Amount of bill returned": formatNumber(summaryData.totalReturnAmount),
-      "Total no. of bill return": summaryData.totalReturnBills || 0
-    }
-  ];
-};
+    // All data in horizontal format
+    return [
+      {
+        "Type of Report": "Daily Closing Report",
+        "Date": formattedDate,
+        "Net sales (in Rs.)": formatNumber((summaryData.paidTotalAmount || 0) + (summaryData.unpaidTotalAmount || 0)),
+        "Total bill count": (summaryData.paidTotalBills || 0) + (summaryData.unpaidTotalBills || 0),
+        "Total Paid amount (in Rs.)": formatNumber(summaryData.paidTotalAmount),
+        "Bill count for Paid": summaryData.paidTotalBills || 0,
+        "Total Unpaid amount (in Rs.)": formatNumber(summaryData.unpaidTotalAmount),
+        "Bill count for Unpaid": summaryData.unpaidTotalBills || 0,
+        "Payment type (Cash)": formatNumber(paymentSummaryData.cashTotal),
+        "Payment type (UPI)": formatNumber(paymentSummaryData.upiNetTotal),
+        "Payment type (Card)": formatNumber(paymentSummaryData.cardTotal),
+        "Payment type (Cash+UPI)": formatNumber(paymentSummaryData.upiCashTotal),
+        "Total Refund Amount of bill returned": formatNumber(summaryData.totalReturnAmount),
+        "Total no. of bill return": summaryData.totalReturnBills || 0
+      }
+    ];
+  };
 
   const handleExport = async () => {
     try {
@@ -131,7 +132,8 @@ const Page = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-900"></div>
+        {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-900"></div> */}
+        <Loader type="spinner" size="md" text="Daily Closing Report is loading ..." fullScreen={false} />
       </div>
     );
   }
@@ -258,7 +260,7 @@ const Page = () => {
             </div>
           </div>
           <hr className="mb-4 border-gray-200" />
-          <div className="space-y-4 text-gray-700"> 
+          <div className="space-y-4 text-gray-700">
             <div className="flex justify-between items-center">
               <p>Paid Bills</p>
               <div className="flex w-1/2 justify-between">
