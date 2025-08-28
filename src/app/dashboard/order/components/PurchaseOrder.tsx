@@ -60,9 +60,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
-  // const [purchaseOrderItems, setPurchaseOrderItems] = useState<
-  //   PurchaseOrderItem[]
-  // >([]);
+ 
 
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
