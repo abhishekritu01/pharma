@@ -23,7 +23,6 @@ import {
   endOfQuarter,
 } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-// import { FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
@@ -669,272 +668,271 @@ const Page = () => {
                   icon={<BiExport size={18} />}
                   onClick={handleExport}
                 />
-                {/* <Button
-                  label="Print"
-                  className="px-4 border border-gray-400 hover:bg-gray-50"
-                  icon={<FiPrinter size={18} />}
-                /> */}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">
-            {[
-              { value: "thisMonth", label: "This Month" },
-              { value: "lastMonth", label: "Last Month" },
-            ].map((filter) => (
-              <button
-                key={filter.value}
-                onClick={() => {
-                  setDateFilter(filter.value);
-                  setSelectedQuarter(null);
-                  setShowQuarterDropdown(false);
-                  setShowFinancialYearDropdown(false);
-                  setShowDatePicker(false);
-                }}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${dateFilter === filter.value && !selectedQuarter
-                  ? "bg-darkPurple text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                {filter.label}
-              </button>
-            ))}
-
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setDateFilter("financialYear");
-                  setShowFinancialYearDropdown(!showFinancialYearDropdown);
-                  setShowQuarterDropdown(false);
-                  setShowDatePicker(false);
-                }}
-                className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === "financialYear"
-                  ? "bg-purple-800 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                FY {selectedFinancialYear}-{selectedFinancialYear + 1}
-                <FiChevronDown size={16} />
-              </button>
-
-              {showFinancialYearDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-40">
-                  {financialYears.map((year) => (
-                    <div
-                      key={year}
-                      className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${year === selectedFinancialYear &&
-                        dateFilter === "financialYear"
-                        ? "bg-purple-100"
-                        : ""
-                        }`}
-                      onClick={() => {
-                        setSelectedFinancialYear(year);
-                        setDateFilter("financialYear");
-                        setShowFinancialYearDropdown(false);
-                      }}
-                    >
-                      {year}-{year + 1}
-                    </div>
-                  ))}
+          {/* Date range selector with new styling */}
+          {/* Date range selector with new styling */}
+          <div className="flex items-center justify-between w-full">
+            {/* Left side - Date filters */}
+            <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer ml-3">
+              {[
+                { value: "thisMonth", label: "This Month" },
+                { value: "lastMonth", label: "Last Month" },
+              ].map((filter) => (
+                <div
+                  key={filter.value}
+                  onClick={() => {
+                    setDateFilter(filter.value);
+                    setSelectedQuarter(null);
+                    setShowQuarterDropdown(false);
+                    setShowFinancialYearDropdown(false);
+                    setShowDatePicker(false);
+                  }}
+                  className={`hover:text-[#4B0082] transition-colors ${dateFilter === filter.value && !selectedQuarter
+                      ? "text-[#4B0082]"
+                      : ""
+                    }`}
+                >
+                  {filter.label}
                 </div>
-              )}
-            </div>
+              ))}
 
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setDateFilter("financialYearQuarter");
-                  setShowQuarterDropdown(!showQuarterDropdown);
-                  setShowFinancialYearDropdown(false);
-                  setShowDatePicker(false);
-                }}
-                className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === "financialYearQuarter" &&
-                  selectedQuarter !== null
-                  ? "bg-purple-800 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                {selectedQuarter !== null
-                  ? selectedQuarter === 4
-                    ? `FY ${selectedFinancialYear}-${selectedFinancialYear + 1}`
-                    : `Q${selectedQuarter + 1} ${selectedFinancialYear}-${selectedFinancialYear + 1
-                    }`
-                  : "Select Quarter"}
-                <FiChevronDown size={16} />
-              </button>
+              {/* Financial Year filter */}
+              <div className="relative">
+                <div
+                  onClick={() => {
+                    setDateFilter("financialYear");
+                    setShowFinancialYearDropdown(!showFinancialYearDropdown);
+                    setShowQuarterDropdown(false);
+                    setShowDatePicker(false);
+                  }}
+                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "financialYear" ? "text-[#4B0082]" : ""
+                    }`}
+                >
+                  FY {selectedFinancialYear}-{selectedFinancialYear + 1}
+                  <FiChevronDown size={16} />
+                </div>
 
-              {showQuarterDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-64">
-                  <div className="p-2 border-b">
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowFinancialYearDropdown(
-                            !showFinancialYearDropdown
-                          );
-                          setShowQuarterDropdown(false);
-                        }}
-                        className="w-full text-left px-3 py-2 bg-gray-100 rounded flex justify-between items-center"
-                      >
-                        {selectedFinancialYear}-{selectedFinancialYear + 1}
-                        <FiChevronDown size={16} />
-                      </button>
-
-                      {showFinancialYearDropdown && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-full">
-                          {financialYears.map((year) => (
-                            <div
-                              key={year}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedFinancialYear(year);
-                                setShowFinancialYearDropdown(false);
-                                setShowQuarterDropdown(true);
-                              }}
-                            >
-                              {year}-{year + 1}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto">
-                    {quarterNames.map((name, index) => (
+                {showFinancialYearDropdown && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-40">
+                    {financialYears.map((year) => (
                       <div
-                        key={index}
-                        className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${selectedQuarter === index &&
-                          dateFilter === "financialYearQuarter"
-                          ? "bg-purple-200"
-                          : ""
+                        key={year}
+                        className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${year === selectedFinancialYear &&
+                            dateFilter === "financialYear"
+                            ? "bg-purple-100"
+                            : ""
                           }`}
                         onClick={() => {
-                          setSelectedQuarter(index);
-                          setDateFilter("financialYearQuarter");
-                          setShowQuarterDropdown(false);
+                          setSelectedFinancialYear(year);
+                          setDateFilter("financialYear");
+                          setShowFinancialYearDropdown(false);
                         }}
                       >
-                        {name}
+                        {year}-{year + 1}
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="relative">
-              <button
-                id="custom-date-button"
-                onClick={() => {
-                  setDateFilter("custom");
-                  setShowDatePicker(!showDatePicker);
-                  setSelectedQuarter(null);
-                  setShowQuarterDropdown(false);
-                  setShowFinancialYearDropdown(false);
-                }}
-                className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === "custom" && (startDate || endDate)
-                  ? "bg-purple-800 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-              >
-                Custom Range
-                <CiCalendar size={18} />
-              </button>
-
-              {showDatePicker && (
+              {/* Quarter filter */}
+              <div className="relative">
                 <div
-                  id="custom-date-picker"
-                  className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200 w-[240px]"
+                  onClick={() => {
+                    setDateFilter("financialYearQuarter");
+                    setShowQuarterDropdown(!showQuarterDropdown);
+                    setShowFinancialYearDropdown(false);
+                    setShowDatePicker(false);
+                  }}
+                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "financialYearQuarter" && selectedQuarter !== null
+                      ? "text-[#4B0082]"
+                      : ""
+                    }`}
                 >
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">
-                        From
-                      </label>
-                      <div className="flex items-center border rounded-md p-2">
-                        <DatePicker
-                          selected={startDate}
-                          onChange={(date) => setStartDate(date)}
-                          selectsStart
-                          startDate={startDate}
-                          endDate={endDate}
-                          maxDate={new Date()}
-                          className="w-full focus:outline-none text-gray-900 text-sm"
-                          placeholderText="Select date"
-                          dateFormat="MMM d, yy"
-                        />
-                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                  {selectedQuarter !== null
+                    ? selectedQuarter === 4
+                      ? `FY ${selectedFinancialYear}-${selectedFinancialYear + 1}`
+                      : `Q${selectedQuarter + 1} ${selectedFinancialYear}-${selectedFinancialYear + 1
+                      }`
+                    : "Select Quarter"}
+                  <FiChevronDown size={16} />
+                </div>
+
+                {showQuarterDropdown && (
+                  <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-64">
+                    <div className="p-2 border-b">
+                      <div className="relative">
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowFinancialYearDropdown(!showFinancialYearDropdown);
+                            setShowQuarterDropdown(false);
+                          }}
+                          className="w-full text-left px-3 py-2 bg-gray-100 rounded flex justify-between items-center cursor-pointer"
+                        >
+                          {selectedFinancialYear}-{selectedFinancialYear + 1}
+                          <FiChevronDown size={16} />
+                        </div>
+
+                        {showFinancialYearDropdown && (
+                          <div className="absolute top-full left-0 mt-1 bg-white rounded-md shadow-lg z-50 w-full">
+                            {financialYears.map((year) => (
+                              <div
+                                key={year}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedFinancialYear(year);
+                                  setShowFinancialYearDropdown(false);
+                                  setShowQuarterDropdown(true);
+                                }}
+                              >
+                                {year}-{year + 1}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-1">
-                        To
-                      </label>
-                      <div className="flex items-center border rounded-md p-2">
-                        <DatePicker
-                          selected={endDate}
-                          onChange={(date) => setEndDate(date)}
-                          selectsEnd
-                          startDate={startDate}
-                          endDate={endDate}
-                          minDate={startDate || undefined}
-                          maxDate={new Date()}
-                          className="w-full focus:outline-none text-gray-900 text-sm"
-                          placeholderText="Select date"
-                          dateFormat="MMM d, yy"
-                        />
-                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between pt-2">
-                      <button
-                        onClick={() => {
-                          setStartDate(null);
-                          setEndDate(null);
-                          setShowDatePicker(false);
-                          setDateFilter("thisMonth");
-                        }}
-                        className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (startDate && endDate) {
-                            setDateFilter("custom");
-                            setShowDatePicker(false);
-                          }
-                        }}
-                        disabled={!startDate || !endDate}
-                        className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-purple-800 text-white hover:bg-purple-700"
-                          }`}
-                      >
-                        Apply
-                      </button>
+                    <div className="max-h-60 overflow-y-auto">
+                      {quarterNames.map((name, index) => (
+                        <div
+                          key={index}
+                          className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${selectedQuarter === index &&
+                              dateFilter === "financialYearQuarter"
+                              ? "bg-purple-200"
+                              : ""
+                            }`}
+                          onClick={() => {
+                            setSelectedQuarter(index);
+                            setDateFilter("financialYearQuarter");
+                            setShowQuarterDropdown(false);
+                          }}
+                        >
+                          {name}
+                        </div>
+                      ))}
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Custom date filter */}
+              <div className="relative">
+                <div
+                  id="custom-date-button"
+                  onClick={() => {
+                    setDateFilter("custom");
+                    setShowDatePicker(!showDatePicker);
+                    setSelectedQuarter(null);
+                    setShowQuarterDropdown(false);
+                    setShowFinancialYearDropdown(false);
+                  }}
+                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "custom" && (startDate || endDate)
+                      ? "text-[#4B0082]"
+                      : ""
+                    }`}
+                >
+                  Custom Range
+                  <CiCalendar size={18} />
                 </div>
-              )}
+
+                {showDatePicker && (
+                  <div
+                    id="custom-date-picker"
+                    className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200 w-[240px]"
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          From
+                        </label>
+                        <div className="flex items-center border rounded-md p-2">
+                          <DatePicker
+                            selected={startDate}
+                            onChange={(date) => setStartDate(date)}
+                            selectsStart
+                            startDate={startDate}
+                            endDate={endDate}
+                            maxDate={new Date()}
+                            className="w-full focus:outline-none text-gray-900 text-sm"
+                            placeholderText="Select date"
+                            dateFormat="MMM d, yy"
+                          />
+                          <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-1">
+                          To
+                        </label>
+                        <div className="flex items-center border rounded-md p-2">
+                          <DatePicker
+                            selected={endDate}
+                            onChange={(date) => setEndDate(date)}
+                            selectsEnd
+                            startDate={startDate}
+                            endDate={endDate}
+                            minDate={startDate || undefined}
+                            maxDate={new Date()}
+                            className="w-full focus:outline-none text-gray-900 text-sm"
+                            placeholderText="Select date"
+                            dateFormat="MMM d, yy"
+                          />
+                          <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between pt-2">
+                        <button
+                          onClick={() => {
+                            setStartDate(null);
+                            setEndDate(null);
+                            setShowDatePicker(false);
+                            setDateFilter("thisMonth");
+                          }}
+                          className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (startDate && endDate) {
+                              setDateFilter("custom");
+                              setShowDatePicker(false);
+                            }
+                          }}
+                          disabled={!startDate || !endDate}
+                          className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-purple-800 text-white hover:bg-purple-700"
+                            }`}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="relative ml-auto">
+            {/* Right side - Payment status filter */}
+            <div className="relative">
               <button
                 id="payment-status-button"
                 onClick={() =>
                   setShowPaymentStatusDropdown(!showPaymentStatusDropdown)
                 }
                 className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${paymentStatusFilter === "paid"
-                  ? "bg-green-600 text-white"
-                  : paymentStatusFilter === "pending"
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-green-600 text-white"
+                    : paymentStatusFilter === "pending"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
               >
                 {paymentStatusFilter === "paid"
@@ -987,7 +985,6 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
               <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (

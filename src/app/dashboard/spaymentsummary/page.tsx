@@ -30,7 +30,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import { CiCalendar } from "react-icons/ci";
 import { toast } from "react-toastify";
 import { BiExport } from "react-icons/bi";
-// import { FiPrinter } from "react-icons/fi";
 import { exportAsCSVService } from "@/app/services/ExportAsCSVService";
 import Loader from "@/app/components/common/Loader";
 
@@ -625,26 +624,22 @@ const Page = () => {
                   icon={<BiExport size={18} />}
                   onClick={handleExport}
                 />
-                {/* <Button
-                  label="Print"
-                  className="px-4 border border-gray-400 hover:bg-gray-50"
-                  icon={<FiPrinter size={18} />}
-                /> */}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">
+          {/* Date range selector with new styling */}
+          <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer ml-3">
             {[
               { value: "today", label: "Today" },
               { value: "yesterday", label: "Yesterday" },
               { value: "thisWeek", label: "This Week" },
               { value: "thisMonth", label: "This Month" },
               { value: "pastDue", label: "Past Due Date" },
-              { value: "custom", label: "Purchase Date Range" },
+              { value: "custom", label: "Purchase Date Range",icon: <CiCalendar size={18} /> },
             ].map((filter) => (
               <div key={filter.value} className="relative">
-                <button
+                <div
                   onClick={() => {
                     const newFilter = filter.value;
                     setDateFilter(newFilter);
@@ -654,14 +649,13 @@ const Page = () => {
                       setEndDate(null);
                     }
                   }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
-                    ? "bg-darkPurple text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
+                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
+                    dateFilter === filter.value ? "text-[#4B0082]" : ""
+                  }`}
                 >
                   {filter.label}
-                  {filter.value === "custom" && <CiCalendar size={18} />}
-                </button>
+                  {filter.icon}
+                </div>
 
                 {dateFilter === "custom" &&
                   filter.value === "custom" &&
@@ -744,7 +738,6 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
               <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (

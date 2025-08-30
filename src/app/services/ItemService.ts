@@ -121,36 +121,36 @@ export const checkDuplicateItem = async (data: {
 };
 
 
-// The code below is added for CSV upload functionality but is currently not functional................
 
-// export const uploadItemsCsv = async (file: File): Promise<void> => {
-//   try {
-//     const token = localStorage.getItem('token'); // Assuming you store JWT token in localStorage
+export const uploadItemsCsv = async (file: File): Promise<{ message: string, data?: ItemData[] }> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('authToken'); 
     
-//     if (!token) {
-//       throw new Error('Authentication token not found');
-//     }
+    const response = await api.post('/api/items/csv/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}` 
+      },
+    });
 
-//     const formData = new FormData();
-//     formData.append('file', file);
-
-//     const response = await fetch('/api/items/csv/upload', {
-//       method: 'POST',
-//       headers: {
-//         'Authorization': `Bearer ${token}`,
-//       },
-//       body: formData,
-//     });
-
-//     if (!response.ok) {
-//       const errorData = await response.json();
-//       throw new Error(errorData.message || 'Failed to upload CSV file');
-//     }
-
-//     const result = await response.json();
-//     return result;
-//   } catch (error) {
-//     console.error('Error uploading CSV:', error);
-//     throw error;
-//   }
-// };
+    return response.data;
+  } catch (error: unknown) {
+    console.error('Error uploading CSV:', error);
+    
+    if (error instanceof AxiosError) {
+      
+      if (error.response?.status === 400 && 
+          error.response?.data?.message?.includes("CSV validation failed")) {
+        throw new Error("There is missing data in the CSV file. Failed to upload. Please check the format and try again.");
+      }
+      
+      const message = error.response?.data?.message || 'There is missing data in the CSV file. Failed to upload. Please check the format and try again.';
+      throw new Error(message);
+    } else {
+      throw new Error('An unknown error occurred while uploading the file.');
+    }
+  }
+};

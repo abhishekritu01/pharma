@@ -1,18 +1,17 @@
 "use client";
 
-
 import { useParams } from "next/navigation";
 import { getItemById } from "@/app/services/ItemService";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
-// import { getSupplierById } from "@/app/services/SupplierService"
+import { getExpiredStock, getInventory } from "@/app/services/InventoryService";
 import PaginationTable from "@/app/components/common/PaginationTable";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import Button from "@/app/components/common/Button";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import Loader from "@/app/components/common/Loader";
-
 
 interface PurchaseEntryItem {
   itemId: string;
@@ -23,7 +22,6 @@ interface PurchaseEntryItem {
   invId: string;
 }
 
-
 interface PurchaseEntryData {
   supplierId: string;
   purchaseBillNo: string;
@@ -31,7 +29,6 @@ interface PurchaseEntryData {
   invId: string;
   stockItemDtos: PurchaseEntryItem[];
 }
-
 
 interface Item {
   itemId: string;
@@ -54,7 +51,6 @@ interface Item {
   modifiedDate: string | null;
 }
 
-
 const formatDate = (dateStr: string): string => {
   try {
     const date = new Date(dateStr);
@@ -68,7 +64,6 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
-
 export default function Page() {
   const params = useParams();
   const itemId = params.slug as string;
@@ -77,10 +72,12 @@ export default function Page() {
     (PurchaseEntryItem & { purchaseBillNo: string })[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [totalStock, setTotalStock] = useState<number>(0);
+  const [expiredStock, setExpiredStock] = useState<number>(0);
+  const [currentStock, setCurrentStock] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>("");
-
 
   const filteredRecords = purchaseRecords.filter((record) => {
     const search = searchText.toLowerCase();
@@ -93,10 +90,12 @@ export default function Page() {
       record.packageQuantity?.toString().includes(search)
     );
   });
+
   const [sortConfig, setSortConfig] = useState<{
     key: keyof (PurchaseEntryItem & { purchaseBillNo: string }) | null;
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
+
   const handleSort = (
     key: keyof (PurchaseEntryItem & { purchaseBillNo: string })
   ) => {
@@ -110,15 +109,14 @@ export default function Page() {
       return { key, direction: "asc" };
     });
   };
+
   const getSortedData = () => {
     const sorted = [...filteredRecords];
-
 
     if (sortConfig.key) {
       sorted.sort((a, b) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
-
 
         // Special handling for dates
         if (sortConfig.key === "expiryDate" || sortConfig.key === "createdDate") {
@@ -131,13 +129,11 @@ export default function Page() {
             : dateB.getTime() - dateA.getTime();
         }
 
-
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "asc"
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
         }
-
 
         if (typeof aValue === "number" && typeof bValue === "number") {
           return sortConfig.direction === "asc"
@@ -145,15 +141,12 @@ export default function Page() {
             : bValue - aValue;
         }
 
-
         return 0;
       });
     }
 
-
     return sorted;
   };
-
 
   const columns = [
     {
@@ -270,7 +263,6 @@ export default function Page() {
         const isValidDate = !isNaN(expiryDate.getTime());
         const isExpired = isValidDate && expiryDate < new Date();
 
-
         return (
           <div className="flex items-center gap-1">
             {isValidDate && (
@@ -299,21 +291,19 @@ export default function Page() {
     },
   ];
 
-
-  useEffect(() => {
+   useEffect(() => {
     const fetchStockData = async () => {
       if (!itemId) return;
-
 
       try {
         setLoading(true);
         setError(null);
 
-
+        // Fetch item details
         const itemData = await getItemById(itemId);
         setItem(itemData);
 
-
+        // Fetch purchase records for the table
         const res = await getPurchase();
         const purchases: PurchaseEntryData[] = res.data;
 
@@ -326,14 +316,38 @@ export default function Page() {
               invId: entry.invId,
             }))
         );
-        const stockTotal = records.reduce(
-          (sum, record) => sum + record.packageQuantity,
-          0
-        );
-        setTotalStock(stockTotal);
-
-
         setPurchaseRecords(records);
+
+        // Fetch inventory and expired stock data (using main page approach)
+        const inventoryResponseRaw = await getInventory();
+        const expiredStockResponseRaw = await getExpiredStock();
+        
+        const inventoryResponse = inventoryResponseRaw.data;
+        const expiredStockResponse = expiredStockResponseRaw.data;
+        
+        if (!Array.isArray(inventoryResponse) || !Array.isArray(expiredStockResponse)) {
+          throw new Error("Invalid data format from API");
+        }
+        
+        // Create map of expired stock by itemId
+        const expiredStockMap = new Map(
+          expiredStockResponse.map((item) => [item.itemId, item.packageQuantity])
+        );
+        
+        // Find inventory data for this specific item
+        const inventoryItem = inventoryResponse.find(item => item.itemId === itemId);
+        
+        if (inventoryItem) {
+          const itemExpiredStock = expiredStockMap.get(itemId) || 0;
+          setTotalStock(inventoryItem.packageQuantity);
+          setExpiredStock(itemExpiredStock);
+          setCurrentStock(inventoryItem.packageQuantity - itemExpiredStock);
+        } else {
+          // Item not found in inventory
+          setTotalStock(0);
+          setExpiredStock(0);
+          setCurrentStock(0);
+        }
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load data. Please try again later.");
@@ -343,19 +357,15 @@ export default function Page() {
       }
     };
 
-
     fetchStockData();
   }, [itemId]);
-
 
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
-        {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
         <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
       </div>
     );
-
 
   if (error)
     return (
@@ -381,14 +391,12 @@ export default function Page() {
       </div>
     );
 
-
   if (!item)
     return (
       <div className="bg-white rounded-lg shadow p-6 text-center">
         <h3 className="text-lg font-medium text-gray-900">Item not found</h3>
       </div>
     );
-
 
   return (
     <div className="w-full">
@@ -399,14 +407,12 @@ export default function Page() {
         </h1>
       </div>
 
-
       {/* Basic Details Card */}
       <div className="w-full p-6 rounded-lg border border-[#B5B3B3] bg-white flex flex-col gap-6 mb-6">
         <h2 className="text-lg font-normal text-[#0A0A0B]">Basic Details</h2>
 
-
-        <div className="flex flex-wrap gap-6">
-          <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Item Name
             </div>
@@ -415,8 +421,7 @@ export default function Page() {
             </div>
           </div>
 
-
-          <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Generic Name
             </div>
@@ -425,8 +430,7 @@ export default function Page() {
             </div>
           </div>
 
-
-          <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Manufacturer
             </div>
@@ -435,8 +439,7 @@ export default function Page() {
             </div>
           </div>
 
-
-          <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Variant
             </div>
@@ -445,8 +448,17 @@ export default function Page() {
             </div>
           </div>
 
+          {/* Unit Field */}
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+            <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
+              Unit Type
+            </div>
+            <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
+              {item.unitName || "--"}
+            </div>
+          </div>
 
-          <div className="w-[240px] h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
             <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
               Total Stock Qty
             </div>
@@ -454,9 +466,28 @@ export default function Page() {
               {totalStock.toLocaleString()}
             </div>
           </div>
+
+          {/* Expired Stock Field */}
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+            <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
+              Expired Stock
+            </div>
+            <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%]">
+              {expiredStock.toLocaleString()}
+            </div>
+          </div>
+
+          {/* Current Stock Field */}
+          <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA]">
+            <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
+              Current Stock
+            </div>
+            <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%]">
+              {currentStock.toLocaleString()}
+            </div>
+          </div>
         </div>
       </div>
-
 
       {/* Table Section */}
       <div className="mb-6">
@@ -502,12 +533,11 @@ export default function Page() {
       <div className="flex justify-end">
         <Button
           type="button"
-          onClick={() => window.history.back()}
+          onClick={() => router.back()}
           label="Back"
-          className="px-4 border border-gray-400 text-gray-700 hover:bg-purple-50 hover:border-gray-500"
+          className="w-20"
         />
       </div>
     </div>
   );
 }
-

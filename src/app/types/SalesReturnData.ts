@@ -37,7 +37,8 @@ export interface SalesReturnData {
   originalBillId: string;         
   patientId: string;           
   patientName?: string;           
-  billReturnDateTime: string | Date;      
+  billReturnDateTime: string | Date;
+  pharmacyId?: string; //(pharmacy id is added for multi pharmacy)     
   subTotal: number;               
   totalGst?: number;               
   grandTotal: number;     

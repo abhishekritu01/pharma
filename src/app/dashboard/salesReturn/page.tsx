@@ -30,6 +30,27 @@ const Page = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
 
+  // Dropdown menu state and functions
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (returnId?: string) => {
+    setOpenMenuId((prev) => (prev === returnId ? null : returnId || null));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const formatDate = (date: string | Date | null | undefined): string => {
     try {
       if (!date) return "--";
@@ -300,18 +321,24 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: SalesReturnListData) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+        <div className="relative menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.billReturnId)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
-          <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            <Link
-              href={`/dashboard/salesReturn/components/${row.billReturnId}`}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              View
-            </Link>
-          </div>
+
+          {openMenuId === row.billReturnId && (
+            <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-lg z-10 border border-gray-200">
+              <Link
+                href={`/dashboard/salesReturn/components/${row.billReturnId}`}
+                className="block w-full px-4 py-3 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg transition-colors duration-150"
+              >
+                View
+              </Link>
+            </div>
+          )}
         </div>
       ),
     },
@@ -364,7 +391,6 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
               <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (

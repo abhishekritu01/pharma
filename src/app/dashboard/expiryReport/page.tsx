@@ -16,7 +16,6 @@ import {
   isSameDay
 } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-// import { FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import Button from "@/app/components/common/Button";
 import "react-datepicker/dist/react-datepicker.css";
@@ -88,13 +87,13 @@ const Page = () => {
         });
 
         setExpiryReport(reportsWithFormattedDates);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching expiry report:", error);
         setError(
           error instanceof Error ? error.message : "An unknown error occurred"
         );
         toast.error("Failed to load expiry report data");
-      } finally {
         setLoading(false);
       }
     };
@@ -333,8 +332,6 @@ const Page = () => {
 
   const handleExport = async () => {
     try {
-      // toast.info("Preparing CSV export...");
-
       const dataToExport = prepareExportData();
       let filenameSuffix;
       const today = new Date();
@@ -392,7 +389,6 @@ const Page = () => {
     <main className="space-y-10">
       {loading && (
         <div className="flex justify-center items-center h-64">
-          {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
           <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
         </div>
       )}
@@ -427,122 +423,131 @@ const Page = () => {
                   icon={<BiExport size={18} />}
                   onClick={handleExport}
                 />
-                {/* <Button
-                  label="Print"
-                  className="px-4 border border-gray-400 hover:bg-gray-50"
-                  icon={<FiPrinter size={18} />}
-                /> */}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">
+          {/* Date range selector with new styling */}
+          <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer ml-3">
             {[
               { value: "today", label: "Today" },
               { value: "thisWeek", label: "This Week" },
               { value: "thisMonth", label: "This Month" },
               { value: "all", label: "All" },
-              { value: "custom", label: "Custom Range" },
             ].map((filter) => (
-              <div key={filter.value} className="relative">
-                <button
-                  onClick={() => {
-                    const newFilter = filter.value;
-                    setDateFilter(newFilter);
-                    setShowDatePicker(newFilter === "custom");
-                    if (newFilter === "custom") {
-                      setStartDate(null);
-                      setEndDate(null);
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
-                    ? "bg-darkPurple text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                >
-                  {filter.label}
-                  {filter.value === "custom" && <CiCalendar size={18} />}
-                </button>
-
-                {dateFilter === "custom" &&
-                  filter.value === "custom" &&
-                  showDatePicker && (
-                    <div
-                      id="custom-date-picker"
-                      className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200 w-[240px]"
-                    >
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-1">
-                            From
-                          </label>
-                          <div className="flex items-center border rounded-md p-2">
-                            <DatePicker
-                              selected={startDate}
-                              onChange={(date) => setStartDate(date)}
-                              selectsStart
-                              startDate={startDate}
-                              endDate={endDate}
-                              className="w-full focus:outline-none text-gray-900 text-sm"
-                              placeholderText="Select date"
-                              dateFormat="MMM d, yy"
-                            />
-                            <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-1">
-                            To
-                          </label>
-                          <div className="flex items-center border rounded-md p-2">
-                            <DatePicker
-                              selected={endDate}
-                              onChange={(date) => setEndDate(date)}
-                              selectsEnd
-                              startDate={startDate}
-                              endDate={endDate}
-                              minDate={startDate || undefined}
-                              className="w-full focus:outline-none text-gray-900 text-sm"
-                              placeholderText="Select date"
-                              dateFormat="MMM d, yy"
-                            />
-                            <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
-                          </div>
-                        </div>
-
-                        <div className="flex justify-between pt-2">
-                          <button
-                            onClick={() => {
-                              setStartDate(null);
-                              setEndDate(null);
-                              setShowDatePicker(false);
-                              setDateFilter("today");
-                            }}
-                            className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (startDate && endDate) {
-                                setShowDatePicker(false);
-                              }
-                            }}
-                            disabled={!startDate || !endDate}
-                            className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-purple-800 text-white hover:bg-purple-700"
-                              }`}
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              <div
+                key={filter.value}
+                onClick={() => {
+                  const newFilter = filter.value;
+                  setDateFilter(newFilter);
+                  setShowDatePicker(false);
+                  if (newFilter === "custom") {
+                    setStartDate(null);
+                    setEndDate(null);
+                  }
+                }}
+                className={`hover:text-[#4B0082] transition-colors ${
+                  dateFilter === filter.value ? "text-[#4B0082]" : ""
+                }`}
+              >
+                {filter.label}
               </div>
             ))}
+
+            <div className="relative">
+              <div
+                id="custom-date-button"
+                onClick={() => {
+                  setDateFilter("custom");
+                  setShowDatePicker(!showDatePicker);
+                }}
+                className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
+                  dateFilter === "custom" && (startDate || endDate)
+                    ? "text-[#4B0082]"
+                    : ""
+                }`}
+              >
+                Custom Date Range
+                <CiCalendar size={18} />
+              </div>
+
+              {showDatePicker && (
+                <div
+                  id="custom-date-picker"
+                  className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200 w-[240px]"
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        From
+                      </label>
+                      <div className="flex items-center border rounded-md p-2">
+                        <DatePicker
+                          selected={startDate}
+                          onChange={(date) => setStartDate(date)}
+                          selectsStart
+                          startDate={startDate}
+                          endDate={endDate}
+                          className="w-full focus:outline-none text-gray-900 text-sm"
+                          placeholderText="Select date"
+                          dateFormat="MMM d, yy"
+                        />
+                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">
+                        To
+                      </label>
+                      <div className="flex items-center border rounded-md p-2">
+                        <DatePicker
+                          selected={endDate}
+                          onChange={(date) => setEndDate(date)}
+                          selectsEnd
+                          startDate={startDate}
+                          endDate={endDate}
+                          minDate={startDate || undefined}
+                          className="w-full focus:outline-none text-gray-900 text-sm"
+                          placeholderText="Select date"
+                          dateFormat="MMM d, yy"
+                        />
+                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between pt-2">
+                      <button
+                        onClick={() => {
+                          setStartDate(null);
+                          setEndDate(null);
+                          setShowDatePicker(false);
+                          setDateFilter("today");
+                        }}
+                        className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (startDate && endDate) {
+                            setShowDatePicker(false);
+                          }
+                        }}
+                        disabled={!startDate || !endDate}
+                        className={`px-3 py-1 text-sm rounded ${
+                          !startDate || !endDate
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-purple-800 text-white hover:bg-purple-700"
+                        }`}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <PaginationTable

@@ -15,6 +15,9 @@ import Loader from "@/app/components/common/Loader";
 
 interface ExtendedInventoryData extends InventoryData {
   genericName: string;
+  variantId?: string;
+  unitId?: string;
+  unitName: string;
   variantName: string;
   itemName: string;
   manufacturer: string;
@@ -34,7 +37,27 @@ const Page = () => {
     key: keyof ExtendedInventoryData | null;
     direction: "asc" | "desc";
   }>({ key: null, direction: "asc" });
-  
+
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (itemId?: string) => {
+    setOpenMenuId((prev) => (prev === itemId ? null : itemId || null));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const handleSort = (key: keyof ExtendedInventoryData) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
@@ -46,7 +69,7 @@ const Page = () => {
       return { key, direction: "asc" };
     });
   };
-  
+
   const getSortedData = () => {
     const sorted = [...filteredData];
 
@@ -72,7 +95,7 @@ const Page = () => {
     }
     return sorted;
   };
-  
+
   const columns = [
     {
       header: (
@@ -151,11 +174,33 @@ const Page = () => {
             )
           ) : (
             <FaArrowDown />
-            )}
+          )}
         </div>
       ),
       accessor: (row: ExtendedInventoryData) => (
         <span className="p-2">{row.variantName ?? "--"}</span>
+      ),
+    },
+    {
+      header: (
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("unitName")}
+        >
+          <span>Unit Type</span>
+          {sortConfig.key === "unitName" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
+        </div>
+      ),
+      accessor: (row: ExtendedInventoryData) => (
+        <span className="p-2">{row.unitName ?? "--"}</span>
       ),
     },
     {
@@ -245,21 +290,27 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: ExtendedInventoryData) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+        <div className="relative menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.itemId)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
-          <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            <Link
-              href={`/dashboard/stockreport/stockdetails/${row.itemId}`}
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              View
-            </Link>
-          </div>
+
+          {openMenuId === row.itemId && (
+            <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-lg z-10 border border-gray-200">
+              <Link
+                href={`/dashboard/stockreport/stockdetails/${row.itemId}`}
+                className="block w-full px-4 py-3 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg transition-colors duration-150"
+              >
+                View
+              </Link>
+            </div>
+          )}
         </div>
       ),
-    },
+    }
   ];
 
   const filteredData = inventoryData.filter((item) => {
@@ -269,6 +320,7 @@ const Page = () => {
       item.manufacturer?.toLowerCase().includes(search) ||
       (item.genericName ?? "--").toLowerCase().includes(search) ||
       (item.variantName ?? "--").toLowerCase().includes(search) ||
+      (item.unitName ?? "--").toLowerCase().includes(search) ||
       item.currentStock?.toString().includes(search) ||
       item.expiredStock?.toString().includes(search) ||
       item.packageQuantity?.toString().includes(search)
@@ -282,6 +334,7 @@ const Page = () => {
     manufacturer: string;
     genericName: string;
     variantName: string;
+    unitName: string;
   }> => {
     try {
       const item: ItemData = await getItemById(itemId);
@@ -292,6 +345,7 @@ const Page = () => {
         manufacturer: item.manufacturer,
         genericName: item.genericName || "--",
         variantName: item.variantName || "--",
+        unitName: item.unitName || "--",
       };
     } catch (error) {
       console.error("Error fetching Item:", error);
@@ -300,6 +354,7 @@ const Page = () => {
         manufacturer: "Unknown Manufacturer",
         genericName: "--",
         variantName: "--",
+        unitName: "--",
       };
     }
   };
@@ -328,7 +383,7 @@ const Page = () => {
 
         const inventoryWithData = await Promise.all(
           inventoryResponse.map(async (inventory) => {
-            const { name, manufacturer, genericName, variantName } =
+            const { name, manufacturer, genericName, variantName, unitName } =
               await fetchItem(inventory.itemId);
             const expiredStock = expiredStockMap.get(inventory.itemId) || 0;
             return {
@@ -337,6 +392,7 @@ const Page = () => {
               manufacturer,
               genericName,
               variantName,
+              unitName,
               expiredStock,
               currentStock: inventory.packageQuantity - expiredStock,
             } as ExtendedInventoryData;
@@ -380,7 +436,6 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
               <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (

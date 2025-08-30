@@ -292,6 +292,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
 
     const totals = calculateTotals();
 
+
     const salesReturnData: SalesReturnData = {
       originalBillId: originalBill.billId,
       billId1: originalBill.billId1 || "",
@@ -303,6 +304,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
       totalSgst: totals.totalSgst,
       grandTotal: totals.grandTotal,
       totalDiscount: originalBill.totalDiscount,
+      pharmacyId: originalBill.pharmacyId, // pharmacy id is added for multi pharmacy
       billReturnItemDtos: returnItem
         .filter((item) => (item.returnedQuantity || 0) > 0)
         .map((item) => ({
@@ -581,85 +583,6 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
               </div>
             </div>
           </div>
-
-          {/* <div className="bg-white rounded-lg shadow p-6 w-full border border-gray-200">
-            <h2 className="text-lg font-medium text-gray-800 mb-4">
-              Patient Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Patient Name
-                </div>
-                <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
-                  {patientData?.firstName
-                    ? `${patientData.firstName} ${
-                        patientData.lastName || ""
-                      }`.trim()
-                    : originalBill.patientName || "--"}
-                </div>
-              </div>
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Bill Date
-                </div>
-                <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
-                  {originalBill?.billDateTime
-                    ? new Date(originalBill.billDateTime).toLocaleDateString(
-                        "en-GB",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        }
-                      )
-                    : "--"}
-                </div>
-              </div>
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Mobile Number
-                </div>
-                <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
-                  {patientData?.phone || originalBill.phone || "--"}
-                </div>
-              </div>
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Patient ID
-                </div>
-                <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
-                  {patientData?.patientId1 || originalBill?.patientId1 || "--"}
-                </div>
-              </div>
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Patient Type
-                </div>
-                <div className="text-base text-[#0A0A0B] font-inter font-normal leading-[161.8%] truncate w-full">
-                  {formatPatientType(originalBill.patientType) || "--"}
-                </div>
-              </div>
-              <div className="w-full h-[96px] p-6 flex flex-col justify-center items-start rounded-lg bg-[#FAFAFA] border border-gray-100">
-                <div className="text-sm text-[#433E3F] font-inter font-normal leading-[161.8%]">
-                  Payment Status
-                </div>
-                <div
-                  className={`text-base font-inter font-normal leading-[161.8%] truncate w-full ${
-                    originalBill.paymentStatus?.toLowerCase() === "paid"
-                      ? "text-green-600"
-                      : ["pending", "not paid"].includes(
-                          originalBill.paymentStatus?.toLowerCase()
-                        )
-                      ? "text-orange-500"
-                      : "text-[#0A0A0B]"
-                  }`}
-                >
-                  {formatPaymentStatus(originalBill.paymentStatus) || "--"}
-                </div>
-              </div>
-            </div>
-          </div> */}
 
           <div className="bg-white rounded-lg shadow p-6 w-full">
             <h2 className="text-xl font-bold text-gray-800">

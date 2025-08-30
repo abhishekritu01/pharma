@@ -7,7 +7,6 @@ import { BillingGstSummaryItem } from "@/app/types/BillingSummaryData";
 import { getBillingGstSummary } from "@/app/services/BillingSummaryService";
 import { format, isSameDay, isSameMonth, isSameYear } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-// import { FiPrinter } from "react-icons/fi";
 import DatePicker from "react-datepicker";
 import Button from "@/app/components/common/Button";
 import "react-datepicker/dist/react-datepicker.css";
@@ -35,6 +34,30 @@ const Page = () => {
     { value: "selectMonth", label: "Select Month" },
     { value: "selectDate", label: "Select Date" },
   ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const datePickerElement = document.getElementById("custom-date-picker");
+      const datePickerButton = document.getElementById("custom-date-button");
+      const monthPickerElement = document.getElementById("custom-month-picker");
+      const monthPickerButton = document.getElementById("custom-month-button");
+
+      if (
+        showPicker &&
+        ((datePickerElement && !datePickerElement.contains(event.target as Node) && 
+          datePickerButton && !datePickerButton.contains(event.target as Node)) ||
+        (monthPickerElement && !monthPickerElement.contains(event.target as Node) && 
+          monthPickerButton && !monthPickerButton.contains(event.target as Node)))
+      ) {
+        setShowPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPicker]);
 
   useEffect(() => {
     const fetchGstReport = async () => {
@@ -170,7 +193,6 @@ const Page = () => {
     <main className="space-y-10">
       {loading && (
         <div className="flex justify-center items-center h-64">
-          {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
           <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
         </div>
       )}
@@ -188,15 +210,12 @@ const Page = () => {
               Sales GST Report
             </div>
             <div className="flex space-x-4">
-
               <Button
                 label="Export as CSV"
                 className="px-6 bg-darkPurple text-white hover:bg-darkPurple"
                 icon={<BiExport size={18} />}
                 onClick={async () => {
                   try {
-                    // toast.info("Preparing CSV export...");
-
                     const dataToExport = getSortedData().map((item, index) => ({
                       "S.No": index + 1,
                       "Bill No.": item.billId1,
@@ -239,94 +258,94 @@ const Page = () => {
                   }
                 }}
               />
-              {/* <Button
-                label="Print"
-                className="px-4 border border-gray-400 hover:bg-gray-50"
-                icon={<FiPrinter size={18} />}
-              /> */}
             </div>
           </div>
-          <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow relative">
-            {filterButtons.map((filter) => (
-              <div key={filter.value} className="relative">
-                <button
-                  onClick={() => {
-                    if (filter.value === "selectDate") {
-                      setSelectedMonth(null);
-                    } else if (filter.value === "selectMonth") {
-                      setSelectedDate(null);
-                    }
-                    setDateFilter(filter.value);
-                    if (filter.value === "selectDate" || filter.value === "selectMonth") {
-                      setShowPicker(true);
-                    } else {
-                      setShowPicker(false);
-                      setSelectedDate(null);
-                      setSelectedMonth(null);
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${dateFilter === filter.value
-                    ? "bg-darkPurple text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                >
-                  {filter.label}
-                  {(filter.value === "selectDate" || filter.value === "selectMonth") && (
-                    <CiCalendar size={18} />
-                  )}
-                </button>
 
-                {(filter.value === dateFilter && showPicker) && (
-                  <div className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200">
-                    {dateFilter === "selectDate" ? (
-                      <DatePicker
-                        selected={selectedDate}
-                        onChange={(date) => {
-                          setSelectedDate(date);
-                          setShowPicker(false);
-                        }}
-                        inline
-                        maxDate={new Date()}
-                        calendarClassName="border-0"
-                        dayClassName={(date) => {
-                          if (selectedDate && isSameDay(date, selectedDate)) {
-                            return "bg-darkPurple text-white rounded-full";
-                          }
-                          return "";
-                        }}
-                      />
-                    ) : (
-                      <DatePicker
-                        selected={selectedMonth}
-                        onChange={(date) => {
-                          setSelectedMonth(date);
-                          setShowPicker(false);
-                        }}
-                        inline
-                        showMonthYearPicker
-                        maxDate={new Date()}
-                        calendarClassName="border-0"
-                        monthClassName={(date) => {
-                          if (selectedMonth &&
-                            isSameMonth(date, selectedMonth) &&
-                            isSameYear(date, selectedMonth)) {
-                            return "bg-darkPurple text-white rounded";
-                          }
-                          return "";
-                        }}
-                      />
+          {/* Date Filters with new styling */}
+          <div className="flex items-center gap-6">
+            <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer">
+              {filterButtons.map((filter) => (
+                <div key={filter.value} className="relative">
+                  <div
+                    id={filter.value === "selectDate" ? "custom-date-button" : 
+                        filter.value === "selectMonth" ? "custom-month-button" : ""}
+                    onClick={() => {
+                      if (filter.value === "selectDate") {
+                        setSelectedMonth(null);
+                      } else if (filter.value === "selectMonth") {
+                        setSelectedDate(null);
+                      }
+                      setDateFilter(filter.value);
+                      if (filter.value === "selectDate" || filter.value === "selectMonth") {
+                        setShowPicker(true);
+                      } else {
+                        setShowPicker(false);
+                        setSelectedDate(null);
+                        setSelectedMonth(null);
+                      }
+                    }}
+                    className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
+                      dateFilter === filter.value ? "text-[#4B0082]" : ""
+                    }`}
+                  >
+                    {filter.label}
+                    {(filter.value === "selectDate" || filter.value === "selectMonth") && (
+                      <CiCalendar size={18} />
                     )}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {(filter.value === dateFilter && showPicker) && (
+                    <div
+                      id={filter.value === "selectDate" ? "custom-date-picker" : "custom-month-picker"}
+                      className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 border border-gray-200"
+                    >
+                      {dateFilter === "selectDate" ? (
+                        <DatePicker
+                          selected={selectedDate}
+                          onChange={(date) => {
+                            setSelectedDate(date);
+                            setShowPicker(false);
+                          }}
+                          inline
+                          maxDate={new Date()}
+                          calendarClassName="border-0"
+                          dayClassName={(date) => {
+                            if (selectedDate && isSameDay(date, selectedDate)) {
+                              return "bg-darkPurple text-white rounded-full";
+                            }
+                            return "";
+                          }}
+                        />
+                      ) : (
+                        <DatePicker
+                          selected={selectedMonth}
+                          onChange={(date) => {
+                            setSelectedMonth(date);
+                            setShowPicker(false);
+                          }}
+                          inline
+                          showMonthYearPicker
+                          maxDate={new Date()}
+                          calendarClassName="border-0"
+                          monthClassName={(date) => {
+                            if (selectedMonth &&
+                              isSameMonth(date, selectedMonth) &&
+                              isSameYear(date, selectedMonth)) {
+                              return "bg-darkPurple text-white rounded";
+                            }
+                            return "";
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
             {(selectedDate || selectedMonth) && (
               <div className={`
-                ml-4 flex items-center text-sm p-2 rounded-md
-                ${selectedDate || selectedMonth ?
-                  'bg-darkPurple text-white' :
-                  'text-gray-600'}
+                flex items-center text-sm p-2 rounded-md bg-darkPurple text-white
               `}>
                 {selectedDate ? (
                   <>

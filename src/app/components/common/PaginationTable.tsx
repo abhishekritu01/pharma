@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 interface TableProps<T> {
-  data: T[]; // Array of data to be displayed
+  data: T[]; 
   columns: {
     header: React.ReactNode;
-    accessor: keyof T | ((item: T, index: number) => React.ReactNode); // Field name or custom renderer
+    accessor: keyof T | ((item: T, index: number) => React.ReactNode); 
   }[];
-  actions?: (item: T) => React.ReactNode; // Optional actions for each row
-  noDataMessage?: string; // Message when there's no data
+  actions?: (item: T) => React.ReactNode; 
+  noDataMessage?: string; 
 }
 
 const PaginationTable = <T,>({
@@ -20,16 +20,16 @@ const PaginationTable = <T,>({
   const pageSize = 8; 
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Calculate total pages
+  
   const totalPages = Math.ceil(data.length / pageSize);
   
-  // Get current page data
+ 
   const currentData = data.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  // Handle page change
+  
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -99,7 +99,7 @@ const PaginationTable = <T,>({
 
       {/* Pagination Controls */}
       {data.length > pageSize && (
-        <div className="flex justify-end items-center mt-6 w-full h-[83px] py-6 space-x-2">
+        <div className="flex justify-end items-center mt-2 w-full  py-1 space-x-2">
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}

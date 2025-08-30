@@ -15,7 +15,6 @@ import {
 import { PatientData } from "@/app/types/PatientData";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { FaPrint } from "react-icons/fa";
 
 const Page = () => {
   const params = useParams();
@@ -297,17 +296,15 @@ const Page = () => {
       <div className="flex justify-end gap-4 mt-6 print-hidden">
         <Button
           label="Back"
-          value=""
-          className="w-20 h-11 hover:bg-gray-200"
+          className="w-20"
           onClick={() => router.back()}
         />
-        <button
+        <Button
+        label="Print"
           onClick={handlePrint}
-          className="px-6 py-3 bg-darkPurple text-white rounded-full hover:bg-darkPurple transition flex items-center gap-2 w-20 h-11 justify-center"
-        >
-          <FaPrint />
-          Print
-        </button>
+          className="w-20 bg-darkPurple text-white"
+        />
+          
       </div>
 
       <style jsx global>{`
