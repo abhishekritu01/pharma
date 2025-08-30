@@ -60,9 +60,7 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
   const [showSupplier, setShowSupplier] = useState(false);
   const [showItem, setShowItem] = useState(false);
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
-  // const [purchaseOrderItems, setPurchaseOrderItems] = useState<
-  //   PurchaseOrderItem[]
-  // >([]);
+ 
 
   const [modalConfirmCallback, setModalConfirmCallback] = useState<
     () => Promise<void> | void
@@ -899,8 +897,8 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                         }));
                       }
                     }}
-                    readOnly={id === "orderedDate"} // Prevents typing
-                    disabled={id === "orderedDate"} // Disables date picker too
+                    readOnly={id === "orderedDate"} 
+                    disabled={id === "orderedDate"} 
                   />
                 )}
               </div>

@@ -136,31 +136,6 @@ const Page = () => {
       header: "Estimated Amount",
       accessor: "grandTotal" as keyof PurchaseOrderData,
     },
-    // {
-    //   header: <BsThreeDotsVertical size={18} />,
-    //   accessor: (row: PurchaseOrderData) => (
-    //     <div className="relative group">
-    //       <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
-    //         <BsThreeDotsVertical size={18} />
-    //       </button>
-
-    //       <div className="absolute right-0 mt-2 w-18 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-    //         <Link
-    //           href={`/dashboard/purchaseOrderDetails?id=${row.orderId}`}
-    //           className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-    //         >
-    //           View
-    //         </Link>
-    //         <button
-    //           onClick={() => handlePurchesOrder(row.orderId)}
-    //           className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-    //         >
-    //           Delete
-    //         </button>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseOrderData) => (

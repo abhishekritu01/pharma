@@ -19,7 +19,7 @@ import {
 } from "@/app/services/PurchaseOrderService";
 import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
 import { createPurchase } from "@/app/services/PurchaseEntryService";
-import { getPharmacy} from "@/app/services/PharmacyService";
+import { getPharmacy } from "@/app/services/PharmacyService";
 import { getSupplier, getSupplierById } from "@/app/services/SupplierService";
 import { toast } from "react-toastify";
 import Modal from "@/app/components/common/Modal";
@@ -35,6 +35,10 @@ import EllipsisTooltip from "@/app/components/common/EllipsisTooltip";
 import { components } from "react-select";
 import { PharmacyData } from "@/app/types/PharmacyData";
 import SelectField from "@/app/components/common/SelectField";
+import {
+  purchaseEntryItemSchema,
+  purchaseEntrySchema,
+} from "@/app/schema/PurchaseEntrySchema";
 
 interface PurchaseEntryProps {
   setShowPurchaseEntry: (value: boolean) => void;
@@ -127,6 +131,10 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
 
   const [items, setItems] = useState<ItemData[]>([]);
   const [subTotal, setSubTotal] = useState(0);
+  const [totalDiscountPercentage, setTotalDiscountPercent] =
+    useState<number>(0);
+  const [totalDiscountAmount, setTotalDiscountAmount] = useState<number>(0);
+
   const [gstTotal, setGstTotal] = useState(0);
   const [grandTotal, setGrandTotal] = useState(0);
   const [showSupplier, setShowSupplier] = useState(false);
@@ -364,15 +372,21 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     {
       header: "Package Qty",
       accessor: (row: PurchaseEntryItem, index: number) => (
-        <div className="flex items-center gap-x-2">
+        <div className="flex flex-col items-center gap-x-2">
           <input
             type="number"
             name="packageQuantity"
-            value={row.packageQuantity === 0 ? "" : row.packageQuantity}
+            value={row.packageQuantity ?? ""}
             onKeyDown={restrictInvalidNumberKeys}
             onChange={handleNumericChange((e) => handleChange(e, index))}
             className="border border-Gray p-2 rounded w-24 text-left outline-none focus:ring-0 focus:outline-none"
           />
+
+          {row.orderedQuantity !== undefined && (
+            <span className="text-xs text-gray-500 mt-1">
+              Ordered Qty: {row.orderedQuantity}
+            </span>
+          )}
         </div>
       ),
       className: "text-left",
@@ -401,7 +415,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     { header: "MRP", accessor: "mrpSalePrice", className: "text-left" },
     { header: "GST %", accessor: "gstPercentage", className: "text-left" },
     { header: "GST", accessor: "gstAmount", className: "text-left" },
-    { header: "Discount", accessor: "discount", className: "text-left" },
+    // { header: "Discount ", accessor: "discount", className: "text-left" },
     { header: "Amount", accessor: "amount", className: "text-left" },
     {
       header: "Action",
@@ -569,7 +583,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
 
   const handleDeleteRow = (index: number) => {
     if (purchaseRows.length === 1) {
-      toast.error("Cannot delete the last row", {
+      toast.error("Cannot delete the first row", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -658,7 +672,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
               itemId: item.itemId,
               itemName: item.itemName,
               batchNo: item.batchNo || "",
-              packageQuantity: item.packageQuantity || 0,
+              orderedQuantity: item.packageQuantity || 0,
               expiryDate: item.expiryDate || "",
               purchasePrice: item.purchasePrice || 0,
               mrpSalePrice: item.mrpSalePrice || 0,
@@ -713,31 +727,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         );
 
         setPurchaseRows(updatedRows);
-
-        // if (pharmacyId) {
-        //   try {
-        //     const response = await getPharmacyById(pharmacyId);
-        //     const pharmacy = response?.data;
-
-        //     setFormData((prev) => ({
-        //       ...prev,
-        //       pharmacyId,
-        //       pharmacyName: pharmacy?.pharmacyName || "N/A",
-        //     }));
-        //   } catch (error) {
-        //     console.error(
-        //       "Error fetching pharmacy details for pharmacyId:",
-        //       pharmacyId,
-        //       error
-        //     );
-        //     setFormData((prev) => ({
-        //       ...prev,
-        //       pharmacyId,
-        //       pharmacyName: "N/A",
-        //     }));
-        //   }
-        // }
-
         if (supplierId) {
           try {
             console.log(
@@ -784,30 +773,15 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       0
     );
 
-    const newGrandTotal = newSubTotal + newGstTotal;
+    const newDiscountAmount = (newSubTotal * totalDiscountPercentage) / 100;
+    const discountedSubTotal = newSubTotal - newDiscountAmount;
+    const newGrandTotal = discountedSubTotal + newGstTotal;
 
     setSubTotal(newSubTotal);
     setGstTotal(newGstTotal);
+    setTotalDiscountAmount(newDiscountAmount);
     setGrandTotal(newGrandTotal);
-  }, [purchaseRows]);
-
-  useEffect(() => {
-    const newSubTotal = purchaseRows.reduce(
-      (sum, row) => sum + (row.amount || 0),
-      0
-    );
-
-    const newGstTotal = purchaseRows.reduce(
-      (sum, row) => sum + (row.gstAmount || 0),
-      0
-    );
-
-    const newGrandTotal = newSubTotal + newGstTotal;
-
-    setSubTotal(newSubTotal);
-    setGstTotal(newGstTotal);
-    setGrandTotal(newGrandTotal);
-  }, [purchaseRows]);
+  }, [purchaseRows, totalDiscountPercentage]);
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -855,6 +829,8 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       totalAmount: subTotal,
       totalCgst: gstTotal,
       totalSgst: gstTotal,
+      totalDiscountPercentage: totalDiscountPercentage,
+      totalDiscountAmount: totalDiscountAmount,
       grandTotal: grandTotal,
       stockItemDtos: purchaseRows.map((row) => ({
         itemId: row.itemId,
@@ -873,6 +849,35 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
       paymentStatus: "",
       goodStatus: "",
     };
+
+    const entryValidation = purchaseEntrySchema.safeParse({
+      pharmacyId: String(purchaseData.pharmacyId),
+      purchaseBillNo: purchaseData.purchaseBillNo,
+      billDate: String(purchaseData.purchaseDate),
+      creditPeriod: purchaseData.creditPeriod,
+      paymentDueDate: String(purchaseData.paymentDueDate),
+      supplierId: String(purchaseData.supplierId),
+      invoiceAmount: purchaseData.invoiceAmount ?? 0,
+    });
+
+    if (!entryValidation.success) {
+      entryValidation.error.errors.forEach((err) => toast.error(err.message));
+      return;
+    }
+
+    for (const row of purchaseData.stockItemDtos) {
+      const itemValidation = purchaseEntryItemSchema.safeParse({
+        itemId: String(row.itemId),
+        batchNo: row.batchNo,
+        packageQuantity: row.packageQuantity,
+        expiryDate: row.expiryDate,
+      });
+
+      if (!itemValidation.success) {
+        itemValidation.error.errors.forEach((err) => toast.error(err.message));
+        return;
+      }
+    }
 
     handleShowModal({
       message:
@@ -1032,7 +1037,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                     </label>
 
                     {showSuggestions && filteredSuggestions.length > 0 && (
-                      <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
+                      <ul className="absolute top-full left-0 z-50 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
                         {filteredSuggestions.map((suggestion, index) => (
                           <li
                             key={index}
@@ -1131,60 +1136,42 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                     />
                   </div>
                 ) : (
-                  // <InputField
-                  //   id={id}
-                  //   label={label}
-                  //   type={type}
-                  //   value={
-                  //     id === "paymentDueDate" && formData.paymentDueDate
-                  //       ? new Date(formData.paymentDueDate)
-                  //           .toISOString()
-                  //           .split("T")[0]
-                  //       : formData[id as keyof PurchaseEntryData]?.toString() ??
-                  //         ""
-                  //   }
-                  //   onChange={
-                  //     id === "paymentDueDate"
-                  //       ? () => {}
-                  //       : id === "creditPeriod" || id === "invoiceAmount"
-                  //       ? handleNumericChange(handleInputChange)
-                  //       : handleInputChange
-                  //   }
-                  //   readOnly={id === "paymentDueDate"}
-                  //   onKeyDown={
-                  //     id === "creditPeriod" || id === "invoiceAmount"
-                  //       ? restrictInvalidNumberKeys
-                  //       : undefined
-                  //   }
-                  // />
-                  <InputField
-                    id={id}
-                    label={label}
-                    type={type}
-                    value={
-                      id === "paymentDueDate" && formData.paymentDueDate
-                        ? new Date(formData.paymentDueDate)
-                            .toISOString()
-                            .split("T")[0]
-                        : formData[id as keyof PurchaseEntryData] === 0
-                        ? ""
-                        : formData[id as keyof PurchaseEntryData]?.toString() ??
-                          ""
-                    }
-                    onChange={
-                      id === "paymentDueDate"
-                        ? () => {}
-                        : id === "creditPeriod" || id === "invoiceAmount"
-                        ? handleNumericChange(handleInputChange)
-                        : handleInputChange
-                    }
-                    readOnly={id === "paymentDueDate"}
-                    onKeyDown={
-                      id === "creditPeriod" || id === "invoiceAmount"
-                        ? restrictInvalidNumberKeys
-                        : undefined
-                    }
-                  />
+                  <div>
+                    <InputField
+                      id={id}
+                      label={label}
+                      type={type}
+                      value={
+                        id === "paymentDueDate" && formData.paymentDueDate
+                          ? new Date(formData.paymentDueDate)
+                              .toISOString()
+                              .split("T")[0]
+                          : formData[id as keyof PurchaseEntryData] === 0
+                          ? ""
+                          : formData[
+                              id as keyof PurchaseEntryData
+                            ]?.toString() ?? ""
+                      }
+                      onChange={
+                        id === "paymentDueDate"
+                          ? () => {}
+                          : id === "creditPeriod" || id === "invoiceAmount"
+                          ? handleNumericChange(handleInputChange)
+                          : handleInputChange
+                      }
+                      readOnly={id === "paymentDueDate"}
+                      onKeyDown={
+                        id === "creditPeriod" || id === "invoiceAmount"
+                          ? restrictInvalidNumberKeys
+                          : undefined
+                      }
+                    />
+                    {id === "creditPeriod" && (
+                      <p className="mt-1 px-2 text-xs text-gray-400">
+                        Max 45 days allowed
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -1207,29 +1194,42 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           ></Button>
         </div>
 
-        <div className="border h-56 w-lg border-Gray rounded-xl p-6 space-y-6 ml-auto font-normal text-sm">
-          {[
-            { label: "SUB TOTAL", value: subTotal.toFixed(2) },
-            { label: "GST TOTAL", value: gstTotal.toFixed(2) },
-            { label: "DISCOUNT", value: 0 },
-            {
-              label: "GRAND TOTAL",
-              value: grandTotal.toFixed(2),
-              isTotal: true,
-            },
-          ].map(({ label, value, isTotal }, index) => (
-            <div
-              key={index}
-              className={`flex justify-between ${
-                isTotal
-                  ? "font-semibold text-base bg-gray1 h-8 p-1 items-center rounded-lg"
-                  : ""
-              }`}
-            >
-              <div>{label}</div>
-              <div>₹{value}</div>
+        <div className="border h-full w-lg border-Gray rounded-xl p-6 space-y-4 ml-auto font-normal text-sm">
+          <div className="flex justify-between">
+            <div>SUB TOTAL</div>
+            <div>₹{subTotal.toFixed(2)}</div>
+          </div>
+
+          <div className="flex justify-between">
+            <div>GST TOTAL</div>
+            <div>₹{gstTotal.toFixed(2)}</div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div>DISCOUNT %</div>
+            <div>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={totalDiscountPercentage}
+                onChange={(e) =>
+                  setTotalDiscountPercent(Number(e.target.value))
+                }
+                className="w-16 border border-gray-300 rounded p-1 text-right outline-none focus:ring-0"
+              />
             </div>
-          ))}
+          </div>
+
+          <div className="flex justify-between">
+            <div>DISCOUNT</div>
+            <div>₹{totalDiscountAmount.toFixed(2)}</div>
+          </div>
+
+          <div className="flex justify-between font-semibold text-base bg-gray1 h-8 p-1 items-center rounded-lg">
+            <div>GRAND TOTAL</div>
+            <div>₹{grandTotal.toFixed(2)}</div>
+          </div>
         </div>
 
         <div className="flex justify-end">
