@@ -651,13 +651,48 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
   //   }));
   // };
 
+// const handleInputChange = (
+//   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+// ) => {
+//   const { name, value } = e.target;
+
+//   setFormData((prev) => {
+//     const isNumberField = !["paymentStatus", "paymentType", "patientType"].includes(name);
+//     const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
+
+//     const updatedData: typeof prev = {
+//       ...prev,
+//       [name]: parsedValue,
+//     };
+
+//     if (
+//       name === "receivedAmount" &&
+//       prev.paymentType === "cash" &&
+//       typeof parsedValue === "number"
+//     ) {
+//       updatedData.balanceAmount = parseFloat(
+//         (parsedValue - prev.grandTotal).toFixed(2)
+//       );
+//     }
+
+//     return updatedData;
+//   });
+// };
+
 const handleInputChange = (
   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
   const { name, value } = e.target;
 
   setFormData((prev) => {
-    const isNumberField = !["paymentStatus", "paymentType"].includes(name);
+    const isNumberField = ![
+      "paymentStatus",
+      "paymentType",
+      "patientType",
+      "patientId1", 
+      "doctorId", 
+    ].includes(name);
+
     const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
 
     const updatedData: typeof prev = {
@@ -678,6 +713,8 @@ const handleInputChange = (
     return updatedData;
   });
 };
+
+
 
   const handleDeleteRow = (index: number) => {
     if (billingItemRows.length === 1) {

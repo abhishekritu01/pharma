@@ -23,6 +23,8 @@ import AsyncSelect from "react-select/async";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { getPharmacy } from "@/app/services/PharmacyService";
 import { PharmacyData } from "@/app/types/PharmacyData";
+import { purchaseReturnSchema } from "@/app/schema/PurchaseReturnSchema";
+import { ZodError, ZodIssue } from "zod";
 
 interface PurchaseReturnProps {
   setShowPurchaseReturn: (value: boolean) => void;
@@ -134,9 +136,29 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         />
       ),
     },
+    // {
+    //   header: "Action",
+    //   accessor: (row: PurchaseReturnItem, index: number) => (
+    //     <div className="relative group">
+    //       <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+    //         <BsThreeDotsVertical size={18} />
+    //       </button>
+
+    //       <div className="absolute right-0 mt-2 w-32 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+    //         <button
+    //           onClick={() => handleDeleteRow(index)}
+    //           className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
+    //         >
+    //           Delete
+    //         </button>
+    //       </div>
+    //     </div>
+    //   ),
+    // },
+
     {
       header: "Action",
-      accessor: (row: PurchaseReturnItem, index: number) => (
+      accessor: () => (
         <div className="relative group">
           <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
             <BsThreeDotsVertical size={18} />
@@ -144,7 +166,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
 
           <div className="absolute right-0 mt-2 w-32 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
             <button
-              onClick={() => handleDeleteRow(index)}
+              onClick={() => handleDeleteRow(rowIndex)} // ✅ use rowIndex from outer scope
               className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
             >
               Delete
@@ -155,148 +177,83 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
     },
   ];
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    const parts = name.split("-");
 
+    if (parts.length === 2) {
+      const field = parts[0] as keyof PurchaseReturnItem;
+      const idx = Number(parts[1]);
 
-  // const handleInputChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  // ) => {
-  //   const { name, value } = e.target;
-  //   const parts = name.split("-");
+      let showToast = false; // flag for toast message
 
-  //   if (parts.length === 2) {
-  //     const field = parts[0] as keyof PurchaseReturnItem;
-  //     const idx = Number(parts[1]);
+      setFormData((prev) => {
+        const updatedItems = [...prev.purchaseReturnItemDtos];
+        const currentItem = updatedItems[idx];
 
-  //     setFormData((prev) => {
-  //       const updatedItems = prev.purchaseReturnItemDtos.map((item, i) =>
-  //         i === idx
-  //           ? {
-  //               ...item,
-  //               [field]:
-  //                 field === "returnQuantity" ||
-  //                 field === "purchasePrice" ||
-  //                 field === "gstPercentage"
-  //                   ? Number(value)
-  //                   : value,
-  //             }
-  //           : item
-  //       );
+        // 🔍 Validation for returnQuantity > availableQuantity
+        if (field === "returnQuantity") {
+          const newQty = Number(value) || 0;
+          const available = currentItem.availableQuantity ?? 0;
 
-  //       let totalAmount = 0;
-  //       let totalGst = 0;
-
-  //       updatedItems.forEach((item) => {
-  //         const qty = Number(item.returnQuantity) || 0;
-  //         const price = Number(item.purchasePrice) || 0;
-  //         const gst = Number(item.gstPercentage) || 0;
-  //         const itemTotal = qty * price;
-  //         const itemGstAmount = (itemTotal * gst) / 100;
-
-  //         totalAmount += itemTotal;
-  //         totalGst += itemGstAmount;
-  //       });
-
-  //       const grandTotal = totalAmount + totalGst;
-
-  //       return {
-  //         ...prev,
-  //         purchaseReturnItemDtos: updatedItems,
-  //         totalAmount: parseFloat(totalAmount.toFixed(2)),
-  //         totalGst: parseFloat(totalGst.toFixed(2)),
-  //         returnAmount: parseFloat(grandTotal.toFixed(2)),
-  //       };
-  //     });
-  //   } else {
-  //     const field = name as keyof PurchaseReturnData;
-  //     const newValue = field === "returnDate" ? new Date(value) : value;
-
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       [field]: newValue,
-  //     }));
-  //   }
-  // };
-
-
-const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
-  const parts = name.split("-");
-
-  if (parts.length === 2) {
-    const field = parts[0] as keyof PurchaseReturnItem;
-    const idx = Number(parts[1]);
-
-    let showToast = false; // flag for toast message
-
-    setFormData((prev) => {
-      const updatedItems = [...prev.purchaseReturnItemDtos];
-      const currentItem = updatedItems[idx];
-
-      // 🔍 Validation for returnQuantity > availableQuantity
-      if (field === "returnQuantity") {
-        const newQty = Number(value) || 0;
-        const available = currentItem.availableQuantity ?? 0;
-
-        if (newQty > available) {
-          showToast = true; // set flag
-          return prev; // ❌ skip state update
+          if (newQty > available) {
+            showToast = true; // set flag
+            return prev; // ❌ skip state update
+          }
         }
-      }
 
-      // ✅ Normal update
-      updatedItems[idx] = {
-        ...currentItem,
-        [field]:
-          field === "returnQuantity" ||
-          field === "purchasePrice" ||
-          field === "gstPercentage"
-            ? Number(value)
-            : value,
-      };
+        // ✅ Normal update
+        updatedItems[idx] = {
+          ...currentItem,
+          [field]:
+            field === "returnQuantity" ||
+            field === "purchasePrice" ||
+            field === "gstPercentage"
+              ? Number(value)
+              : value,
+        };
 
-      let totalAmount = 0;
-      let totalGst = 0;
+        let totalAmount = 0;
+        let totalGst = 0;
 
-      updatedItems.forEach((item) => {
-        const qty = Number(item.returnQuantity) || 0;
-        const price = Number(item.purchasePrice) || 0;
-        const gst = Number(item.gstPercentage) || 0;
-        const itemTotal = qty * price;
-        const itemGstAmount = (itemTotal * gst) / 100;
+        updatedItems.forEach((item) => {
+          const qty = Number(item.returnQuantity) || 0;
+          const price = Number(item.purchasePrice) || 0;
+          const gst = Number(item.gstPercentage) || 0;
+          const itemTotal = qty * price;
+          const itemGstAmount = (itemTotal * gst) / 100;
 
-        totalAmount += itemTotal;
-        totalGst += itemGstAmount;
+          totalAmount += itemTotal;
+          totalGst += itemGstAmount;
+        });
+
+        const grandTotal = totalAmount + totalGst;
+
+        return {
+          ...prev,
+          purchaseReturnItemDtos: updatedItems,
+          totalAmount: parseFloat(totalAmount.toFixed(2)),
+          totalGst: parseFloat(totalGst.toFixed(2)),
+          returnAmount: parseFloat(grandTotal.toFixed(2)),
+        };
       });
 
-      const grandTotal = totalAmount + totalGst;
+      // ✅ trigger toast AFTER state update
+      if (showToast) {
+        toast.error("Return quantity cannot exceed available quantity!");
+      }
+    } else {
+      const field = name as keyof PurchaseReturnData;
+      const newValue = field === "returnDate" ? new Date(value) : value;
 
-      return {
+      setFormData((prev) => ({
         ...prev,
-        purchaseReturnItemDtos: updatedItems,
-        totalAmount: parseFloat(totalAmount.toFixed(2)),
-        totalGst: parseFloat(totalGst.toFixed(2)),
-        returnAmount: parseFloat(grandTotal.toFixed(2)),
-      };
-    });
-
-    // ✅ trigger toast AFTER state update
-    if (showToast) {
-      toast.error("Return quantity cannot exceed available quantity!");
+        [field]: newValue,
+      }));
     }
-  } else {
-    const field = name as keyof PurchaseReturnData;
-    const newValue = field === "returnDate" ? new Date(value) : value;
-
-    setFormData((prev) => ({
-      ...prev,
-      [field]: newValue,
-    }));
-  }
-};
-
-
+  };
 
   const handleShowModal = (options: ModalOptions) => {
     setModalMessage(options.message);
@@ -316,30 +273,22 @@ const handleInputChange = (
   };
 
   const addPurchaseReturn = () => {
-    const hasInvalidDiscrepancy = formData.purchaseReturnItemDtos.some(
-      (item, index) => {
-        const isInvalid =
-          !item.discrepancyIn ||
-          item.discrepancy === undefined ||
-          item.discrepancy === null ||
-          item.discrepancy === "";
-        if (isInvalid) {
-          toast.error(
-            `Please fill in both "Discrepancy In" and "Discrepancy" for item ${
-              index + 1
-            }`,
-            {
-              position: "top-right",
-              autoClose: 2000,
-              pauseOnHover: false,
-            }
-          );
-        }
-        return isInvalid;
-      }
-    );
-
-    if (hasInvalidDiscrepancy) return;
+   try {
+    purchaseReturnSchema.parse({
+      purchaseReturnItemDtos: formData.purchaseReturnItemDtos,
+    });
+  } catch (err) {
+    if (err instanceof ZodError) {
+      err.errors.forEach((e: ZodIssue) => {
+        toast.error(e.message, {
+          position: "top-right",
+          autoClose: 2000,
+          pauseOnHover: false,
+        });
+      });
+    }
+    return; 
+  }
 
     const firstItem = formData.purchaseReturnItemDtos[0] || {};
 
@@ -576,66 +525,6 @@ const handleInputChange = (
           </div>
         </div>
 
-        {/* <div className="border border-Gray w-full h-full rounded-lg p-5">
-          <div className="justify-start text-black text-lg font-normal leading-7">
-            Basic Details
-          </div>
-
-          <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[
-              {
-                id: "grnno",
-                label: "GRN Number",
-                type: "text",
-                readOnly: false,
-              },
-              {
-                id: "supplierName",
-                label: "Supplier",
-                type: "text",
-                readOnly: true,
-              },
-              {
-                id: "purchaseBillNo",
-                label: "Bill Number",
-                type: "text",
-                readOnly: true,
-              },
-              {
-                id: "returnDate",
-                label: "Return Date",
-                type: "date",
-                readOnly: false,
-              },
-            ].map(({ id, label, type, readOnly }) => (
-              <div key={id} className="relative w-full">
-                <label
-                  htmlFor={id}
-                  className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                >
-                  {label}
-                </label>
-
-                <input
-                  id={id}
-                  name={id}
-                  type={type}
-                  readOnly={readOnly}
-                  value={
-                    type === "date" && formData[id as keyof typeof formData]
-                      ? (formData[id as keyof typeof formData] as Date)
-                          .toISOString()
-                          .split("T")[0]
-                      : formData[id as keyof typeof formData]?.toString() ?? ""
-                  }
-                  onChange={handleInputChange}
-                  className="peer w-full h-[49px] px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                />
-              </div>
-            ))}
-          </div>
-        </div> */}
-
         {formData.purchaseReturnItemDtos.map((row, idx) => (
           <div
             key={idx}
@@ -818,10 +707,6 @@ const handleInputChange = (
                     <option value="Store Credit Returns">
                       Store Credit Returns
                     </option>
-                    {/* <option value="Replacement Returns">
-                      Replacement Returns
-                    </option>
-                    <option value="Change Invoice">Change Invoice</option> */}
                   </select>
                 </div>
 

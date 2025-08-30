@@ -897,8 +897,8 @@ const PurchaseOrder: React.FC<PurchaseOrderProps> = ({
                         }));
                       }
                     }}
-                    readOnly={id === "orderedDate"} // Prevents typing
-                    disabled={id === "orderedDate"} // Disables date picker too
+                    readOnly={id === "orderedDate"} 
+                    disabled={id === "orderedDate"} 
                   />
                 )}
               </div>
