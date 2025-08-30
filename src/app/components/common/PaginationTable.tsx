@@ -17,7 +17,7 @@ const PaginationTable = <T,>({
   actions,
   noDataMessage = "No data available",
 }: TableProps<T>) => {
-  const pageSize = 8; 
+  const pageSize = 7; 
   const [currentPage, setCurrentPage] = useState(1);
   
   

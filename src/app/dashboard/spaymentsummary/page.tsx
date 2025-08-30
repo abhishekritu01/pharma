@@ -6,10 +6,7 @@ import React, { useEffect, useState } from "react";
 import PurchaseEntry from "@/app/dashboard/entry/components/PurchaseEntry";
 import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
 import PaginationTable from "@/app/components/common/PaginationTable";
-import {
-  confirmPurchasePayment,
-  getPurchase,
-} from "@/app/services/PurchaseEntryService";
+import {getPurchase} from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import Button from "@/app/components/common/Button";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -43,6 +40,27 @@ const Page = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Dropdown menu state and functions
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  const toggleMenu = (invId?: string) => {
+    setOpenMenuId((prev) => (prev === invId ? null : invId || null));
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".menu-container")) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const fetchSupplier = async (
     supplierId: string | null | undefined
@@ -190,33 +208,33 @@ const Page = () => {
     fetchPurchaseEntry();
   }, []);
 
-  const handleConfirmPayment = async (invId: string) => {
-    try {
-      await confirmPurchasePayment(invId);
-      toast.success("Payment status updated to Paid", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+  // const handleConfirmPayment = async (invId: string) => {
+  //   try {
+  //     await confirmPurchasePayment(invId);
+  //     toast.success("Payment status updated to Paid", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
 
-      setPurchaseEntryData((prevData) =>
-        prevData.map((item) =>
-          item.invId === invId
-            ? {
-              ...item,
-              paymentStatus: "Paid",
-              dueStatus: "Payment Cleared",
-            }
-            : item
-        )
-      );
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to update payment status", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
+  //     setPurchaseEntryData((prevData) =>
+  //       prevData.map((item) =>
+  //         item.invId === invId
+  //           ? {
+  //             ...item,
+  //             paymentStatus: "Paid",
+  //             dueStatus: "Payment Cleared",
+  //           }
+  //           : item
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error("Failed to update payment status", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
+  //   }
+  // };
 
   const formatDate = (date: string | Date): string => {
     const parsedDate = typeof date === "string" ? new Date(date) : date;
@@ -499,28 +517,24 @@ const Page = () => {
     {
       header: <BsThreeDotsVertical size={18} />,
       accessor: (row: PurchaseEntryData) => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
+        <div className="relative menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(row.invId)}
+          >
             <BsThreeDotsVertical size={18} />
           </button>
-          <div className="absolute right-0 mt-2 w-40 bg-white shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-100">
-            <div className="flex flex-col items-center py-1">
+
+          {openMenuId === row.invId && (
+            <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-lg z-10 border border-gray-200">
               <Link
                 href={`/dashboard/orderSummary?id=${row.invId}`}
-                className="w-full px-4 py-2 text-center text-gray-700 hover:bg-purple-950 hover:text-white"
+                className="block w-full px-4 py-3 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg transition-colors duration-150"
               >
                 View
               </Link>
-              {row.paymentStatus?.toLowerCase() === "pending" && (
-                <button
-                  onClick={() => handleConfirmPayment(row.invId!)}
-                  className="w-full px-4 py-2 text-center text-gray-700 hover:bg-purple-950 hover:text-white"
-                >
-                  Confirm Payment
-                </button>
-              )}
             </div>
-          </div>
+          )}
         </div>
       ),
     },
