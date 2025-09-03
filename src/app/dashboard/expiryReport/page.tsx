@@ -34,6 +34,7 @@ const Page = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isCustomRangeApplied, setIsCustomRangeApplied] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof ExpiryReportData | null;
     direction: "asc" | "desc";
@@ -101,11 +102,6 @@ const Page = () => {
     fetchExpiryReport();
   }, []);
 
-  useEffect(() => {
-    if (dateFilter === "custom" && startDate && endDate) {
-      setDateFilter("custom");
-    }
-  }, [startDate, endDate, dateFilter]);
 
   const handleSort = (key: keyof ExpiryReportData) => {
     setSortConfig((prev) => {
@@ -182,7 +178,7 @@ const Page = () => {
       case "all":
         return data;
       case "custom":
-        if (startDate && endDate) {
+        if (isCustomRangeApplied && startDate && endDate) {
           return data.filter((item) =>
             isWithinInterval(item.expiryDate, {
               start: startDate,
@@ -190,7 +186,7 @@ const Page = () => {
             })
           );
         }
-        return data;
+        return [];
       default:
         return data;
     }
@@ -441,14 +437,14 @@ const Page = () => {
                   const newFilter = filter.value;
                   setDateFilter(newFilter);
                   setShowDatePicker(false);
+                  setIsCustomRangeApplied(false); // Reset applied state
                   if (newFilter === "custom") {
                     setStartDate(null);
                     setEndDate(null);
                   }
                 }}
-                className={`hover:text-[#4B0082] transition-colors ${
-                  dateFilter === filter.value ? "text-[#4B0082]" : ""
-                }`}
+                className={`hover:text-[#4B0082] transition-colors ${dateFilter === filter.value ? "text-[#4B0082]" : ""
+                  }`}
               >
                 {filter.label}
               </div>
@@ -460,12 +456,12 @@ const Page = () => {
                 onClick={() => {
                   setDateFilter("custom");
                   setShowDatePicker(!showDatePicker);
+                  setIsCustomRangeApplied(false);
                 }}
-                className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
-                  dateFilter === "custom" && (startDate || endDate)
-                    ? "text-[#4B0082]"
-                    : ""
-                }`}
+                className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "custom" && (startDate || endDate)
+                  ? "text-[#4B0082]"
+                  : ""
+                  }`}
               >
                 Custom Date Range
                 <CiCalendar size={18} />
@@ -521,6 +517,7 @@ const Page = () => {
                         onClick={() => {
                           setStartDate(null);
                           setEndDate(null);
+                          setIsCustomRangeApplied(false);
                           setShowDatePicker(false);
                           setDateFilter("today");
                         }}
@@ -531,15 +528,15 @@ const Page = () => {
                       <button
                         onClick={() => {
                           if (startDate && endDate) {
+                            setIsCustomRangeApplied(true);
                             setShowDatePicker(false);
                           }
                         }}
                         disabled={!startDate || !endDate}
-                        className={`px-3 py-1 text-sm rounded ${
-                          !startDate || !endDate
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-purple-800 text-white hover:bg-purple-700"
-                        }`}
+                        className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-darkPurple text-white"
+                          }`}
                       >
                         Apply
                       </button>

@@ -304,7 +304,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
       totalSgst: totals.totalSgst,
       grandTotal: totals.grandTotal,
       totalDiscount: originalBill.totalDiscount,
-      pharmacyId: originalBill.pharmacyId, // pharmacy id is added for multi pharmacy
+      pharmacyId: originalBill.pharmacyId,
       billReturnItemDtos: returnItem
         .filter((item) => (item.returnedQuantity || 0) > 0)
         .map((item) => ({

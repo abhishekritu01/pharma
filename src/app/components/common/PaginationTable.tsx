@@ -2,34 +2,42 @@ import React, { useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 interface TableProps<T> {
-  data: T[]; 
+  data: T[];
   columns: {
     header: React.ReactNode;
-    accessor: keyof T | ((item: T, index: number) => React.ReactNode); 
+    accessor: keyof T | ((item: T, index: number) => React.ReactNode);
   }[];
-  actions?: (item: T) => React.ReactNode; 
-  noDataMessage?: string; 
+  actions?: (item: T) => React.ReactNode;
+  noDataMessage?: string;
 }
 
+/**
+ * A reusable pagination table component
+ * Displays tabular data with pagination controls
+ * Supports custom column rendering and actions
+ */
 const PaginationTable = <T,>({
   data,
   columns,
   actions,
   noDataMessage = "No data available",
 }: TableProps<T>) => {
-  const pageSize = 7; 
+  const pageSize = 10; // Number of items per page
   const [currentPage, setCurrentPage] = useState(1);
-  
-  
+
+  // Calculate total number of pages based on data length and page size
   const totalPages = Math.ceil(data.length / pageSize);
-  
- 
+
+  // Get the current page's data slice
   const currentData = data.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  
+  /**
+   * Handles page navigation
+   * Validates page number before updating current page
+   */
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -44,9 +52,8 @@ const PaginationTable = <T,>({
             {columns.map((col, index) => (
               <th
                 key={index}
-                className={`p-2 text-left ${
-                  index === 0 ? "rounded-l-xl" : ""
-                } ${index === columns.length - 1 ? "rounded-r-xl" : ""}`}
+                className={`p-2 text-left ${index === 0 ? "rounded-l-xl" : ""
+                  } ${index === columns.length - 1 ? "rounded-r-xl" : ""}`}
               >
                 {col.header}
               </th>
@@ -64,13 +71,11 @@ const PaginationTable = <T,>({
                 {columns.map((col, colIndex) => (
                   <td
                     key={colIndex}
-                    className={`p-2 text-left ${
-                      colIndex === 0 ? "rounded-l-xl" : ""
-                    } ${
-                      colIndex === columns.length - 1 && !actions
+                    className={`p-2 text-left ${colIndex === 0 ? "rounded-l-xl" : ""
+                      } ${colIndex === columns.length - 1 && !actions
                         ? "rounded-r-xl"
                         : ""
-                    }`}
+                      }`}
                   >
                     {typeof col.accessor === "function"
                       ? col.accessor(item, rowIndex)
@@ -103,11 +108,10 @@ const PaginationTable = <T,>({
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`p-2 rounded-lg ${
-              currentPage === 1
+            className={`p-2 rounded-lg ${currentPage === 1
                 ? "text-gray-400 cursor-not-allowed"
                 : "text-black hover:bg-gray-100"
-            }`}
+              }`}
           >
             <FaChevronLeft />
           </button>
@@ -124,11 +128,10 @@ const PaginationTable = <T,>({
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={`p-2 rounded-lg ${
-              currentPage === totalPages
+            className={`p-2 rounded-lg ${currentPage === totalPages
                 ? "text-gray-400 cursor-not-allowed"
                 : "text-black hover:bg-gray-100"
-            }`}
+              }`}
           >
             <FaChevronRight />
           </button>

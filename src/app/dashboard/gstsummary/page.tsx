@@ -67,6 +67,7 @@ const Page = () => {
     useState<string>("paid");
   const [showPaymentStatusDropdown, setShowPaymentStatusDropdown] =
     useState(false);
+  const [isCustomRangeApplied, setIsCustomRangeApplied] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -314,7 +315,7 @@ const Page = () => {
         });
 
       case "custom":
-        if (startDate && endDate) {
+        if (isCustomRangeApplied && startDate && endDate) {
           const adjustedStart = new Date(startDate);
           const adjustedEnd = new Date(endDate);
           adjustedStart.setHours(0, 0, 0, 0);
@@ -324,7 +325,7 @@ const Page = () => {
             return purchaseDate >= adjustedStart && purchaseDate <= adjustedEnd;
           });
         }
-        return data;
+        return []; // Return empty array until dates are selected and applied
 
       default:
         return data;
@@ -689,10 +690,11 @@ const Page = () => {
                     setShowQuarterDropdown(false);
                     setShowFinancialYearDropdown(false);
                     setShowDatePicker(false);
+                    setIsCustomRangeApplied(false); // Reset applied state
                   }}
                   className={`hover:text-[#4B0082] transition-colors ${dateFilter === filter.value && !selectedQuarter
-                      ? "text-[#4B0082]"
-                      : ""
+                    ? "text-[#4B0082]"
+                    : ""
                     }`}
                 >
                   {filter.label}
@@ -707,6 +709,7 @@ const Page = () => {
                     setShowFinancialYearDropdown(!showFinancialYearDropdown);
                     setShowQuarterDropdown(false);
                     setShowDatePicker(false);
+                    setIsCustomRangeApplied(false);
                   }}
                   className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "financialYear" ? "text-[#4B0082]" : ""
                     }`}
@@ -721,9 +724,9 @@ const Page = () => {
                       <div
                         key={year}
                         className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${year === selectedFinancialYear &&
-                            dateFilter === "financialYear"
-                            ? "bg-purple-100"
-                            : ""
+                          dateFilter === "financialYear"
+                          ? "bg-purple-100"
+                          : ""
                           }`}
                         onClick={() => {
                           setSelectedFinancialYear(year);
@@ -746,10 +749,11 @@ const Page = () => {
                     setShowQuarterDropdown(!showQuarterDropdown);
                     setShowFinancialYearDropdown(false);
                     setShowDatePicker(false);
+                    setIsCustomRangeApplied(false);
                   }}
                   className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "financialYearQuarter" && selectedQuarter !== null
-                      ? "text-[#4B0082]"
-                      : ""
+                    ? "text-[#4B0082]"
+                    : ""
                     }`}
                 >
                   {selectedQuarter !== null
@@ -802,9 +806,9 @@ const Page = () => {
                         <div
                           key={index}
                           className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${selectedQuarter === index &&
-                              dateFilter === "financialYearQuarter"
-                              ? "bg-purple-200"
-                              : ""
+                            dateFilter === "financialYearQuarter"
+                            ? "bg-purple-200"
+                            : ""
                             }`}
                           onClick={() => {
                             setSelectedQuarter(index);
@@ -832,8 +836,8 @@ const Page = () => {
                     setShowFinancialYearDropdown(false);
                   }}
                   className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "custom" && (startDate || endDate)
-                      ? "text-[#4B0082]"
-                      : ""
+                    ? "text-[#4B0082]"
+                    : ""
                     }`}
                 >
                   Custom Range
@@ -892,6 +896,7 @@ const Page = () => {
                           onClick={() => {
                             setStartDate(null);
                             setEndDate(null);
+                            setIsCustomRangeApplied(false);
                             setShowDatePicker(false);
                             setDateFilter("thisMonth");
                           }}
@@ -902,14 +907,14 @@ const Page = () => {
                         <button
                           onClick={() => {
                             if (startDate && endDate) {
-                              setDateFilter("custom");
+                              setIsCustomRangeApplied(true);
                               setShowDatePicker(false);
                             }
                           }}
                           disabled={!startDate || !endDate}
                           className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-purple-800 text-white hover:bg-purple-700"
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-darkPurple text-white"
                             }`}
                         >
                           Apply
@@ -929,10 +934,10 @@ const Page = () => {
                   setShowPaymentStatusDropdown(!showPaymentStatusDropdown)
                 }
                 className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-1 ${paymentStatusFilter === "paid"
-                    ? "bg-green-600 text-white"
-                    : paymentStatusFilter === "pending"
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? "bg-green-600 text-white"
+                  : paymentStatusFilter === "pending"
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
               >
                 {paymentStatusFilter === "paid"

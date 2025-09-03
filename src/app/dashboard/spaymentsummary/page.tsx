@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import PurchaseEntry from "@/app/dashboard/entry/components/PurchaseEntry";
 import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
 import PaginationTable from "@/app/components/common/PaginationTable";
-import {getPurchase} from "@/app/services/PurchaseEntryService";
+import { getPurchase } from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
 import Button from "@/app/components/common/Button";
 import { BsThreeDotsVertical } from "react-icons/bs";
@@ -40,6 +40,7 @@ const Page = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isCustomRangeApplied, setIsCustomRangeApplied] = useState(false);
 
   // Dropdown menu state and functions
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -129,7 +130,7 @@ const Page = () => {
           return normalizeDate(new Date(item.paymentDueDate)) < today;
         });
       case "custom":
-        if (startDate && endDate) {
+        if (isCustomRangeApplied && startDate && endDate) {
           const adjustedEndDate = new Date(endDate);
           adjustedEndDate.setHours(23, 59, 59, 999);
 
@@ -140,17 +141,11 @@ const Page = () => {
             })
           );
         }
-        return data;
+        return [];
       default:
         return data;
     }
   };
-
-  useEffect(() => {
-    if (dateFilter === "custom" && startDate && endDate) {
-      setDateFilter("custom");
-    }
-  }, [startDate, endDate, dateFilter]);
 
   useEffect(() => {
     const fetchPurchaseEntry = async () => {
@@ -650,22 +645,24 @@ const Page = () => {
               { value: "thisWeek", label: "This Week" },
               { value: "thisMonth", label: "This Month" },
               { value: "pastDue", label: "Past Due Date" },
-              { value: "custom", label: "Purchase Date Range",icon: <CiCalendar size={18} /> },
+              { value: "custom", label: "Purchase Date Range", icon: <CiCalendar size={18} /> },
             ].map((filter) => (
               <div key={filter.value} className="relative">
                 <div
                   onClick={() => {
                     const newFilter = filter.value;
                     setDateFilter(newFilter);
-                    setShowDatePicker(newFilter === "custom");
+                    setIsCustomRangeApplied(false);
                     if (newFilter === "custom") {
                       setStartDate(null);
                       setEndDate(null);
+                      setShowDatePicker(true);
+                    } else {
+                      setShowDatePicker(false);
                     }
                   }}
-                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
-                    dateFilter === filter.value ? "text-[#4B0082]" : ""
-                  }`}
+                  className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === filter.value ? "text-[#4B0082]" : ""
+                    }`}
                 >
                   {filter.label}
                   {filter.icon}
@@ -722,6 +719,7 @@ const Page = () => {
                             onClick={() => {
                               setStartDate(null);
                               setEndDate(null);
+                              setIsCustomRangeApplied(false);
                               setShowDatePicker(false);
                             }}
                             className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
@@ -731,13 +729,14 @@ const Page = () => {
                           <button
                             onClick={() => {
                               if (startDate && endDate) {
+                                setIsCustomRangeApplied(true);
                                 setShowDatePicker(false);
                               }
                             }}
                             disabled={!startDate || !endDate}
                             className={`px-3 py-1 text-sm rounded ${!startDate || !endDate
                               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-purple-800 text-white hover:bg-purple-700"
+                              : "bg-darkPurple text-white"
                               }`}
                           >
                             Apply
