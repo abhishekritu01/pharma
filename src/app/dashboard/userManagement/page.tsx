@@ -50,7 +50,9 @@ const Page = () => {
 
   const [showUser, setShowUser] = useState(false);
   const [, setShowDrawer] = useState<boolean>(false);
-  const [currentUserId, setCurrentUserId] = useState<string | number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | number | null>(
+    null
+  );
   const [action, setAction] = useState<Action | undefined>(undefined);
   const [, setPharmacies] = useState<PharmacyData[]>([]);
   const [user, setUser] = useState([]);
@@ -135,10 +137,26 @@ const Page = () => {
     fetchPharmacies();
   }, []);
 
-  const fetchUser = async (pharmacyId: number) => {
+  // const fetchUser = async (pharmacyId?: number) => {
+  //   try {
+  //     const response = await getUserOfPharmacy(pharmacyId);
+
+  //     const users = response?.data || response?.users || [];
+  //     setUser(users);
+  //   } catch (error) {
+  //     toast.error("Failed to fetch members");
+  //     console.error("Failed to fetch users:", error);
+  //     setError("Failed to load user data");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchUser = async (pharmacyId?: number) => {
+    if (!pharmacyId) return; // prevent call if no pharmacyId
+
     try {
       const response = await getUserOfPharmacy(pharmacyId);
-
       const users = response?.data || response?.users || [];
       setUser(users);
     } catch (error) {
@@ -149,6 +167,17 @@ const Page = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const storedPharma = localStorage.getItem("currentPharma");
+    const pharmacyId = storedPharma
+      ? JSON.parse(storedPharma).pharmacyId
+      : null;
+
+    if (pharmacyId) {
+      fetchUser(pharmacyId);
+    }
+  }, []);
 
   const handleUserDrawer = (id?: number, action?: Action) => {
     if (id) {
@@ -175,6 +204,7 @@ const Page = () => {
             setShowDrawer={handleCloseDrawer}
             id={currentUserId}
             action={action}
+            onSuccess={(pharmacyId) => fetchUser(pharmacyId)}
           />
         </Drawer>
       )}
@@ -233,14 +263,23 @@ const Page = () => {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
-            <Loader type="spinner" size="md" text="User List is loading ..." fullScreen={false} />
+            <Loader
+              type="spinner"
+              size="md"
+              text="User List is loading ..."
+              fullScreen={false}
+            />
           </div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
             <strong>Error!</strong> {error}
           </div>
         ) : (
-          <PaginationTable data={user} columns={columns} noDataMessage="No records found" />
+          <PaginationTable
+            data={user}
+            columns={columns}
+            noDataMessage="No records found"
+          />
         )}
       </div>
     </>

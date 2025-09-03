@@ -22,6 +22,7 @@ interface UserProps {
   setShowDrawer: (value: boolean) => void;
   id?: string | number | null;
   action?: "edit" | "delete";
+  onSuccess?: (pharmacyId: number) => void;
 }
 
 interface Option {
@@ -29,7 +30,7 @@ interface Option {
   label: string;
 }
 
-const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action }) => {
+const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, }) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -191,6 +192,7 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action }) => {
       }
 
       setShowDrawer(false);
+       onSuccess?.(formData.pharmacyId!);
     } catch (error) {
       console.error("Error:", error);
       if (error instanceof ZodError) {
@@ -459,7 +461,7 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action }) => {
         <div>
           <Button
             onClick={addUser}
-            label={action === "edit" ? "Edit" : id ? "Save" : "Add User"}
+            label={action === "edit" ? "Save" : id ? "Save" : "Add User"}
             value=""
             className={`w-36 h-11 text-white ${
               action === "edit" ? "bg-darkPurple" : "bg-darkPurple"

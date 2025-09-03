@@ -505,16 +505,16 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     }
   };
 
-  const handleSuggestionClick = async (orderId: string, orderId1: string) => {
-    setFormData((prev) => ({ ...prev, orderId, orderId1 }));
-    setShowSuggestions(false);
+  // const handleSuggestionClick = async (orderId: string, orderId1: string) => {
+  //   setFormData((prev) => ({ ...prev, orderId, orderId1 }));
+  //   setShowSuggestions(false);
 
-    const fakeEvent = {
-      target: { value: orderId },
-    } as React.ChangeEvent<HTMLSelectElement>;
+  //   const fakeEvent = {
+  //     target: { value: orderId },
+  //   } as React.ChangeEvent<HTMLSelectElement>;
 
-    await handleOrderSelect(fakeEvent);
-  };
+  //   await handleOrderSelect(fakeEvent);
+  // };
 
   const addNewRow = () => {
     setPurchaseRows([
@@ -1000,25 +1000,127 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
             ].map(({ id, label, type }) => (
               <div key={id} className="relative w-full">
                 {id === "orderId" ? (
+                  //     <div className="relative">
+                  //       <input
+                  //         type="text"
+                  //         id="orderId"
+                  //         value={formData.orderId1 || ""}
+                  //         onChange={handleInputChange}
+                  //         onBlur={() =>
+                  //           setTimeout(() => setShowSuggestions(false), 200)
+                  //         }
+                  //         onFocus={() => {
+                  //           if (formData.orderId) {
+                  //             setFilteredSuggestions(
+                  //               orderSuggestions.filter((order) =>
+                  //                 order.orderId1
+                  //                   .toLowerCase()
+                  //                   .includes(formData.orderId!.toLowerCase())
+                  //               )
+                  //             );
+                  //             setShowSuggestions(true);
+                  //           }
+                  //         }}
+                  //         required
+                  //         placeholder=" "
+                  //         className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                  //         data-has-value={formData.orderId1 ? "true" : "false"}
+                  //       />
+                  //       <label
+                  //         htmlFor="orderId"
+                  //         className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all
+                  // peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs
+                  // peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
+                  // peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
+                  //       >
+                  //         {label}
+                  //       </label>
+
+                  //       {showSuggestions && filteredSuggestions.length > 0 && (
+                  //         <ul className="absolute top-full left-0 z-50 w-full bg-white border border-gray-300 rounded-md shadow max-h-40 overflow-y-auto">
+                  //           {filteredSuggestions.map((suggestion, index) => (
+                  //             <li
+                  //               key={index}
+                  //               className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  //               onClick={() =>
+                  //                 handleSuggestionClick(
+                  //                   suggestion.orderId,
+                  //                   suggestion.orderId1
+                  //                 )
+                  //               }
+                  //             >
+                  //               {suggestion.orderId1}
+                  //             </li>
+                  //           ))}
+                  //         </ul>
+                  //       )}
+                  //     </div>
+
                   <div className="relative">
                     <input
                       type="text"
                       id="orderId"
                       value={formData.orderId1 || ""}
-                      onChange={handleInputChange}
-                      onBlur={() =>
-                        setTimeout(() => setShowSuggestions(false), 200)
-                      }
-                      onFocus={() => {
-                        if (formData.orderId) {
-                          setFilteredSuggestions(
-                            orderSuggestions.filter((order) =>
-                              order.orderId1
-                                .toLowerCase()
-                                .includes(formData.orderId!.toLowerCase())
-                            )
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((prev) => ({ ...prev, orderId1: value }));
+
+                        // live filter
+                        const matches = orderSuggestions.filter((order) =>
+                          order.orderId1
+                            ?.toLowerCase()
+                            .includes(value.toLowerCase())
+                        );
+                        setFilteredSuggestions(matches);
+                        setShowSuggestions(true);
+                      }}
+                      onBlur={async () => {
+                        setTimeout(() => setShowSuggestions(false), 200);
+
+                        // when user leaves field, check if typed value matches any suggestion
+                        const matched = orderSuggestions.find(
+                          (o) =>
+                            o.orderId1.toLowerCase() ===
+                            formData.orderId1?.toLowerCase()
+                        );
+
+                        if (matched) {
+                          // sync both IDs and fetch
+                          setFormData((prev) => ({
+                            ...prev,
+                            orderId: matched.orderId,
+                            orderId1: matched.orderId1,
+                          }));
+
+                          // fake event to reuse existing fetch logic
+                          const fakeEvent = {
+                            target: { value: matched.orderId },
+                          } as React.ChangeEvent<HTMLSelectElement>;
+
+                          await handleOrderSelect(fakeEvent);
+                        }
+                      }}
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const matched = orderSuggestions.find(
+                            (o) =>
+                              o.orderId1.toLowerCase() ===
+                              formData.orderId1?.toLowerCase()
                           );
-                          setShowSuggestions(true);
+                          if (matched) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              orderId: matched.orderId,
+                              orderId1: matched.orderId1,
+                            }));
+
+                            const fakeEvent = {
+                              target: { value: matched.orderId },
+                            } as React.ChangeEvent<HTMLSelectElement>;
+
+                            await handleOrderSelect(fakeEvent);
+                          }
                         }
                       }}
                       required
@@ -1029,9 +1131,9 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                     <label
                       htmlFor="orderId"
                       className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all 
-              peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
-              peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
-              peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
+        peer-placeholder-shown:top-0 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs 
+        peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-purple-950 peer-focus:px-1
+        peer-[data-has-value=true]:top-0 peer-[data-has-value=true]:-translate-y-1/2 peer-[data-has-value=true]:text-xs"
                     >
                       {label}
                     </label>
@@ -1042,12 +1144,21 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
                           <li
                             key={index}
                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={() =>
-                              handleSuggestionClick(
-                                suggestion.orderId,
-                                suggestion.orderId1
-                              )
-                            }
+                            onClick={async () => {
+                              // update form data
+                              setFormData((prev) => ({
+                                ...prev,
+                                orderId: suggestion.orderId,
+                                orderId1: suggestion.orderId1,
+                              }));
+                              setShowSuggestions(false);
+
+                              // reuse fetch logic
+                              const fakeEvent = {
+                                target: { value: suggestion.orderId },
+                              } as React.ChangeEvent<HTMLSelectElement>;
+                              await handleOrderSelect(fakeEvent);
+                            }}
                           >
                             {suggestion.orderId1}
                           </li>

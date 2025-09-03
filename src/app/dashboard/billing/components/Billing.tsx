@@ -26,6 +26,8 @@ import {
 import { DoctorData } from "@/app/types/DoctorData";
 import { getPharmacy } from "@/app/services/PharmacyService";
 import { PharmacyData } from "@/app/types/PharmacyData";
+import { billingItemSchema, billingSchema } from "@/app/schema/BillingSchema";
+import { ZodError, ZodIssue } from "zod";
 
 interface BillingProps {
   setShowBilling: (value: boolean) => void;
@@ -497,56 +499,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     callback([addNewOption, ...filtered]);
   };
 
-  // const handleMobileSelect = (
-  //   selected: { label: string; value: string } | null
-  // ) => {
-  //   if (!selected) {
-  //     setSelectedMobile(null);
-  //     setPatientData({
-  //       phone: 0,
-  //       firstName: "",
-  //       gender: "",
-  //     });
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       patientId1: "",
-  //       patientType: "",
-  //       doctorId: "",
-  //     }));
-  //     return;
-  //   }
-
-  //   if (selected.value === "newPatient") {
-  //     handlePatientDrawer();
-  //     return;
-  //   }
-
-  //   setSelectedMobile(selected.value);
-
-  //   const found = mobileOptions.find((opt) => opt.value === selected.value);
-
-  //   if (found) {
-  //     const fullName = `${found.firstName} ${found.lastName}`;
-
-  //     setPatientData({
-  //       phone: Number(selected.value),
-  //       firstName: fullName,
-  //       gender: found.gender || "Not Available",
-  //     });
-
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       patientId: found.patientId,
-  //       patientId1: found.patientId1 || "",
-  //       patientName: fullName,
-  //       phone: Number(selected.value),
-  //       gender: found.gender || "",
-  //     }));
-  //   } else {
-  //     handlePatientDrawer();
-  //   }
-  // };
-
   const handleMobileSelect = (
     selected: { label: string; value: string } | null
   ) => {
@@ -641,80 +593,40 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
     }
   };
 
-  // const handleInputChange = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  // ) => {
-  //   const { name, value } = e.target;
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [name]: value,
-  //   }));
-  // };
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
 
-// const handleInputChange = (
-//   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-// ) => {
-//   const { name, value } = e.target;
+    setFormData((prev) => {
+      const isNumberField = ![
+        "paymentStatus",
+        "paymentType",
+        "patientType",
+        "patientId1",
+        "doctorId",
+      ].includes(name);
 
-//   setFormData((prev) => {
-//     const isNumberField = !["paymentStatus", "paymentType", "patientType"].includes(name);
-//     const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
+      const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
 
-//     const updatedData: typeof prev = {
-//       ...prev,
-//       [name]: parsedValue,
-//     };
+      const updatedData: typeof prev = {
+        ...prev,
+        [name]: parsedValue,
+      };
 
-//     if (
-//       name === "receivedAmount" &&
-//       prev.paymentType === "cash" &&
-//       typeof parsedValue === "number"
-//     ) {
-//       updatedData.balanceAmount = parseFloat(
-//         (parsedValue - prev.grandTotal).toFixed(2)
-//       );
-//     }
+      if (
+        name === "receivedAmount" &&
+        prev.paymentType === "cash" &&
+        typeof parsedValue === "number"
+      ) {
+        updatedData.balanceAmount = parseFloat(
+          (parsedValue - prev.grandTotal).toFixed(2)
+        );
+      }
 
-//     return updatedData;
-//   });
-// };
-
-const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value } = e.target;
-
-  setFormData((prev) => {
-    const isNumberField = ![
-      "paymentStatus",
-      "paymentType",
-      "patientType",
-      "patientId1", 
-      "doctorId", 
-    ].includes(name);
-
-    const parsedValue = isNumberField ? parseFloat(value) || 0 : value;
-
-    const updatedData: typeof prev = {
-      ...prev,
-      [name]: parsedValue,
-    };
-
-    if (
-      name === "receivedAmount" &&
-      prev.paymentType === "cash" &&
-      typeof parsedValue === "number"
-    ) {
-      updatedData.balanceAmount = parseFloat(
-        (parsedValue - prev.grandTotal).toFixed(2)
-      );
-    }
-
-    return updatedData;
-  });
-};
-
-
+      return updatedData;
+    });
+  };
 
   const handleDeleteRow = (index: number) => {
     if (billingItemRows.length === 1) {
@@ -817,6 +729,25 @@ const handleInputChange = (
   }, [formData.paymentStatus, formData.paymentType]);
 
   const addBilling = () => {
+    try {
+      billingSchema.parse(formData);
+
+      billingItemRows.forEach((item,) => {
+        billingItemSchema.parse(item);
+      });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        err.errors.forEach((e: ZodIssue) => {
+          toast.error(e.message, {
+            position: "top-right",
+            autoClose: 2000,
+            pauseOnHover: false,
+          });
+        });
+      }
+      return;
+    }
+
     handleShowModal({
       message:
         "Are you sure you want to confirm the Billing? Once confirmed, this Bill cannot be edited.",

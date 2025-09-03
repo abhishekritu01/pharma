@@ -61,39 +61,81 @@ const ItemDropdown: React.FC<ItemDropdownProps> = ({
     fetchLabelIfMissing();
   }, [selectedOption, onChange]);
 
+  // const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
+  //   const response = await getInventoryDetails();
+  //   const inventory = response.data || [];
+
+  //   const options = await Promise.all(
+  //     inventory
+  //       .filter((inv: BillingItemData) => inv.packageQuantity > 0)
+  //       .map(async (inv: BillingItemData) => {
+  //         try {
+  //           const item = await getItemById(inv.itemId);
+  //           return {
+  //             label: `${item.itemName}`,
+  //             value: `${inv.itemId}__${inv.batchNo}`,
+  //             batchNo: inv.batchNo,
+  //             itemId: inv.itemId,
+  //             packageQty: inv.packageQuantity,
+  //           };
+  //         } catch (err) {
+  //           console.error("Failed to fetch item for ID:", inv.itemId, err);
+  //           return null;
+  //         }
+  //       })
+  //   );
+
+  //   const filtered = options.filter(
+  //     (opt): opt is OptionType =>
+  //       opt !== null &&
+  //       (inputValue.trim() === "" ||
+  //         opt.label.toLowerCase().startsWith(inputValue.toLowerCase()))
+  //   );
+
+  //   return filtered;
+  // };
+
   const loadOptions = async (inputValue: string): Promise<OptionType[]> => {
-    const response = await getInventoryDetails();
-    const inventory = response.data || [];
+  const response = await getInventoryDetails();
+  const inventory = response.data || [];
 
-    const options = await Promise.all(
-      inventory
-        .filter((inv: BillingItemData) => inv.packageQuantity > 0)
-        .map(async (inv: BillingItemData) => {
-          try {
-            const item = await getItemById(inv.itemId);
-            return {
-              label: `${item.itemName}`,
-              value: `${inv.itemId}__${inv.batchNo}`,
-              batchNo: inv.batchNo,
-              itemId: inv.itemId,
-              packageQty: inv.packageQuantity,
-            };
-          } catch (err) {
-            console.error("Failed to fetch item for ID:", inv.itemId, err);
-            return null;
-          }
-        })
-    );
+  // today's date (midnight, so time won't cause issues)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const filtered = options.filter(
-      (opt): opt is OptionType =>
-        opt !== null &&
-        (inputValue.trim() === "" ||
-          opt.label.toLowerCase().startsWith(inputValue.toLowerCase()))
-    );
+  const options = await Promise.all(
+    inventory
+      .filter(
+        (inv: BillingItemData) =>
+          inv.packageQuantity > 0 &&
+          inv.expiryDate && new Date(inv.expiryDate) > today // ✅ check expiry
+      )
+      .map(async (inv: BillingItemData) => {
+        try {
+          const item = await getItemById(inv.itemId);
+          return {
+            label: `${item.itemName}`,
+            value: `${inv.itemId}__${inv.batchNo}`,
+            batchNo: inv.batchNo,
+            itemId: inv.itemId,
+            packageQty: inv.packageQuantity,
+          };
+        } catch (err) {
+          console.error("Failed to fetch item for ID:", inv.itemId, err);
+          return null;
+        }
+      })
+  );
 
-    return filtered;
-  };
+  const filtered = options.filter(
+    (opt): opt is OptionType =>
+      opt !== null &&
+      (inputValue.trim() === "" ||
+        opt.label.toLowerCase().startsWith(inputValue.toLowerCase()))
+  );
+
+  return filtered;
+};
 
   return (
     <AsyncSelect

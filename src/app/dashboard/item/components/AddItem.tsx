@@ -104,11 +104,11 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess 
         const chosen = variant.find((v) => v.variantId === value);
         if (chosen) {
           next.variantId = chosen.variantId;
-          next.variantName = chosen.variantName; // <- add this
+          next.variantName = chosen.variantName; 
           const unit = chosen.unitDtos[0];
           if (unit) {
             next.unitId = unit.unitId;
-            next.unitName = unit.unitName; // <- and this
+            next.unitName = unit.unitName; 
           } else {
             next.unitId = "";
             next.unitName = "";
