@@ -142,7 +142,7 @@ const OrderSummaryClient = () => {
         useCORS: true,
         allowTaint: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: "#ffffff",
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -151,16 +151,8 @@ const OrderSummaryClient = () => {
       const ratio = imgHeight / imgWidth;
       const pdfImgHeight = pageWidth * ratio;
 
-      pdf.addImage(
-        imgData,
-        "PNG",
-        0,
-        0,
-        pageWidth,
-        pdfImgHeight
-      );
+      pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pdfImgHeight);
 
-      
       element.classList.remove("print-mode");
 
       const pdfBlob = pdf.output("blob");
@@ -233,8 +225,7 @@ const OrderSummaryClient = () => {
 
           <div className="flex space-x-7 w-full">
             <div className="border border-gray w-full h-64 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-              <div className="text-darkPurple text-3xl font-bold">
-              </div>
+              <div className="text-darkPurple text-3xl font-bold"></div>
               <Image
                 src="/PharmacyLogo.jpg"
                 alt="Pharmacy Logo"
@@ -251,12 +242,22 @@ const OrderSummaryClient = () => {
                     label: "Bill Date",
                     value: formatDate(purchaseEntryData.purchaseDate ?? "N/A"),
                   },
-                  {
-                    label: "Payment Due Date",
-                    value: formatDate(
-                      purchaseEntryData.paymentDueDate ?? "N/A"
-                    ),
-                  },
+                  // {
+                  //   label: "Payment Due Date",
+                  //   value: formatDate(
+                  //     purchaseEntryData.paymentDueDate ?? "N/A"
+                  //   ),
+                  // },
+                  ...(purchaseEntryData.paymentStatus === "pending"
+                    ? [
+                        {
+                          label: "Payment Due Date",
+                          value: formatDate(
+                            purchaseEntryData.paymentDueDate ?? "N/A"
+                          ),
+                        },
+                      ]
+                    : []),
                   { label: "GRN No", value: purchaseEntryData.grnNo },
                   {
                     label: "Order Status",
@@ -268,10 +269,7 @@ const OrderSummaryClient = () => {
                   },
                   { label: "DL No", value: "No Data" },
                 ].map(({ label, value }, index) => (
-                  <div
-                    key={index}
-                    className="flex text-sm space-y-3 space-x-2"
-                  >
+                  <div key={index} className="flex text-sm space-y-3 space-x-2">
                     <div className="font-semibold">{label}</div>
                     <div>: {String(value ?? "N/A")}</div>
                   </div>
@@ -303,10 +301,7 @@ const OrderSummaryClient = () => {
                     value: supplierData?.supplierAddress ?? "N/A",
                   },
                 ].map(({ label, value }, index) => (
-                  <div
-                    key={index}
-                    className="flex text-sm space-y-3 space-x-2"
-                  >
+                  <div key={index} className="flex text-sm space-y-3 space-x-2">
                     <div className="font-semibold">{label}</div>
                     <div>: {String(value)}</div>
                   </div>
@@ -344,10 +339,11 @@ const OrderSummaryClient = () => {
               ].map(({ label, value, isTotal }, index) => (
                 <div
                   key={index}
-                  className={`flex justify-between ${isTotal
+                  className={`flex justify-between ${
+                    isTotal
                       ? "font-semibold text-base bg-primaryPurple h-10 p-1 items-center rounded-lg"
                       : ""
-                    }`}
+                  }`}
                 >
                   <div>{label}</div>
                   <div>{String(value ?? "N/A")}</div>
@@ -361,11 +357,7 @@ const OrderSummaryClient = () => {
 
       {/* Buttons container */}
       <div className="flex justify-end gap-4 mt-6 print-hidden">
-        <Button
-          label="Back"
-          className="w-20"
-          onClick={() => router.back()}
-        />
+        <Button label="Back" className="w-20" onClick={() => router.back()} />
         <Button
           label="Print"
           onClick={handlePrint}
@@ -375,7 +367,8 @@ const OrderSummaryClient = () => {
 
       <style jsx global>{`
         @media print {
-          body, html {
+          body,
+          html {
             margin: 0;
             padding: 0;
             color: black !important;
@@ -402,36 +395,7 @@ const OrderSummaryClient = () => {
 
 export default OrderSummaryClient;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // this code is original and without print functionalty.........................................................................
-
-
 
 // "use client";
 // import React, { useEffect, useState } from "react";

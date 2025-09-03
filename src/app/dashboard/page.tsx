@@ -14,22 +14,22 @@ import { getPurchaseOrder } from "../services/PurchaseOrderService";
 const Page = () => {
   const { user, initializeUser } = useUserStore();
   const [greeting, setGreeting] = useState("");
-  // const [weeklyBillCount, setWeeklyBillCount] = useState<number>(0);
-  // const [weeklyBillAmount, setWeeklyBillAmount] = useState<number>(0);
-  // const [pendingInvoices, setPendingInvoices] = useState<number>(0);
-  // const [overdueInvoices, setOverdueInvoices] = useState<number>(0);
-  // const [deliveryStats, setDeliveryStats] = useState({
-  //   dueThisWeek: 0,
-  //   overdueUndelivered: 0,
-  // });
-  const [,setWeeklyBillCount] = useState<number>(0);
-  const [,setWeeklyBillAmount] = useState<number>(0);
-  const [, setPendingInvoices] = useState<number>(0);
-  const [, setOverdueInvoices] = useState<number>(0);
-  const [, setDeliveryStats] = useState({
+  const [weeklyBillCount, setWeeklyBillCount] = useState<number>(0);
+  const [weeklyBillAmount, setWeeklyBillAmount] = useState<number>(0);
+  const [pendingInvoices, setPendingInvoices] = useState<number>(0);
+  const [overdueInvoices, setOverdueInvoices] = useState<number>(0);
+  const [deliveryStats, setDeliveryStats] = useState({
     dueThisWeek: 0,
     overdueUndelivered: 0,
   });
+  // const [,setWeeklyBillCount] = useState<number>(0);
+  // const [,setWeeklyBillAmount] = useState<number>(0);
+  // const [, setPendingInvoices] = useState<number>(0);
+  // const [, setOverdueInvoices] = useState<number>(0);
+  // const [, setDeliveryStats] = useState({
+  //   dueThisWeek: 0,
+  //   overdueUndelivered: 0,
+  // });
   const [selectedRange, setSelectedRange] = useState<
     "today" | "week" | "month"
   >("today");
@@ -312,7 +312,7 @@ const Page = () => {
           </div>
         </div>
 
-        {/* <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full space-y-6">
+        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full space-y-6">
           <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3">
             <span className="text-[#FCA258]">
               <AiFillAlert />
@@ -341,9 +341,9 @@ const Page = () => {
             </span>
           </div>
 
-        </div> */}
+        </div>
 
-        <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full">
+        {/* <div className="max-w-xl mx-auto bg-white border border-gray-100 shadow-lg rounded-xl p-5 h-72 w-full">
           <div className="font-normal text-lg whitespace-nowrap flex items-center space-x-3 mb-4">
             <span className="text-[#FCA258]">
               <AiFillAlert />
@@ -351,7 +351,7 @@ const Page = () => {
             <span>Important Alerts</span>
           </div>
 
-          {/* Scrollable content */}
+          
           <div className="text-sm font-medium text-[#433E3F] space-y-6 overflow-y-auto h-[calc(100%-2.5rem)] pr-2">
             <div className="space-y-2">
               <div>Inventory Alerts</div>
@@ -399,7 +399,7 @@ const Page = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </main>
   );

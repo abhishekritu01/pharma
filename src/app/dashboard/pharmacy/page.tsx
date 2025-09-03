@@ -7,24 +7,7 @@ import { PharmacyData } from "@/app/types/PharmacyData";
 import { getUserById } from "@/app/services/UserService";
 
 const Page = () => {
-
-    const [pharmacyData, setPharmacyData] = useState<PharmacyData[]>([]);
-  
-
-    // const fetchPharmacyDetails = async () => {
-    //   try {
-    //     const data = await getUsersPharma();
-    //     console.log("Pharmacy Data", data);
-        
-    //     setPharmacyData(data);
-    //   } catch (error) {
-    //     console.error("Failed to fetch pharmacy:", error);
-    //   }
-    // };
-  
-    // useEffect(() => {
-    //   fetchPharmacyDetails();
-    // }, []);
+  const [pharmacyData, setPharmacyData] = useState<PharmacyData[]>([]);
 
   const [ownerName, setOwnerName] = useState<string>("N/A");
 
@@ -36,9 +19,8 @@ const Page = () => {
       setPharmacyData(data);
 
       if (data.length > 0) {
-        const pharmacy = data[0]; // first pharmacy
+        const pharmacy = data[0];
         if (pharmacy.createdBy && pharmacy.pharmacyId) {
-          // fetch user details
           const userResponse = await getUserById(
             pharmacy.createdBy,
             pharmacy.pharmacyId
@@ -59,24 +41,47 @@ const Page = () => {
     fetchPharmacyDetails();
   }, []);
 
-  
-     const pharmacy = pharmacyData.length > 0 ? pharmacyData[0] : null;
+  const pharmacy = pharmacyData.length > 0 ? pharmacyData[0] : null;
 
-     const infoItems = [
-    { icon: "/icons/person.svg", label: "Pharmacy Owner", value: ownerName || "N/A" },
-    { icon: "/icons/mail.svg", label: "Email", value: pharmacy?.pharmaEmail || "N/A" },
-    { icon: "/icons/phone.svg", label: "Phone Number", value: pharmacy?.pharmaPhone || "N/A" },
-    { icon: "/icons/address.svg", label: "Address", value: pharmacy
-      ? `${pharmacy.address || ""}, ${pharmacy.city || ""}, ${pharmacy.pharmaZip || ""}, ${pharmacy.state || ""},  ${pharmacy.pharmaCountry || ""}`
-      : "N/A", },
+  const infoItems = [
+    {
+      icon: "/icons/person.svg",
+      label: "Pharmacy Owner",
+      value: ownerName || "N/A",
+    },
+    {
+      icon: "/icons/mail.svg",
+      label: "Email",
+      value: pharmacy?.pharmaEmail || "N/A",
+    },
+    {
+      icon: "/icons/phone.svg",
+      label: "Phone Number",
+      value: pharmacy?.pharmaPhone || "N/A",
+    },
+    {
+      icon: "/icons/address.svg",
+      label: "Address",
+      value: pharmacy
+        ? `${pharmacy.address || ""}, ${pharmacy.city || ""}, ${
+            pharmacy.pharmaZip || ""
+          }, ${pharmacy.state || ""},  ${pharmacy.pharmaCountry || ""}`
+        : "N/A",
+    },
   ];
 
   const compliance = [
-    { icon: "/icons/dl.svg", label: "Drug Licence Number", value: pharmacy?.licenseNo || "N/A" },
-    { icon: "/icons/gstin.svg", label: "GSTIN", value: pharmacy?.gstNo || "N/A" },
+    {
+      icon: "/icons/dl.svg",
+      label: "Drug Licence Number",
+      value: pharmacy?.licenseNo || "N/A",
+    },
+    {
+      icon: "/icons/gstin.svg",
+      label: "GSTIN",
+      value: pharmacy?.gstNo || "N/A",
+    },
   ];
-
-
 
   return (
     <>
@@ -98,11 +103,13 @@ const Page = () => {
               />
             </div>
           </div>
-          <div className="font-bold text-lg mt-4 text-center">{pharmacy?.name}</div>
+          <div className="font-bold text-lg mt-4 text-center">
+            {pharmacy?.name}
+          </div>
         </div>
         <div className="border border-[#CCCBCB] w-full h-full rounded-2xl p-6">
           <div className="font-bold text-lg">Contact Details</div>
-        
+
           <div className="space-y-5 mt-5">
             {infoItems.map(({ icon, label, value }, idx) => (
               <div
@@ -122,7 +129,7 @@ const Page = () => {
 
           <div className="font-bold text-lg">Compliance</div>
 
-            <div className="space-y-5 mt-5">
+          <div className="space-y-5 mt-5">
             {compliance.map(({ icon, label, value }, idx) => (
               <div
                 key={idx}

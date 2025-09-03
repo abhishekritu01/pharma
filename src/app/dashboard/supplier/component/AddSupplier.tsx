@@ -84,13 +84,84 @@ const AddSupplier: React.FC<SupplierProps> = ({
     }
   };
 
+  // const addSupplier = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  //   e.preventDefault();
+
+  //   setValidationErrors({});
+
+  //   try {
+  //     supplierSchema.parse(formData);
+  //     const exists = await checkSupplierDuplicate({
+  //       supplierName: formData.supplierName,
+  //       supplierMobile: String(formData.supplierMobile),
+  //       supplierGstinNo: formData.supplierGstinNo,
+  //     });
+
+  //     if (
+  //       exists.supplierName ||
+  //       exists.supplierMobile ||
+  //       exists.supplierGstinNo
+  //     ) {
+  //       const newErrors: Record<string, string> = {};
+  //       if (exists.supplierName)
+  //         newErrors.supplierName = "Supplier name already exists";
+  //       if (exists.supplierMobile)
+  //         newErrors.supplierMobile = "Mobile number already exists";
+  //       if (exists.supplierGstinNo)
+  //         newErrors.supplierGstinNo = "GSTIN number already exists";
+  //       setValidationErrors(newErrors);
+  //       return;
+  //     }
+
+  //     if (formData.supplierId) {
+  //       await updateSupplier(formData.supplierId, formData);
+  //       toast.success("Supplier updated successfully", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //     } else {
+  //       await createSupplier(formData);
+  //       toast.success("Supplier created successfully", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //     }
+
+  //     setShowDrawer(false);
+  //     onSuccess?.();
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     if (error instanceof ZodError) {
+  //       const formattedErrors: Record<string, string> = {};
+  //       error.errors.forEach((err) => {
+  //         const field = err.path[0] as string;
+  //         formattedErrors[field] = err.message;
+  //       });
+  //       setValidationErrors(formattedErrors);
+  //     } else if (error instanceof Error) {
+  //       toast.error(error.message);
+  //     } else {
+  //       toast.error("Unknown error occurred");
+  //     }
+  //   }
+  // };
+
   const addSupplier = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  e.preventDefault();
+  setValidationErrors({});
 
-    setValidationErrors({});
+  try {
+    supplierSchema.parse(formData);
 
-    try {
-      supplierSchema.parse(formData);
+    if (formData.supplierId) {
+      // 🔹 Update supplier (skip duplicate check)
+      await updateSupplier(formData.supplierId, formData);
+      toast.success("Supplier updated successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } else {
+      // 🔹 Create supplier (run duplicate check here)
       const exists = await checkSupplierDuplicate({
         supplierName: formData.supplierName,
         supplierMobile: String(formData.supplierMobile),
@@ -113,38 +184,32 @@ const AddSupplier: React.FC<SupplierProps> = ({
         return;
       }
 
-      if (formData.supplierId) {
-        await updateSupplier(formData.supplierId, formData);
-        toast.success("Supplier updated successfully", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        await createSupplier(formData);
-        toast.success("Supplier created successfully", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-
-      setShowDrawer(false);
-      onSuccess?.();
-    } catch (error) {
-      console.error("Error:", error);
-      if (error instanceof ZodError) {
-        const formattedErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          const field = err.path[0] as string;
-          formattedErrors[field] = err.message;
-        });
-        setValidationErrors(formattedErrors);
-      } else if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Unknown error occurred");
-      }
+      await createSupplier(formData);
+      toast.success("Supplier created successfully", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-  };
+
+    setShowDrawer(false);
+    onSuccess?.();
+  } catch (error) {
+    console.error("Error:", error);
+    if (error instanceof ZodError) {
+      const formattedErrors: Record<string, string> = {};
+      error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        formattedErrors[field] = err.message;
+      });
+      setValidationErrors(formattedErrors);
+    } else if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error("Unknown error occurred");
+    }
+  }
+};
+
 
   useEffect(() => {
     const fetchSupplier = async () => {

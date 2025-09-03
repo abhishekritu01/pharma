@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import SideBar from "../components/LayoutComponents/SideBar";
 import useUserStore from "../context/userStore";
 import { usePharma } from "../context/PharmaContex";
@@ -25,11 +25,12 @@ const Layout = ({ children }: LayoutProps) => {
   } = usePharma();
   const router = useRouter();
 
+  const didToast = useRef(false);
+
   useEffect(() => {
     initializeUser();
     const fetchPharma = async () => {
       try {
-        // Check local storage first
         const storedPharma = localStorage.getItem("currentPharma");
         const storedPharmas = localStorage.getItem("userPharmas");
         const getlogedUser = localStorage.getItem("logedUser");
@@ -39,26 +40,34 @@ const Layout = ({ children }: LayoutProps) => {
           setCurrentPharma(JSON.parse(storedPharma));
           setLoginedUser(JSON.parse(getlogedUser || "{}"));
         }
-        // Always fetch fresh data but don't wait for it
+
         const data = await getUsersPharma();
+
         setPharma(data);
         localStorage.setItem("userPharmas", JSON.stringify(data));
 
-        if (data.length > 0) {
-          // Only set new lab if there wasn't one stored
+        if (data && data.length > 0) {
+          setPharma(data);
+          localStorage.setItem("userPharmas", JSON.stringify(data));
+
           if (!storedPharma) {
             setCurrentPharma(data[0]);
             localStorage.setItem("currentPharma", JSON.stringify(data[0]));
           }
+        } else {
+          throw new Error("Pharmacy Not Found");
         }
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Pharmacy Not Found",
-          {
-            position: "top-right",
-            autoClose: 2000,
-          }
-        );
+         if (!didToast.current) {
+          toast.error(
+            error instanceof Error ? error.message : "Pharmacy Not Found",
+            {
+              position: "top-right",
+              autoClose: 2000,
+            }
+          );
+          didToast.current = true;
+        }
       }
     };
     fetchPharma();
