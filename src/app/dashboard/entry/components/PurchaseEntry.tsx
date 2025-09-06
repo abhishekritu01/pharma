@@ -957,9 +957,35 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         />
       )}
 
-      {showItem && (
+      {/* {showItem && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
           <AddItem setShowDrawer={handleCloseDrawer} itemId={currentItemId} />
+        </Drawer>
+      )} */}
+
+      {showItem && (
+        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
+          <AddItem
+            setShowDrawer={handleCloseDrawer}
+            itemId={currentItemId}
+            onSuccess={(updatedItem) => {
+              if (!updatedItem?.itemId) return;
+
+              const rowIndex = purchaseRows.findIndex(
+                (row) => row.itemId === updatedItem.itemId
+              );
+
+              if (rowIndex !== -1) {
+                handleRowUpdate(rowIndex, {
+                  itemName: updatedItem.itemName,
+                  purchasePrice: updatedItem.purchasePrice,
+                  mrpSalePrice: updatedItem.mrpSalePrice,
+                  gstPercentage: updatedItem.gstPercentage,
+                  purchasePricePerUnit: updatedItem.purchasePricePerUnit,
+                });
+              }
+            }}
+          />
         </Drawer>
       )}
 

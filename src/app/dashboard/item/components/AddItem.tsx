@@ -19,10 +19,15 @@ interface ItemProps {
   setShowDrawer: (value: boolean) => void;
   itemId?: string | null;
   action?: "edit" | "delete";
-  onSuccess?: () => void;
+  onSuccess?: (savedItem: ItemData) => void;
 }
 
-const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess }) => {
+const AddItem: React.FC<ItemProps> = ({
+  setShowDrawer,
+  itemId,
+  action,
+  onSuccess,
+}) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
@@ -104,11 +109,11 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess 
         const chosen = variant.find((v) => v.variantId === value);
         if (chosen) {
           next.variantId = chosen.variantId;
-          next.variantName = chosen.variantName; 
+          next.variantName = chosen.variantName;
           const unit = chosen.unitDtos[0];
           if (unit) {
             next.unitId = unit.unitId;
-            next.unitName = unit.unitName; 
+            next.unitName = unit.unitName;
           } else {
             next.unitId = "";
             next.unitName = "";
@@ -152,6 +157,70 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess 
     }
   };
 
+  // const addItem = async (e: { preventDefault: () => void }) => {
+  //   e.preventDefault();
+  //   setValidationErrors({});
+
+  //   try {
+  //     itemSchema.parse(formData);
+
+  //     if (formData.mrpSalePrice <= formData.purchasePrice) {
+  //       toast.error("MRP must be greater than Purchase Price", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //       return;
+  //     }
+
+  //     if (!itemId) {
+  //       const duplicateCheck = await checkDuplicateItem({
+  //         itemName: formData.itemName,
+  //         manufacturer: formData.manufacturer,
+  //       });
+
+  //       if (duplicateCheck.duplicate) {
+  //         setValidationErrors({
+  //           itemName:
+  //             "Item with the same name and manufacturer already exists.",
+  //         });
+  //         return;
+  //       }
+  //     }
+
+  //     if (itemId) {
+  //       await updateItem(itemId, formData);
+  //       toast.success("Item updated successfully", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //     } else {
+  //       await createItem(formData);
+  //       toast.success("Item created successfully", {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //       });
+  //     }
+
+  //     setShowDrawer(false);
+  //     onSuccess?.();
+  //   } catch (error) {
+  //     console.error("Error:", error);
+
+  //     if (error instanceof ZodError) {
+  //       const formattedErrors: Record<string, string> = {};
+  //       error.errors.forEach((err) => {
+  //         const field = err.path[0] as string;
+  //         formattedErrors[field] = err.message;
+  //       });
+  //       setValidationErrors(formattedErrors);
+  //     } else if (error instanceof Error) {
+  //       console.error("Unexpected Error:", error.message);
+  //     } else {
+  //       console.error("Unknown error occurred", error);
+  //     }
+  //   }
+  // };
+
   const addItem = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setValidationErrors({});
@@ -182,22 +251,18 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess 
         }
       }
 
+      let savedItem;
       if (itemId) {
         await updateItem(itemId, formData);
-        toast.success("Item updated successfully", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        savedItem = await getItemById(itemId); // ✅ fresh data from backend
+        toast.success("Item updated successfully", { autoClose: 3000 });
       } else {
-        await createItem(formData);
-        toast.success("Item created successfully", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        const newItem = await createItem(formData);
+        savedItem = await getItemById(newItem.itemId); // ✅ fetch new item
+        toast.success("Item created successfully", { autoClose: 3000 });
       }
-
       setShowDrawer(false);
-      onSuccess?.();
+      onSuccess?.(savedItem);
     } catch (error) {
       console.error("Error:", error);
 
@@ -217,43 +282,42 @@ const AddItem: React.FC<ItemProps> = ({ setShowDrawer, itemId, action,onSuccess 
   };
 
   useEffect(() => {
-  if (!itemId) return;
+    if (!itemId) return;
 
-  async function fetchItemDetails() {
-    try {
-      const data = await getItemById(itemId!);
+    async function fetchItemDetails() {
+      try {
+        const data = await getItemById(itemId!);
 
-      const matchingVariant = variant.find(
-        (v) => v.variantName === data.variantName 
-      );
+        const matchingVariant = variant.find(
+          (v) => v.variantName === data.variantName
+        );
 
-      const matchingUnit = matchingVariant?.unitDtos.find(
-        (u) => u.unitName === data.unitName 
-      );
+        const matchingUnit = matchingVariant?.unitDtos.find(
+          (u) => u.unitName === data.unitName
+        );
 
-      setFormData({
-        ...data,
-        variantId: matchingVariant?.variantId || "", 
-        unitId: matchingUnit?.unitId || "",        
-        purchasePricePerUnit: data.purchaseUnit
-          ? data.purchasePrice / data.purchaseUnit
-          : 0,
-        mrpSalePricePerUnit: data.purchaseUnit
-          ? data.mrpSalePrice / data.purchaseUnit
-          : 0,
-      });
-    } catch (error) {
-      console.error("Failed to fetch item details:", error);
-      toast.error("Failed to fetch item data.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+        setFormData({
+          ...data,
+          variantId: matchingVariant?.variantId || "",
+          unitId: matchingUnit?.unitId || "",
+          purchasePricePerUnit: data.purchaseUnit
+            ? data.purchasePrice / data.purchaseUnit
+            : 0,
+          mrpSalePricePerUnit: data.purchaseUnit
+            ? data.mrpSalePrice / data.purchaseUnit
+            : 0,
+        });
+      } catch (error) {
+        console.error("Failed to fetch item details:", error);
+        toast.error("Failed to fetch item data.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
     }
-  }
 
-  fetchItemDetails();
-}, [itemId, variant]);
-
+    fetchItemDetails();
+  }, [itemId, variant]);
 
   const handleDeleteItem = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
