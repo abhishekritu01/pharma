@@ -34,7 +34,7 @@ const SideBar = ({ isOpen, setIsOpen }: SideBarProps) => {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0   m-1 py-8 px-4 rounded-lg bg-primaryPurple text-gray shadow-lg transform transition-transform duration-300 ease-in-out ${
+      className={`sidebar fixed inset-y-0 left-0   m-1 py-8 px-4 rounded-lg bg-primaryPurple text-gray shadow-lg transform transition-transform duration-300 ease-in-out ${
         isOpen ? "w-60" : "w-20"
       }`}
     >

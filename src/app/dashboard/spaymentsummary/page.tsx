@@ -126,7 +126,7 @@ const Page = () => {
         );
       case "pastDue":
         return data.filter((item) => {
-          if (!item.paymentDueDate) return false;
+          if (!item.paymentDueDate || item.paymentStatus === "Paid") return false;
           return normalizeDate(new Date(item.paymentDueDate)) < today;
         });
       case "custom":

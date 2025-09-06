@@ -177,3 +177,48 @@ body {
   }
   
 }
+
+
+/* Print styles .........................*/
+@media print {
+  /* Hide sidebar */
+  .sidebar {
+    display: none !important;
+  }
+
+   * {
+    overflow: visible !important;
+  }
+
+  /* Remove scrollbars */
+  html, body {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /*Main content takes full width in print */
+  main, .print-full {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .mt-20 {
+    margin-top: 1rem !important;
+  }
+  * {
+    height: auto !important;
+    max-height: none !important;
+  }
+  .print-section {
+    page-break-after: avoid;
+  }
+  footer, .footer {
+    page-break-after: avoid;
+  }
+  
+}
+
