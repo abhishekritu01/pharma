@@ -620,7 +620,9 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         typeof parsedValue === "number"
       ) {
         updatedData.balanceAmount = parseFloat(
-          (parsedValue - prev.grandTotal).toFixed(2)
+          // (parsedValue - prev.grandTotal).toFixed(2)
+          (prev.grandTotal - parsedValue).toFixed(2)
+
         );
       }
 
