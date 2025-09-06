@@ -224,30 +224,6 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                   ))}
               </div>
 
-              {/* <div className="flex-1 p-5">
-                {[
-                  { label: "Branch", value: "" },
-                  {
-                    label: "Address",
-                    value: "",
-                  },
-                  {
-                    label: "Tel No.",
-                    value: "",
-                  },
-                  { label: "DL No.", value: "" },
-                  { label: "GSTIN", value: "" },
-                ].map(({ label, value }, index) => (
-                  <div
-                    key={index}
-                    className="flex  text-base space-y-5 space-x-2"
-                  >
-                    <div className="font-medium">{label}</div>
-                    <div>: {String(value ?? "N/A")}</div>
-                  </div>
-                ))}
-              </div> */}
-
               <div className="flex-1 p-5">
                 {pharmacyData.length > 0 ? (
                   [

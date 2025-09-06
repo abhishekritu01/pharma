@@ -15,6 +15,8 @@ import { getItemById } from "@/app/services/ItemService";
 import { format } from "date-fns";
 import Button from "@/app/components/common/Button";
 import Loader from "@/app/components/common/Loader";
+import { PharmacyData } from "@/app/types/PharmacyData";
+import { getUsersPharma } from "@/app/services/PharmacyService";
 
 const OrderSummaryClient = () => {
   const searchParams = useSearchParams();
@@ -26,6 +28,7 @@ const OrderSummaryClient = () => {
   const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pharmacyData, setPharmacyData] = useState<PharmacyData[] | null>(null);
 
   const handlePrint = () => {
     window.print();
@@ -86,6 +89,9 @@ const OrderSummaryClient = () => {
         }
 
         setPurchaseEntryData(purchaseData);
+
+      const pharma = await getUsersPharma();
+      setPharmacyData(pharma);
       } catch {
         setError("Failed to fetch purchase data");
       } finally {
@@ -99,12 +105,7 @@ const OrderSummaryClient = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader
-          type="spinner"
-          size="md"
-          text="Loading ..."
-          fullScreen={false}
-        />
+        <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
       </div>
     );
   }
@@ -200,7 +201,7 @@ const OrderSummaryClient = () => {
                   label: "Payment Status",
                   value: purchaseEntryData.paymentStatus,
                 },
-                { label: "DL No", value: "No Data" },
+                { label: "DL No", value: pharmacyData?.[0]?.licenseNo || "N/A" },
               ].map(({ label, value }, index) => (
                 <div key={index} className="flex text-sm space-x-2">
                   <div className="font-semibold">{label}</div>
@@ -248,10 +249,7 @@ const OrderSummaryClient = () => {
               { label: "SUB TOTAL", value: purchaseEntryData.totalAmount },
               { label: "TOTAL CGST", value: totalCgstAmount },
               { label: "TOTAL SGST", value: totalSgstAmount },
-              {
-                label: "DISCOUNT",
-                value: purchaseEntryData.totalDiscountAmount,
-              },
+              { label: "DISCOUNT", value: purchaseEntryData.totalDiscount },
               {
                 label: "GRAND TOTAL",
                 value: purchaseEntryData.grandTotal,
@@ -260,11 +258,10 @@ const OrderSummaryClient = () => {
             ].map(({ label, value, isTotal }, index) => (
               <div
                 key={index}
-                className={`flex justify-between ${
-                  isTotal
-                    ? "font-semibold text-base bg-primaryPurple h-10 p-1 items-center rounded-lg"
-                    : ""
-                }`}
+                className={`flex justify-between ${isTotal
+                  ? "font-semibold text-base bg-primaryPurple h-10 p-1 items-center rounded-lg"
+                  : ""
+                  }`}
               >
                 <div>{label}</div>
                 <div>{String(value ?? "N/A")}</div>
@@ -293,73 +290,29 @@ const OrderSummaryClient = () => {
       {/* ==== PRINT VIEW ==== */}
       <div className="hidden print:block bg-gray-100 print-section p-4 sm:p-8">
         <header className="mb-4 no-print">
-          <h1 className="text-2xl font-semibold text-gray-800 tracking-wide">
-            Order Summary
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-800 tracking-wide">Order Summary</h1>
         </header>
 
         <main className="bg-white border border-gray-400 printable-content">
           <section className="flex flex-row border-b border-gray-400">
             {/* Left Column: Bill Details */}
             <div className="flex-1 p-4 text-sm text-gray-700 space-y-2 tracking-wide border-r border-gray-400">
-              <p>
-                <span className="font-semibold text-gray-800">Bill No :</span>{" "}
-                {purchaseEntryData?.purchaseBillNo || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">Bill Date :</span>{" "}
-                {formatDate(purchaseEntryData?.purchaseDate)}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">
-                  Payment Due Date :
-                </span>{" "}
-                {formatDate(purchaseEntryData?.paymentDueDate)}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">GRN No :</span>{" "}
-                {purchaseEntryData?.grnNo || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">
-                  Order Status :
-                </span>{" "}
-                {purchaseEntryData?.goodStatus || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">
-                  Payment Status :
-                </span>{" "}
-                {purchaseEntryData?.paymentStatus || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">DL No :</span> No
-                Data
-              </p>
+              <p><span className="font-semibold text-gray-800">Bill No :</span> {purchaseEntryData?.purchaseBillNo || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Bill Date :</span> {formatDate(purchaseEntryData?.purchaseDate)}</p>
+              <p><span className="font-semibold text-gray-800">Payment Due Date :</span> {formatDate(purchaseEntryData?.paymentDueDate)}</p>
+              <p><span className="font-semibold text-gray-800">GRN No :</span> {purchaseEntryData?.grnNo || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Order Status :</span> {purchaseEntryData?.goodStatus || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Payment Status :</span> {purchaseEntryData?.paymentStatus || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">DL No :</span>{pharmacyData?.[0]?.licenseNo || "N/A"}</p>
             </div>
 
             {/* Right Column: Supplier Details */}
             <div className="flex-1 p-4 text-sm text-gray-700 space-y-3 tracking-wide">
-              <p>
-                <span className="font-semibold text-gray-800">Name :</span>{" "}
-                {supplierData?.supplierName || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">Contact :</span>{" "}
-                {supplierData?.supplierMobile || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">GSTIN No :</span>{" "}
-                {supplierData?.supplierGstinNo || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">Email :</span>{" "}
-                {supplierData?.supplierEmail || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold text-gray-800">Address :</span>{" "}
-                {supplierData?.supplierAddress || "N/A"}
-              </p>
+              <p><span className="font-semibold text-gray-800">Name :</span> {supplierData?.supplierName || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Contact :</span> {supplierData?.supplierMobile || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">GSTIN No :</span> {supplierData?.supplierGstinNo || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Email :</span> {supplierData?.supplierEmail || "N/A"}</p>
+              <p><span className="font-semibold text-gray-800">Address :</span> {supplierData?.supplierAddress || "N/A"}</p>
             </div>
           </section>
 
@@ -386,33 +339,16 @@ const OrderSummaryClient = () => {
                   const netAmount = grossAmount + gstAmount;
 
                   return (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-400 tracking-wide text-gray-700"
-                    >
-                      <td className="py-2 px-2 font-semibold text-gray-800">
-                        {item.itemName}
-                      </td>
+                    <tr key={index} className="border-b border-gray-400 tracking-wide text-gray-700">
+                      <td className="py-2 px-2 font-semibold text-gray-800">{item.itemName}</td>
                       <td className="py-2 px-2">{item.batchNo}</td>
-                      <td className="py-2 px-2">
-                        {formatDate(item.expiryDate)}
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        {item.packageQuantity}
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        {item.purchasePrice?.toFixed(2)}
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        {grossAmount.toFixed(2)}
-                      </td>
+                      <td className="py-2 px-2">{formatDate(item.expiryDate)}</td>
+                      <td className="py-2 px-2 text-right">{item.packageQuantity}</td>
+                      <td className="py-2 px-2 text-right">{item.purchasePrice?.toFixed(2)}</td>
+                      <td className="py-2 px-2 text-right">{grossAmount.toFixed(2)}</td>
                       <td className="py-2 px-2 text-right">{gstPercentage}</td>
-                      <td className="py-2 px-2 text-right">
-                        {gstAmount.toFixed(2)}
-                      </td>
-                      <td className="py-2 px-2 text-right">
-                        {netAmount.toFixed(2)}
-                      </td>
+                      <td className="py-2 px-2 text-right">{gstAmount.toFixed(2)}</td>
+                      <td className="py-2 px-2 text-right">{netAmount.toFixed(2)}</td>
                     </tr>
                   );
                 })}
@@ -421,8 +357,7 @@ const OrderSummaryClient = () => {
                 <tr>
                   <td colSpan={9} className="p-2 text-right tracking-wide">
                     <span className="mr-4 font-normal text-gray-500">
-                      Disc:{" "}
-                      {purchaseEntryData?.totalDiscount?.toFixed(2) || "0.00"}
+                      Disc: {purchaseEntryData?.totalDiscount?.toFixed(2) || "0.00"}
                     </span>
                     <span className="mr-4 font-normal text-gray-500">
                       CGST: {totalCgstAmount?.toFixed(2) || "0.00"}
@@ -431,8 +366,7 @@ const OrderSummaryClient = () => {
                       SGST: {totalSgstAmount?.toFixed(2) || "0.00"}
                     </span>
                     <span className="ml-4 font-bold text-gray-800">
-                      TOTAL:{" "}
-                      {purchaseEntryData?.grandTotal?.toFixed(2) || "0.00"}
+                      TOTAL: {purchaseEntryData?.grandTotal?.toFixed(2) || "0.00"}
                     </span>
                   </td>
                 </tr>
@@ -450,5 +384,4 @@ const OrderSummaryClient = () => {
 };
 
 export default OrderSummaryClient;
-
 

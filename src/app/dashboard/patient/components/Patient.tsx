@@ -6,7 +6,7 @@ import TextareaField from "@/app/components/common/TextareaFeild";
 import { patientSchema } from "@/app/schema/PatientSchema";
 import { checkDuplicate, createPatient } from "@/app/services/PatientService";
 import { PatientData } from "@/app/types/PatientData";
-import React, {useState } from "react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { z, ZodError } from "zod";
 
@@ -51,7 +51,7 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
     }
 
     if (id === "dateOfBirth") {
-      updatedValue = new Date(value); // ✅ convert string to Date
+      updatedValue = new Date(value);
     }
 
     setFormData((prev) => ({
@@ -212,7 +212,7 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
               </div>
             ))}
           </div>
-
+          {/* 
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               {
@@ -313,6 +313,110 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
                 </div>
               );
             })}
+          </div> */}
+
+          <div className="relative mt-8 grid grid-cols-2 gap-4">
+            {[
+              {
+                id: "phone",
+                label: "Mobile Number",
+                type: "text",
+                maxLength: 10,
+              },
+              {
+                id: "gender", // ✅ moved gender here
+                label: "Gender",
+                type: "select",
+              },
+            ].map(({ id, label, type }) => {
+              const value =
+                id === "gender"
+                  ? String(formData[id as keyof PatientData] ?? "")
+                  : String(formData[id as keyof PatientData] ?? "");
+
+              return (
+                <div key={id} className="flex flex-col w-full relative">
+                  {id === "gender" ? (
+                    <>
+                      <label
+                        htmlFor={id}
+                        className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                      >
+                        {label} <span className="text-tertiaryRed">*</span>
+                      </label>
+
+                      <select
+                        id={id}
+                        value={value}
+                        onChange={(e) => handleChange(e)}
+                        className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
+                      >
+                        <option value="" disabled>
+                          Select
+                        </option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </>
+                  ) : (
+                    <InputField
+                      type={type}
+                      id={id}
+                      label={
+                        <>
+                          {label} <span className="text-tertiaryRed">*</span>
+                        </>
+                      }
+                      value={value}
+                      onChange={(e) => handleChange(e)}
+                    />
+                  )}
+
+                  {validationErrors[id] && (
+                    <span className="text-tertiaryRed text-sm">
+                      {validationErrors[id]}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="relative mt-8 grid grid-cols-2 gap-4">
+            {[
+              {
+                id: "dateOfBirth",
+                label: "DOB",
+                type: "date",
+              },
+              {
+                id: "email", // ✅ moved email here
+                label: "Email",
+                type: "text",
+              },
+            ].map(({ id, label, type }) => {
+              const value =
+                id === "dateOfBirth" && formData.dateOfBirth
+                  ? new Date(formData.dateOfBirth).toISOString().split("T")[0]
+                  : String(formData[id as keyof PatientData] ?? "");
+
+              return (
+                <div key={id} className="relative w-72">
+                  <InputField
+                    type={type}
+                    id={id}
+                    label={
+                      <>
+                        {label}
+                      </>
+                    }
+                    value={value}
+                    onChange={(e) => handleChange(e)}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-8">
@@ -345,17 +449,13 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
                   id={id}
                   label={
                     <>
-                      {label} <span className="text-tertiaryRed">*</span>
+                      {label} 
                     </>
                   }
                   value={String(formData[id as keyof PatientData] ?? "")}
                   onChange={(e) => handleChange(e)}
                 />
-                {validationErrors[id] && (
-                  <span className="text-tertiaryRed text-sm">
-                    {validationErrors[id]}
-                  </span>
-                )}
+               
               </div>
             ))}
           </div>
@@ -371,34 +471,17 @@ const Patient: React.FC<PatientProps> = ({ setShowDrawer, onPatientAdded }) => {
                   id={id}
                   label={
                     <>
-                      {label} <span className="text-tertiaryRed">*</span>
+                      {label} 
                     </>
                   }
                   value={String(formData[id as keyof PatientData] ?? "")}
                   onChange={(e) => handleChange(e)}
                 />
-                {validationErrors[id] && (
-                  <span className="text-tertiaryRed text-sm">
-                    {validationErrors[id]}
-                  </span>
-                )}
+                
               </div>
             ))}
           </div>
         </div>
-
-        {/* <div>
-          <Button
-            onClick={action === "delete" ? handleDeleteItem : addItem}
-            label={
-              action === "delete" ? "Delete" : itemId ? "Save" : "Add Item"
-            }
-            value=""
-            className={`w-36 h-11 text-white ${
-              action === "delete" ? "bg-darkRed" : "bg-darkPurple"
-            }`}
-          />
-        </div> */}
 
         <div className="flex">
           <Button
