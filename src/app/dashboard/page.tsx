@@ -324,7 +324,7 @@ const Page = () => {
               {weeklyBillCount} bills were generated this week
             </span>
             <span className="hover:text-[#4B0082] transition-colors">
-              ₹{weeklyBillAmount} total billing for the week
+             ₹{Math.round(weeklyBillAmount)} total billing for the week
             </span>
             <span className="hover:text-[#4B0082] transition-colors">
               {pendingInvoices} purchase invoices due this week
