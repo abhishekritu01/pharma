@@ -53,27 +53,32 @@ const registerDataSchema = z.object({
     .min(10, "Phone number must be at least 10 digits")
     .max(10, "Phone number must be at most 10 digits")
     .regex(/^[0-9+]+$/, "Phone number can only contain numbers and +"),
-  address: z
-    .string()
-    .min(5, "Address must be at least 5 characters")
-    .max(100, "Address must be at most 100 characters"),
   city: z
     .string()
     .min(2, "City must be at least 2 characters")
     .max(50, "City must be at most 50 characters"),
-  state: z
-    .string()
-    .min(2, "State must be at least 2 characters")
-    .max(50, "State must be at most 50 characters"),
   zip: z
     .string()
     .min(3, "ZIP code must be at least 3 characters")
     .max(10, "ZIP code must be at most 10 characters"),
-  country: z
-    .string()
-    .min(2, "Country must be at least 2 characters")
-    .max(50, "Country must be at most 50 characters"),
-  verified: z.boolean().default(false),
+  // address: z
+  //   .string()
+  //   .min(5, "Address must be at least 5 characters")
+  //   .max(100, "Address must be at most 100 characters"),
+
+  // state: z
+  //   .string()
+  //   .min(2, "State must be at least 2 characters")
+  //   .max(50, "State must be at most 50 characters"),
+  // country: z
+  //   .string()
+  //   .min(2, "Country must be at least 2 characters")
+  //   .max(50, "Country must be at most 50 characters"),
+  // verified: z.boolean().default(false),
+  address: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  verified: z.boolean().optional(),
 });
 
 type UserRegisterProps = {
@@ -106,7 +111,6 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
       ...prevData,
       [name]: value,
     }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -118,13 +122,11 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
 
   const validateStep = (step: number): boolean => {
     try {
-      // Validate only the fields in the current step
       const stepFields = fieldGroups[step - 1].fields.map((f) => f.name);
       const stepData = Object.fromEntries(
         Object.entries(formData).filter(([key]) => stepFields.includes(key))
       );
 
-      // Create a partial schema for the current step
       const stepSchema = registerDataSchema.pick(
         stepFields.reduce((acc, field) => {
           acc[field as keyof RegisterData] = true;
@@ -332,7 +334,6 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
 
   return (
     <>
-      {/* Right Side - Registration Form */}
       <div className="max-w-md mx-auto">
         <div className="lg:hidden mb-8">
           <div className="flex items-center justify-center">
@@ -365,7 +366,6 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Step Indicator */}
           <div className="flex justify-between mb-8 px-4">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex flex-col items-center relative">
@@ -397,7 +397,6 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
             ))}
           </div>
 
-          {/* Current Step Content */}
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-800 flex items-center">
               <span className="bg-purple-200 text-Purple rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">
@@ -421,8 +420,13 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
                       id={field.id}
                       name={field.name}
                       // type={field.type}
-                      type={field.name === "password" ? (showPassword ? "text" : "password") : field.type}
-                      required
+                      type={
+                        field.name === "password"
+                          ? showPassword
+                            ? "text"
+                            : "password"
+                          : field.type
+                      }
                       placeholder={field.placeholder}
                       value={
                         formData[field.name as keyof RegisterData] as string
@@ -455,7 +459,6 @@ const UserRegister: React.FC<UserRegisterProps> = ({ setShowRegister }) => {
             </div>
           </div>
 
-          {/* Navigation Buttons */}
           <div className="flex justify-between pt-6">
             {currentStep > 1 ? (
               <motion.button
