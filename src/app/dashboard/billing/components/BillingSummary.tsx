@@ -26,7 +26,7 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [pharmacyData, setPharmacyData] = useState<PharmacyData[]>([]);
   // const [ownerName, setOwnerName] = useState<string>("N/A");
-  const [ ,setOwnerName] = useState<string>("N/A");
+  const [, setOwnerName] = useState<string>("N/A");
 
 
   const paymentTypeMap: Record<string, string> = {
@@ -208,7 +208,7 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                       label: "Payment Status",
                       value: billingData.paymentStatus
                         ? billingData.paymentStatus.charAt(0).toUpperCase() +
-                          billingData.paymentStatus.slice(1).toLowerCase()
+                        billingData.paymentStatus.slice(1).toLowerCase()
                         : "--",
                     },
                   ].map(({ label, value }, index) => (
@@ -228,18 +228,16 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                 {pharmacyData.length > 0 ? (
                   [
                     // { label: "Branch", value: pharmacyData[0].branchName },
-                    
+
                     { label: "Tel No.", value: pharmacyData[0].pharmaPhone },
                     { label: "DL No.", value: pharmacyData[0].licenseNo },
                     { label: "GSTIN", value: pharmacyData[0].gstNo },
                     {
                       label: "Address",
                       value: pharmacyData[0]
-                        ? `${pharmacyData[0].address || ""}, ${
-                            pharmacyData[0].city || ""
-                          }, ${pharmacyData[0].pharmaZip || ""}, ${
-                            pharmacyData[0].state || ""
-                          }, ${pharmacyData[0].pharmaCountry || ""}`
+                        ? `${pharmacyData[0].address || ""}, ${pharmacyData[0].city || ""
+                        }, ${pharmacyData[0].pharmaZip || ""}, ${pharmacyData[0].state || ""
+                        }, ${pharmacyData[0].pharmaCountry || ""}`
                         : "N/A",
                     },
                   ].map(({ label, value }, index) => (
@@ -249,7 +247,7 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
                     >
                       <div className="font-medium">{label}</div>
                       <div className="font-normal">: {String(value ?? "N/A")}</div>
-                    </div> 
+                    </div>
                   ))
                 ) : (
                   <div className="text-base">
@@ -381,6 +379,10 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
       </div>
 
       <style jsx global>{`
+       .print-mode {
+    padding: 40px !important; /* increase padding for PDF */
+    box-sizing: border-box;
+  }
         @media print {
           body,
           html {

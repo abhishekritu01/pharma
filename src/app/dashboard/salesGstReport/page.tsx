@@ -44,10 +44,10 @@ const Page = () => {
 
       if (
         showPicker &&
-        ((datePickerElement && !datePickerElement.contains(event.target as Node) && 
+        ((datePickerElement && !datePickerElement.contains(event.target as Node) &&
           datePickerButton && !datePickerButton.contains(event.target as Node)) ||
-        (monthPickerElement && !monthPickerElement.contains(event.target as Node) && 
-          monthPickerButton && !monthPickerButton.contains(event.target as Node)))
+          (monthPickerElement && !monthPickerElement.contains(event.target as Node) &&
+            monthPickerButton && !monthPickerButton.contains(event.target as Node)))
       ) {
         setShowPicker(false);
       }
@@ -137,10 +137,10 @@ const Page = () => {
   };
 
   const columns = [
-    {
-      header: "S.No",
-      accessor: (row: BillingGstSummaryItem, index: number) => index + 1,
-    },
+    // {
+    //   header: "S.No",
+    //   accessor: (row: BillingGstSummaryItem, index: number) => index + 1,
+    // },
     {
       header: (
         <div
@@ -148,8 +148,14 @@ const Page = () => {
           onClick={() => handleSort("billId1")}
         >
           <span>Bill No.</span>
-          {sortConfig.key === "billId1" && (
-            sortConfig.direction === "asc" ? <FaArrowUp /> : <FaArrowDown />
+          {sortConfig.key === "billId1" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
           )}
         </div>
       ),
@@ -157,32 +163,80 @@ const Page = () => {
     },
     {
       header: (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("billDate")}
+        >
           <span>Bill Date</span>
+          {sortConfig.key === "billDate" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
         </div>
       ),
       accessor: (row: BillingGstSummaryItem) => row.formattedBillDate,
     },
     {
       header: (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("subTotal")}
+        >
           <span>Gross Amount</span>
+          {sortConfig.key === "subTotal" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
         </div>
       ),
       accessor: (row: BillingGstSummaryItem) => `₹${row.subTotal.toFixed(2)}`,
     },
     {
       header: (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("grandTotal")}
+        >
           <span>Net Amount</span>
+          {sortConfig.key === "grandTotal" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
         </div>
       ),
       accessor: (row: BillingGstSummaryItem) => `₹${row.grandTotal.toFixed(2)}`,
     },
     {
       header: (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => handleSort("totalGst")}
+        >
           <span>GST Amount</span>
+          {sortConfig.key === "totalGst" ? (
+            sortConfig.direction === "asc" ? (
+              <FaArrowUp />
+            ) : (
+              <FaArrowDown />
+            )
+          ) : (
+            <FaArrowDown />
+          )}
         </div>
       ),
       accessor: (row: BillingGstSummaryItem) => `₹${row.totalGst.toFixed(2)}`,
@@ -267,8 +321,8 @@ const Page = () => {
               {filterButtons.map((filter) => (
                 <div key={filter.value} className="relative">
                   <div
-                    id={filter.value === "selectDate" ? "custom-date-button" : 
-                        filter.value === "selectMonth" ? "custom-month-button" : ""}
+                    id={filter.value === "selectDate" ? "custom-date-button" :
+                      filter.value === "selectMonth" ? "custom-month-button" : ""}
                     onClick={() => {
                       if (filter.value === "selectDate") {
                         setSelectedMonth(null);
@@ -284,9 +338,8 @@ const Page = () => {
                         setSelectedMonth(null);
                       }
                     }}
-                    className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
-                      dateFilter === filter.value ? "text-[#4B0082]" : ""
-                    }`}
+                    className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === filter.value ? "text-[#4B0082]" : ""
+                      }`}
                   >
                     {filter.label}
                     {(filter.value === "selectDate" || filter.value === "selectMonth") && (

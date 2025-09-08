@@ -689,7 +689,17 @@ const Page = () => {
                               placeholderText="Select date"
                               dateFormat="MMM d, yy"
                             />
-                            <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                            <div
+                              className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
+                              onClick={() => {
+                                const datePickerInput = document.querySelector('.react-datepicker-wrapper input');
+                                if (datePickerInput) {
+                                  (datePickerInput as HTMLElement).focus();
+                                }
+                              }}
+                            >
+                              <CiCalendar size={20} />
+                            </div>
                           </div>
                         </div>
 
@@ -710,7 +720,17 @@ const Page = () => {
                               placeholderText="Select date"
                               dateFormat="MMM d, yy"
                             />
-                            <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                            <div
+                              className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
+                              onClick={() => {
+                                const datePickerInputs = document.querySelectorAll('.react-datepicker-wrapper input');
+                                if (datePickerInputs.length > 1) {
+                                  (datePickerInputs[1] as HTMLElement).focus();
+                                }
+                              }}
+                            >
+                              <CiCalendar size={20} />
+                            </div>
                           </div>
                         </div>
 

@@ -423,7 +423,7 @@ const Page = () => {
             </div>
           </div>
 
-          {/* Date range selector with new styling */}
+
           <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer ml-3">
             {[
               { value: "today", label: "Today" },
@@ -437,7 +437,7 @@ const Page = () => {
                   const newFilter = filter.value;
                   setDateFilter(newFilter);
                   setShowDatePicker(false);
-                  setIsCustomRangeApplied(false); // Reset applied state
+                  setIsCustomRangeApplied(false);
                   if (newFilter === "custom") {
                     setStartDate(null);
                     setEndDate(null);
@@ -484,11 +484,22 @@ const Page = () => {
                           selectsStart
                           startDate={startDate}
                           endDate={endDate}
+                          maxDate={new Date()}
                           className="w-full focus:outline-none text-gray-900 text-sm"
                           placeholderText="Select date"
                           dateFormat="MMM d, yy"
                         />
-                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                        <div
+                          className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
+                          onClick={() => {
+                            const datePickerInputs = document.querySelectorAll('.react-datepicker-wrapper input');
+                            if (datePickerInputs[0]) {
+                              (datePickerInputs[0] as HTMLElement).focus();
+                            }
+                          }}
+                        >
+                          <CiCalendar size={20} />
+                        </div>
                       </div>
                     </div>
 
@@ -504,11 +515,22 @@ const Page = () => {
                           startDate={startDate}
                           endDate={endDate}
                           minDate={startDate || undefined}
+                          maxDate={new Date()}
                           className="w-full focus:outline-none text-gray-900 text-sm"
                           placeholderText="Select date"
                           dateFormat="MMM d, yy"
                         />
-                        <CiCalendar className="w-5 h-5 text-gray-500 ml-2" />
+                        <div
+                          className="w-5 h-5 text-gray-500 ml-2 cursor-pointer"
+                          onClick={() => {
+                            const datePickerInputs = document.querySelectorAll('.react-datepicker-wrapper input');
+                            if (datePickerInputs[1]) {
+                              (datePickerInputs[1] as HTMLElement).focus();
+                            }
+                          }}
+                        >
+                          <CiCalendar size={20} />
+                        </div>
                       </div>
                     </div>
 
