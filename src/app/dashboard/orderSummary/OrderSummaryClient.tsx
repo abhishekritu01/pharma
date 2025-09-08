@@ -249,7 +249,7 @@ const OrderSummaryClient = () => {
               { label: "SUB TOTAL", value: purchaseEntryData.totalAmount },
               { label: "TOTAL CGST", value: totalCgstAmount },
               { label: "TOTAL SGST", value: totalSgstAmount },
-              { label: "DISCOUNT", value: purchaseEntryData.totalDiscount },
+              { label: "DISCOUNT", value: purchaseEntryData.totalDiscountAmount },
               {
                 label: "GRAND TOTAL",
                 value: purchaseEntryData.grandTotal,

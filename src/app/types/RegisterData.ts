@@ -5,11 +5,11 @@ export interface RegisterData {
     firstName: string;
     lastName: string;
     phone: string;
-    address: string;
     city: string;
-    state: string;
     zip: string;
-    country: string;
+    address?: string;
+    state?: string;
+    country?: string;
     // modules: number[];
-    verified: boolean;
+    verified?: boolean;
     }

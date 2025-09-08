@@ -3,22 +3,22 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
-  FaFacebookSquare,
-  FaGooglePlusG,
-  FaInstagram,
-  FaLinkedinIn,
+  // FaFacebookSquare,
+  // FaGooglePlusG,
+  // FaInstagram,
+  // FaLinkedinIn,
   FaPhoneAlt,
-  FaTwitter,
-  FaYoutube,
+  // FaTwitter,
+  // FaYoutube,
 } from "react-icons/fa";
 import {
   FaChevronDown,
   FaChevronUp,
   FaLocationDot,
-  FaPinterest,
+  // FaPinterest,
 } from "react-icons/fa6";
 import { FiPhone } from "react-icons/fi";
-import { IoLogoRss } from "react-icons/io";
+// import { IoLogoRss } from "react-icons/io";
 import { IoLocationOutline, IoMail } from "react-icons/io5";
 import { MdOutlineEmail } from "react-icons/md";
 
@@ -533,7 +533,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex justify-around pt-3 items-center">
+              {/* <div className="flex justify-around pt-3 items-center">
                 <span>Social Media</span>
                 <span>
                   <FaFacebookSquare />
@@ -559,7 +559,7 @@ export default function Home() {
                 <span>
                   <IoLogoRss />
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="border border-b-0 text-[#FAFAFA]" />
