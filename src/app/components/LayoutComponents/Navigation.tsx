@@ -52,17 +52,16 @@ export const navigation: NavigationItem[] = [
     icon: MdBarChart,
     current: false,
     children: [
-<<<<<<< HEAD
+
       { name: "Purchase Summary", href: "/dashboard/purchaseDetails", icon: FaListAlt, current: true },
       { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled, current: true },
       { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill, current: true },
-      { name: "Expiry Stock", href: "/dashboard/expiryReport", icon: ClockAlert, current: true } 
-=======
+      { name: "Expiry Stock", href: "/dashboard/expiryReport", icon: ClockAlert, current: true } ,
+
       { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
       { name: "Supplier Payment New", href: "/dashboard/supplierPayment", icon: TbCreditCardFilled , current: true },
       { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true },
       { name: "Expired Stock", href: "/dashboard/expiryReport", icon: ClockAlert , current: true } 
->>>>>>> 650057e6a0adc4bcd46590e0f424e366dca0d9db
     ],
   },
 
