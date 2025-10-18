@@ -5,15 +5,18 @@ import Input from "@/app/components/common/Input";
 import { Search } from "lucide-react";
 import PaginationTable from "@/app/components/common/PaginationTable";
 import { ExpiryReportData } from "@/app/types/ExpiryReportData";
-import { getExpiredStockWithSupplier } from "@/app/services/ExpiryReportService";
+import {
+  getExpiredStockWithSupplier,
+  getNextThreeMonthsStockWithSupplier
+} from "@/app/services/ExpiryReportService";
 import {
   format,
-  startOfWeek,
-  endOfWeek,
   startOfMonth,
   endOfMonth,
   isWithinInterval,
-  isSameDay
+  addMonths,
+  startOfYear,
+  endOfYear
 } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import DatePicker from "react-datepicker";
@@ -24,13 +27,15 @@ import { toast } from "react-toastify";
 import { BiExport } from 'react-icons/bi';
 import { exportAsCSVService } from "@/app/services/ExportAsCSVService";
 import Loader from "@/app/components/common/Loader";
+// import Ellipse229 from "@/public/Ellipse229.svg";
+import Image from "next/image";
 
 const Page = () => {
   const [expiryReport, setExpiryReport] = useState<ExpiryReportData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>("");
-  const [dateFilter, setDateFilter] = useState<string>("today");
+  const [dateFilter, setDateFilter] = useState<string>("thisMonth");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -54,7 +59,7 @@ const Page = () => {
       ) {
         setShowDatePicker(false);
         if (!startDate || !endDate) {
-          setDateFilter("today");
+          setDateFilter("thisMonth");
         }
       }
     };
@@ -68,7 +73,14 @@ const Page = () => {
   useEffect(() => {
     const fetchExpiryReport = async () => {
       try {
-        const response = await getExpiredStockWithSupplier();
+        setLoading(true);
+        let response;
+
+        if (dateFilter === "nearExpiry") {
+          response = await getNextThreeMonthsStockWithSupplier();
+        } else {
+          response = await getExpiredStockWithSupplier();
+        }
         const items: ExpiryReportData[] = Array.isArray(response)
           ? response
           : response?.data && Array.isArray(response.data)
@@ -78,12 +90,15 @@ const Page = () => {
         const reportsWithFormattedDates = items.map((item: ExpiryReportData) => {
           const expiryDate = new Date(item.expiryDate);
           expiryDate.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
 
           return {
             ...item,
             quantity: item.packageQuantity,
             formattedExpiryDate: format(expiryDate, "dd-MM-yyyy"),
-            expiryDate: expiryDate
+            expiryDate: expiryDate,
           };
         });
 
@@ -100,8 +115,7 @@ const Page = () => {
     };
 
     fetchExpiryReport();
-  }, []);
-
+  }, [dateFilter]);
 
   const handleSort = (key: keyof ExpiryReportData) => {
     setSortConfig((prev) => {
@@ -128,7 +142,7 @@ const Page = () => {
               ? aDate - bDate
               : bDate - aDate;
           }
-          return a.itemName.localeCompare(b.itemName);
+          return a.itemName?.localeCompare(b.itemName || "") || 0;
         }
 
         const aValue = a[sortConfig.key!];
@@ -156,37 +170,63 @@ const Page = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const currentYear = new Date().getFullYear();
+    const yearStart = new Date(currentYear, 0, 1);
+    const yearEnd = new Date(currentYear, 11, 31);
+
     switch (dateFilter) {
-      case "today":
-        return data.filter((item) =>
-          isSameDay(item.expiryDate, today)
-        );
-      case "thisWeek":
-        return data.filter((item) =>
-          isWithinInterval(item.expiryDate, {
-            start: startOfWeek(today),
-            end: endOfWeek(today),
-          })
-        );
       case "thisMonth":
+        const monthStart = startOfMonth(today);
+        const monthEnd = endOfMonth(today);
         return data.filter((item) =>
           isWithinInterval(item.expiryDate, {
-            start: startOfMonth(today),
-            end: endOfMonth(today),
+            start: monthStart,
+            end: monthEnd,
           })
         );
-      case "all":
-        return data;
+
+      case "nearExpiry":
+        const nextMonthStart = startOfMonth(addMonths(today, 1));
+        const threeMonthsEnd = endOfMonth(addMonths(today, 3));
+        return data.filter((item) =>
+          isWithinInterval(item.expiryDate, {
+            start: nextMonthStart,
+            end: threeMonthsEnd,
+          })
+        );
+
+      case "thisYear":
+        return data.filter((item) =>
+          isWithinInterval(item.expiryDate, {
+            start: yearStart,
+            end: yearEnd,
+          })
+        );
+
+      case "expired":
+        return data.filter((item) =>
+          item.expiryDate < today &&
+          isWithinInterval(item.expiryDate, {
+            start: yearStart,
+            end: yearEnd,
+          })
+        );
+
       case "custom":
         if (isCustomRangeApplied && startDate && endDate) {
+          const customStart = new Date(Math.max(startDate.getTime(), yearStart.getTime()));
+          const customEnd = new Date(Math.min(endDate.getTime(), yearEnd.getTime()));
+
           return data.filter((item) =>
             isWithinInterval(item.expiryDate, {
-              start: startDate,
-              end: endDate,
+              start: customStart,
+              end: customEnd,
             })
           );
         }
         return [];
+
+      case "all":
       default:
         return data;
     }
@@ -253,7 +293,6 @@ const Page = () => {
       ),
       accessor: "supplierName" as keyof ExpiryReportData,
     },
-
     {
       header: (
         <div
@@ -272,17 +311,29 @@ const Page = () => {
           )}
         </div>
       ),
-      accessor: (row: ExpiryReportData) => row.formattedExpiryDate,
+      accessor: (row: ExpiryReportData) => (
+        <div className="flex items-center gap-1">
+          {row.expiryDate < new Date() && (
+            <Image
+              src="/Ellipse229.svg"
+              alt="Expired"
+              width={9}
+              height={9}
+              className="w-[9px] h-[9px]"
+            />
+          )}
+          {row.formattedExpiryDate}
+        </div>
+      ),
     },
-
     {
       header: (
         <div
           className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleSort("quantity")}
+          onClick={() => handleSort("packageQuantity")}
         >
-          <span>Expired Quantity</span>
-          {sortConfig.key === "quantity" ? (
+          <span>Total Quantity</span>
+          {sortConfig.key === "packageQuantity" ? (
             sortConfig.direction === "asc" ? (
               <FaArrowUp />
             ) : (
@@ -295,9 +346,8 @@ const Page = () => {
       ),
       accessor: (row: ExpiryReportData) => (
         <div className="flex items-center">
-          <span className="inline-block w-2 h-2 rounded-full bg-danger"></span>
           <span className="px-2 py-1 rounded-xl text-sm font-medium">
-            {row.quantity}
+            {row.packageQuantity}
           </span>
         </div>
       ),
@@ -308,9 +358,9 @@ const Page = () => {
     expiryReport.filter((item) => {
       const search = searchText.toLowerCase();
       return (
-        item.supplierName?.toLowerCase().includes(search) ||
-        item.itemName?.toLowerCase().includes(search) ||
-        item.formattedExpiryDate?.toLowerCase().includes(search) ||
+        (item.supplierName?.toLowerCase().includes(search) || "N/A".includes(search)) ||
+        (item.itemName?.toLowerCase().includes(search) || "N/A".includes(search)) ||
+        (item.formattedExpiryDate?.toLowerCase().includes(search) || "N/A".includes(search)) ||
         item.batchNo?.toLowerCase().includes(search)
       );
     })
@@ -318,11 +368,11 @@ const Page = () => {
 
   const prepareExportData = () => {
     return getSortedData().map(item => ({
-      "Item Name": item.itemName,
+      "Item Name": item.itemName || "N/A",
       "Batch Number": item.batchNo,
-      "Supplier Name": item.supplierName,
-      "Expiry Date": item.formattedExpiryDate,
-      "Expired Quantity": item.quantity
+      "Supplier Name": item.supplierName || "N/A",
+      "Expiry Date": item.formattedExpiryDate || "N/A",
+      "Total Quantity": item.packageQuantity
     }));
   };
 
@@ -331,25 +381,26 @@ const Page = () => {
       const dataToExport = prepareExportData();
       let filenameSuffix;
       const today = new Date();
+      const currentYear = today.getFullYear();
 
       switch (dateFilter) {
-        case "today":
-          filenameSuffix = format(today, 'dd_MM_yyyy');
-          break;
-        case "thisWeek":
-          filenameSuffix = `week_${format(startOfWeek(today), 'dd_MM_yyyy')}_to_${format(endOfWeek(today), 'dd_MM_yyyy')}`;
-          break;
         case "thisMonth":
-          filenameSuffix = format(today, 'MM_yyyy');
+          filenameSuffix = `for_${format(today, 'MM_yyyy')}`;
           break;
-        case "all":
-          filenameSuffix = "all";
+        case "nearExpiry":
+          filenameSuffix = `next_three_months_${format(today, 'MM_yyyy')}`;
+          break;
+        case "thisYear":
+          filenameSuffix = `this_year_${currentYear}`;
+          break;
+        case "expired":
+          filenameSuffix = `expired_items_${currentYear}`;
           break;
         case "custom":
           if (startDate && endDate) {
-            filenameSuffix = `${format(startDate, 'dd_MM_yyyy')}_to_${format(endDate, 'dd_MM_yyyy')}`;
+            filenameSuffix = `_${format(startDate, 'dd_MM_yyyy')}_to_${format(endDate, 'dd_MM_yyyy')}`;
           } else {
-            filenameSuffix = "custom";
+            filenameSuffix = "custom_range";
           }
           break;
         default:
@@ -366,7 +417,7 @@ const Page = () => {
             "Batch Number": "Batch Number",
             "Supplier Name": "Supplier Name",
             "Expiry Date": "Expiry Date",
-            "Expired Quantity": "Expired Quantity"
+            "Total Quantity": "Total Quantity"
           },
           csv: {
             delimiter: ','
@@ -399,7 +450,7 @@ const Page = () => {
         <>
           <div className="flex justify-between">
             <div className="justify-start text-darkPurple text-3xl font-medium leading-10">
-              Expired Stock Report
+              Stock Expiry Report
             </div>
             <div>
               <div className="flex space-x-4">
@@ -423,13 +474,12 @@ const Page = () => {
             </div>
           </div>
 
-
           <div className="text-sm font-normal text-[#726C6C] flex space-x-7 cursor-pointer ml-3">
             {[
-              { value: "today", label: "Today" },
-              { value: "thisWeek", label: "This Week" },
               { value: "thisMonth", label: "This Month" },
-              { value: "all", label: "All" },
+              { value: "nearExpiry", label: "Near Expiry" },
+              { value: "thisYear", label: "This Year" },
+              { value: "expired", label: "Expired Items" },
             ].map((filter) => (
               <div
                 key={filter.value}
@@ -484,7 +534,8 @@ const Page = () => {
                           selectsStart
                           startDate={startDate}
                           endDate={endDate}
-                          maxDate={new Date()}
+                          minDate={startOfYear(new Date())}
+                          maxDate={endOfYear(new Date())}
                           className="w-full focus:outline-none text-gray-900 text-sm"
                           placeholderText="Select date"
                           dateFormat="MMM d, yy"
@@ -514,8 +565,8 @@ const Page = () => {
                           selectsEnd
                           startDate={startDate}
                           endDate={endDate}
-                          minDate={startDate || undefined}
-                          maxDate={new Date()}
+                          minDate={startDate || startOfYear(new Date())}
+                          maxDate={endOfYear(new Date())}
                           className="w-full focus:outline-none text-gray-900 text-sm"
                           placeholderText="Select date"
                           dateFormat="MMM d, yy"
@@ -541,7 +592,7 @@ const Page = () => {
                           setEndDate(null);
                           setIsCustomRangeApplied(false);
                           setShowDatePicker(false);
-                          setDateFilter("today");
+                          setDateFilter("thisMonth");
                         }}
                         className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
                       >

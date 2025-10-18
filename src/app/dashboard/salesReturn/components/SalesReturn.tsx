@@ -7,7 +7,7 @@ import {
 } from "@/app/types/SalesReturnData";
 import { PatientData } from "@/app/types/PatientData";
 import { getBillingById } from "@/app/services/BillingService";
-import { getPatientById } from "@/app/services/PatientService";
+import { getPatientById, getPatient } from "@/app/services/PatientService";
 import { createSalesReturn } from "@/app/services/SalesReturnService";
 import Button from "@/app/components/common/Button";
 import Table from "@/app/components/common/Table";
@@ -15,8 +15,9 @@ import { toast } from "react-toastify";
 import Modal from "@/app/components/common/Modal";
 import Select, { SelectInstance } from "react-select";
 import { getItemById } from "@/app/services/ItemService";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Loader from "@/app/components/common/Loader";
 
 interface SalesReturnProps {
   setShowCreateReturn: (value: boolean) => void;
@@ -34,6 +35,21 @@ interface MyButtonProps {
   label: string;
   className?: string;
   disabled?: boolean;
+}
+
+interface MobileBillItem extends SalesReturnItemData {
+  sourceBillId: string;
+  sourceBillNumber: string;
+  billingDate: Date;
+}
+
+interface PatientOption {
+  label: string;
+  value: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  patientId: string;
 }
 
 const MyButton: React.FC<MyButtonProps> = ({
@@ -56,27 +72,103 @@ const MyButton: React.FC<MyButtonProps> = ({
 const SalesReturn: React.FC<SalesReturnProps> = ({
   setShowCreateReturn,
   onSuccess,
-  bills,
+  bills: initialBills,
 }) => {
   const router = useRouter();
+  const [searchMethod, setSearchMethod] = useState<'billNumber' | 'mobileNumber'>('billNumber');
   const [selectedBill, setSelectedBill] = useState<OptionType | null>(null);
+  const [mobileNumber, setMobileNumber] = useState<string>('');
+  const [allBills, setAllBills] = useState<BillingData[]>([]);
+  const [allPatients, setAllPatients] = useState<PatientData[]>([]);
   const [originalBill, setOriginalBill] = useState<BillingData | null>(null);
   const [patientData, setPatientData] = useState<PatientData | null>(null);
   const [returnItem, setReturnItem] = useState<SalesReturnItemData[]>([]);
+  const [mobileBillItems, setMobileBillItems] = useState<MobileBillItem[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showMobileLoader, setShowMobileLoader] = useState(false);
   const [searching, setSearching] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const selectRef = useRef<SelectInstance<OptionType>>(null);
   const [modalMessage, setModalMessage] = useState("");
   const [modalSecondaryMesaage, setModalSecondaryMessage] = useState("");
   const [modalBgClass, setModalBgClass] = useState("");
-  const [modalCancelCallback, setModalCancelCallback] = useState<() => void>(
-    () => { }
-  );
-  const [modalConfirmCallback, setModalConfirmCallback] = useState<
-    () => Promise<void> | void
-  >(() => { });
+  const [modalCancelCallback, setModalCancelCallback] = useState<() => void>(() => { });
+  const [modalConfirmCallback, setModalConfirmCallback] = useState<() => Promise<void> | void>(() => { });
+  const [mobileOptions, setMobileOptions] = useState<PatientOption[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
+  const [itemSearchText, setItemSearchText] = useState("");
+  const [filteredItems, setFilteredItems] = useState<MobileBillItem[]>([]);
+  const [showItemSuggestions, setShowItemSuggestions] = useState(false);
+  const [showItemSelectionLoader, setShowItemSelectionLoader] = useState(false);
+
+  useEffect(() => {
+    const fetchAllBills = async () => {
+      try {
+        setSearching(true);
+        const billsWithDetails = await Promise.all(
+          initialBills.map(async (bill) => {
+            try {
+              const billDetails = await getBillingById(bill.billId);
+              return billDetails;
+            } catch (error) {
+              console.error(`Failed to fetch details for bill ${bill.billId}:`, error);
+              return null;
+            }
+          })
+        );
+
+        const validBills = billsWithDetails.filter(bill => bill !== null) as BillingData[];
+        setAllBills(validBills);
+      } catch (error) {
+        console.error("Failed to fetch bill details:", error);
+        toast.error("Failed to load bill data");
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    fetchAllBills();
+  }, [initialBills]);
+
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const patients = await getPatient();
+        setAllPatients(patients);
+
+        const options = patients.map((p: PatientData) => ({
+          label: `${p.phone} - ${p.firstName} ${p.lastName}`,
+          value: p.patientId,
+          phone: p.phone.toString(),
+          firstName: p.firstName,
+          lastName: p.lastName,
+          patientId: p.patientId,
+        }));
+        setMobileOptions(options);
+      } catch (error) {
+        console.error("Failed to fetch patients:", error);
+        toast.error("Failed to load patient data");
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    if (itemSearchText.length > 0) {
+      const filtered = mobileBillItems.filter(item =>
+        item.itemName?.toLowerCase().includes(itemSearchText.toLowerCase()) ||
+        item.batchNo?.toLowerCase().includes(itemSearchText.toLowerCase())
+      );
+      setFilteredItems(filtered);
+      setShowItemSuggestions(true);
+    } else {
+      setFilteredItems([]);
+      setShowItemSuggestions(false);
+    }
+  }, [itemSearchText, mobileBillItems]);
 
   const handleShowModal = (options: {
     message: string;
@@ -105,11 +197,143 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
     setShowModal(false);
   };
 
-  const fetchOriginalBill = useCallback(async () => {
-    if (!selectedBill?.value) return;
+  useEffect(() => {
+    const loadItemsByMobileNumber = async () => {
+      if (!mobileNumber || mobileNumber.length !== 10) {
+        setMobileBillItems([]);
+        setShowMobileLoader(false);
+        return;
+      }
+
+      try {
+        setShowMobileLoader(true);
+        setSearching(true);
+
+        // Find patients with this mobile number
+        const patientsWithMobile = allPatients.filter(
+          patient => patient.phone && patient.phone.toString() === mobileNumber
+        );
+
+        if (patientsWithMobile.length === 0) {
+          toast.error("No patients found with this mobile number");
+          setMobileBillItems([]);
+          setShowMobileLoader(false);
+          return;
+        }
+
+
+        const patientIds = patientsWithMobile.map(patient => patient.patientId);
+
+
+        const filteredBills = allBills.filter(bill =>
+          bill.patientId && patientIds.includes(bill.patientId)
+        );
+
+        if (filteredBills.length === 0) {
+          toast.info("No bills found for patients with this mobile number");
+          setMobileBillItems([]);
+          setShowMobileLoader(false);
+          return;
+        }
+
+
+        const allBilledItems: MobileBillItem[] = [];
+
+        for (const bill of filteredBills) {
+          const enrichedItems = await Promise.all(
+            bill.billItemDtos.map(async (item: BillingItemData) => {
+              try {
+                const itemDetails = await getItemById(item.itemId);
+                return {
+                  returnItemId: `temp-${Math.random().toString(36).substring(2, 9)}`,
+                  billItemId: item.billItemId,
+                  itemId: item.itemId,
+                  itemName: itemDetails.itemName,
+                  batchNo: item.batchNo,
+                  expiryDate: item.expiryDate,
+                  returnedQuantity: 0,
+                  originalPrice: item.mrpSalePricePerUnit,
+                  billedAmount: item.netTotal,
+                  gstPercentage: item.gstPercentage,
+                  cgstPercentage: item.gstPercentage / 2,
+                  sgstPercentage: item.gstPercentage / 2,
+                  discountPercentage: item.discountPercentage,
+                  refundAmount: 0,
+                  maxQuantity: item.packageQuantity,
+                  packageQuantity: item.packageQuantity,
+                  returnQuantity: 0,
+                  mrpSalePricePerUnit: item.mrpSalePricePerUnit,
+                  netTotal: 0,
+                  grossTotal: item.grossTotal,
+                  cgstAmount: 0,
+                  sgstAmount: 0,
+                  sourceBillId: bill.billId,
+                  sourceBillNumber: bill.billId1 || `Bill-${bill.billId.substring(0, 8)}`,
+                  billingDate: bill.billDateTime
+                };
+              } catch (err) {
+                console.error("Failed to fetch item details:", err);
+                return {
+                  returnItemId: `temp-${Math.random().toString(36).substring(2, 9)}`,
+                  billItemId: item.billItemId,
+                  itemId: item.itemId,
+                  itemName: "Unknown Item",
+                  batchNo: item.batchNo,
+                  expiryDate: item.expiryDate,
+                  returnedQuantity: 0,
+                  originalPrice: item.mrpSalePricePerUnit,
+                  billedAmount: item.netTotal,
+                  gstPercentage: item.gstPercentage,
+                  cgstPercentage: item.gstPercentage / 2,
+                  sgstPercentage: item.gstPercentage / 2,
+                  discountPercentage: item.discountPercentage,
+                  refundAmount: 0,
+                  maxQuantity: item.packageQuantity,
+                  packageQuantity: item.packageQuantity,
+                  returnQuantity: 0,
+                  mrpSalePricePerUnit: item.mrpSalePricePerUnit,
+                  netTotal: 0,
+                  grossTotal: item.grossTotal,
+                  cgstAmount: 0,
+                  sgstAmount: 0,
+                  sourceBillId: bill.billId,
+                  sourceBillNumber: bill.billId1 || `Bill-${bill.billId.substring(0, 8)}`,
+                  billingDate: bill.billDateTime
+                };
+              }
+            })
+          );
+
+          allBilledItems.push(...enrichedItems);
+        }
+
+
+        setTimeout(() => {
+          setMobileBillItems(allBilledItems);
+          setShowMobileLoader(false);
+          toast.success(`Found ${allBilledItems.length} items for this mobile number`);
+        }, 1000);
+
+      } catch (error) {
+        toast.error("Failed to fetch billed items by mobile number");
+        console.error("Error fetching billed items by mobile:", error);
+        setShowMobileLoader(false);
+      } finally {
+        setSearching(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      loadItemsByMobileNumber();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [mobileNumber, allPatients, allBills]);
+
+  const fetchOriginalBill = useCallback(async (billId: string) => {
     try {
       setSearching(true);
-      const bill = await getBillingById(selectedBill.value);
+      const bill = await getBillingById(billId);
 
       if (!bill) {
         toast.error("Bill not found");
@@ -205,17 +429,52 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
     } finally {
       setSearching(false);
     }
-  }, [selectedBill?.value]);
+  }, []);
+
+
+  const handleMobileItemClick = useCallback(async (item: MobileBillItem) => {
+    setShowItemSelectionLoader(true);
+    setSearchMethod('billNumber');
+    setSelectedBill({
+      label: item.sourceBillNumber,
+      value: item.sourceBillId,
+    });
+
+    const startTime = Date.now();
+    const minDisplayTime = 1500;
+
+    try {
+      await fetchOriginalBill(item.sourceBillId);
+    } finally {
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
+
+      setTimeout(() => {
+        setShowItemSelectionLoader(false);
+      }, remainingTime);
+    }
+
+
+    setReturnItem(prev => prev.map(returnItem => {
+      if (returnItem.itemId === item.itemId && returnItem.batchNo === item.batchNo) {
+        return {
+          ...returnItem,
+          returnedQuantity: item.packageQuantity,
+        };
+      }
+      return returnItem;
+    }));
+  }, [fetchOriginalBill]);
 
   useEffect(() => {
-    if (selectedBill?.value) {
-      fetchOriginalBill();
+    if (selectedBill?.value && searchMethod === 'billNumber') {
+      fetchOriginalBill(selectedBill.value);
     } else {
       setOriginalBill(null);
       setPatientData(null);
       setReturnItem([]);
     }
-  }, [selectedBill?.value, fetchOriginalBill]);
+  }, [selectedBill?.value, searchMethod, fetchOriginalBill]);
 
   const handleInputChange = (newValue: string) => {
     setInputValue(newValue);
@@ -292,7 +551,6 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
 
     const totals = calculateTotals();
 
-
     const salesReturnData: SalesReturnData = {
       originalBillId: originalBill.billId,
       billId1: originalBill.billId1 || "",
@@ -345,7 +603,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
     }
   };
 
-  const columns = [
+  const returnColumns = [
     {
       header: "Item Name",
       accessor: (row: SalesReturnItemData) => row.itemName,
@@ -404,7 +662,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
 
   const handleManualBillEntry = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      const matchedBill = bills.find(
+      const matchedBill = initialBills.find(
         (bill) => bill.billNumber.toLowerCase() === inputValue.toLowerCase()
       );
       if (matchedBill) {
@@ -453,74 +711,280 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
         </div>
       </div>
 
-      {/* Bill Number Section*/}
+      {/* Search Method Selection */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex w-[351.67px] h-[96px] py-6 flex-col justify-center items-start relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Bill Number *
-          </label>
-          <Select
-            ref={selectRef}
-            options={bills.map((bill) => ({
-              label: bill.billNumber,
-              value: bill.billId,
-            }))}
-            value={selectedBill}
-            onChange={handleBillChange}
-            onInputChange={handleInputChange}
-            inputValue={inputValue}
-            className="w-full"
-            placeholder="Enter Bill Number"
-            isLoading={searching}
-            isClearable={true}
-            onKeyDown={handleManualBillEntry}
-            filterOption={(option, rawInput) => {
-              return option.label
-                .toLowerCase()
-                .includes(rawInput.toLowerCase());
-            }}
-            styles={{
-              control: (base, state) => ({
-                ...base,
-                borderColor: state.isFocused ? "#442060" : base.borderColor,
-                boxShadow: state.isFocused
-                  ? "0 0 0 1px #421D5E"
-                  : base.boxShadow,
-                "&:hover": {
-                  borderColor: state.isFocused ? "#442060" : base.borderColor,
-                },
-              }),
-              option: (base, state) => ({
-                ...base,
-                backgroundColor: state.isSelected
-                  ? "#442060"
-                  : state.isFocused
-                    ? "#F3E8FF"
-                    : base.backgroundColor,
-                color: state.isSelected ? "white" : base.color,
-                "&:active": {
-                  backgroundColor: "#E1C4F8",
-                },
-              }),
-              menu: (base) => ({
-                ...base,
-                zIndex: 9999,
-              }),
-            }}
-            theme={(theme) => ({
-              ...theme,
-              colors: {
-                ...theme.colors,
-                primary: "#442060",
-                primary25: "#F3E8FF",
-                primary50: "#E1C4F8",
-              },
-            })}
-          />
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Search By</label>
+          <div className="flex space-x-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="billNumber"
+                checked={searchMethod === 'billNumber'}
+                onChange={(e) => {
+                  setSearchMethod(e.target.value as 'billNumber' | 'mobileNumber');
+                  setSelectedBill(null);
+                  setMobileNumber('');
+                  setMobileBillItems([]);
+                  setReturnItem([]);
+                  setItemSearchText("");
+                  setFilteredItems([]);
+                }}
+                className="form-radio cursor-pointer accent-[var(--DARK-PURPLE)]"
+              />
+              <span className="ml-2">Bill Number</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="mobileNumber"
+                checked={searchMethod === 'mobileNumber'}
+                onChange={(e) => {
+                  setSearchMethod(e.target.value as 'billNumber' | 'mobileNumber');
+                  setSelectedBill(null);
+                  setInputValue('');
+                  setReturnItem([]);
+                  setItemSearchText("");
+                  setFilteredItems([]);
+                }}
+                className="form-radio cursor-pointer accent-[var(--DARK-PURPLE)]"
+              />
+              <span className="ml-2">Mobile Number</span>
+            </label>
+          </div>
         </div>
+
+        {searchMethod === 'billNumber' ? (
+          <div className="flex w-[351.67px] h-[96px] py-6 flex-col justify-center items-start relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bill Number *
+            </label>
+            <Select
+              ref={selectRef}
+              options={initialBills.map((bill) => ({
+                label: bill.billNumber,
+                value: bill.billId,
+              }))}
+              value={selectedBill}
+              onChange={handleBillChange}
+              onInputChange={handleInputChange}
+              inputValue={inputValue}
+              className="w-full"
+              placeholder="Enter Bill Number"
+              isLoading={searching}
+              isClearable={true}
+              onKeyDown={handleManualBillEntry}
+              filterOption={(option, rawInput) => {
+                return option.label
+                  .toLowerCase()
+                  .includes(rawInput.toLowerCase());
+              }}
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: state.isFocused ? "#442060" : base.borderColor,
+                  boxShadow: state.isFocused
+                    ? "0 0 0 1px #421D5E"
+                    : base.boxShadow,
+                  "&:hover": {
+                    borderColor: state.isFocused ? "#442060" : base.borderColor,
+                  },
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected
+                    ? "#442060"
+                    : state.isFocused
+                      ? "#F3E8FF"
+                      : base.backgroundColor,
+                  color: state.isSelected ? "white" : base.color,
+                  "&:active": {
+                    backgroundColor: "#E1C4F8",
+                  },
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                clearIndicator: (base) => ({
+                  ...base,
+                  color: '#442060',
+                  ':hover': {
+                    color: '#6D28D9',
+                  },
+                }),
+              }}
+              theme={(theme) => ({
+                ...theme,
+                colors: {
+                  ...theme.colors,
+                  primary: "#442060",
+                  primary25: "#F3E8FF",
+                  primary50: "#E1C4F8",
+                },
+              })}
+            />
+          </div>
+        ) : (
+          <div className="space-y-4 w-full">
+            <div className="flex flex-col md:flex-row gap-6 w-full items-start">
+
+              <div className="w-[351.67px] h-[96px] py-6 flex flex-col justify-center items-start relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mobile Number *
+                </label>
+                <div className="relative w-full">
+                  <Select
+                    value={selectedPatient}
+                    onChange={(selected) => {
+                      setSelectedPatient(selected);
+                      if (selected) {
+                        setMobileNumber(selected.phone);
+                      } else {
+                        setMobileNumber('');
+                        setMobileBillItems([]);
+                        setItemSearchText('');
+                        setFilteredItems([]);
+                      }
+                    }}
+                    options={mobileOptions}
+                    className="w-full"
+                    classNamePrefix="select"
+                    placeholder="Select or type mobile number"
+                    isClearable={true}
+                    noOptionsMessage={() => <div className="p-3">No options</div>}
+                    filterOption={(option, inputValue) => {
+                      if (!inputValue) return true;
+                      return option.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+                        option.data.phone.includes(inputValue);
+                    }}
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        borderColor: state.isFocused ? "#442060" : base.borderColor,
+                        boxShadow: state.isFocused
+                          ? "0 0 0 1px #421D5E"
+                          : base.boxShadow,
+                        "&:hover": {
+                          borderColor: state.isFocused ? "#442060" : base.borderColor,
+                        },
+                        height: '49px',
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor: state.isSelected
+                          ? "#442060"
+                          : state.isFocused
+                            ? "#F3E8FF"
+                            : base.backgroundColor,
+                        color: state.isSelected ? "white" : base.color,
+                        "&:active": {
+                          backgroundColor: "#E1C4F8",
+                        },
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 100,
+                      }),
+                      clearIndicator: (base) => ({
+                        ...base,
+                        color: '#442060',
+                        ':hover': {
+                          color: '#6D28D9',
+                        },
+                      }),
+                    }}
+                    theme={(theme) => ({
+                      ...theme,
+                      colors: {
+                        ...theme.colors,
+                        primary: "#442060",
+                        primary25: "#F3E8FF",
+                        primary50: "#E1C4F8",
+                      },
+                    })}
+                  />
+                </div>
+              </div>
+              {!showMobileLoader && mobileBillItems.length > 0 && (
+                <div className="w-[351.67px] h-[96px] py-6 flex flex-col justify-center items-start relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Search Items For This Mobile Number
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      value={itemSearchText}
+                      onChange={(e) => setItemSearchText(e.target.value)}
+                      placeholder="Search items..."
+                      className="w-full p-2 pl-3 pr-10 border border-gray-300 rounded-md h-[49px]"
+                      onFocus={() => setShowItemSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowItemSuggestions(false), 200)}
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                    {showItemSuggestions && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {itemSearchText.length === 0 ? (
+                          <div className="p-3 text-gray-500">No options</div>
+                        ) : filteredItems.length > 0 ? (
+                          <div className="max-h-35 overflow-y-auto">
+                            {filteredItems.map((item) => (
+                              <div
+                                key={item.returnItemId}
+                                className="p-2 bg-white cursor-pointer hover:bg-[#4B0082] group"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleMobileItemClick(item);
+                                  setItemSearchText("");
+                                  setShowItemSuggestions(false);
+                                }}
+                              >
+                                {/* Row 1: Item Name - Batch No. */}
+                                <div className="font-bold text-black group-hover:text-white">
+                                  {item.itemName} - {item.batchNo}
+                                </div>
+
+                                {/* Row 2: Qty and Bill Date */}
+                                <div className="text-sm text-gray-500 mt-1">
+                                  Qty: {item.packageQuantity} | Bill Date:{" "}
+                                  {new Date(item.billingDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-3 text-gray-500">
+                            No items found matching &quot;{itemSearchText}&quot;
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Loader */}
+            {showMobileLoader && (
+              <div className="flex justify-center items-center h-64">
+                <Loader type="spinner" size="md" text="Loading..." fullScreen={false} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {originalBill && (
+      {/* Item Selection Loader */}
+      {showItemSelectionLoader && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
+          <div className="text-center">
+            <Loader type="spinner" size="md" text="Loading bill details..." fullScreen={false} />
+          </div>
+        </div>
+      )}
+
+      {searchMethod === 'billNumber' && originalBill && (
         <>
           <div className="bg-white rounded-lg p-6 w-full border border-gray-200">
             <div className="flex items-center mb-6">
@@ -590,7 +1054,7 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
             </h2>
             <Table
               data={returnItem}
-              columns={columns}
+              columns={returnColumns}
               noDataMessage="No items available for return"
             />
           </div>

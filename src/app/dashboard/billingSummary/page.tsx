@@ -19,6 +19,7 @@ import Button from "@/app/components/common/Button";
 import { exportAsCSVService } from "@/app/services/ExportAsCSVService";
 import { toast } from "react-toastify";
 import Loader from "@/app/components/common/Loader";
+import { useRouter } from 'next/navigation';
 
 const Page = () => {
   const [summaryData, setSummaryData] = useState<BillingSummaryData | null>(null);
@@ -27,6 +28,7 @@ const Page = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -147,10 +149,35 @@ const Page = () => {
     }
   };
 
+  const handlePaidBillsClick = () => {
+    if (dateFilter !== 'today' && dateFilter !== 'yesterday') {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('dateFilter', dateFilter);
+    params.set('paymentFilter', 'paid');
+
+    router.push(`/dashboard/salesReport?${params.toString()}`);
+  };
+
+
+  const handleUnpaidBillsClick = () => {
+    if (dateFilter !== 'today' && dateFilter !== 'yesterday') {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('dateFilter', dateFilter);
+    params.set('paymentFilter', 'unpaid');
+
+    router.push(`/dashboard/salesReport?${params.toString()}`);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader type="spinner" size="md" text="Daily Closing Report is loading ..." fullScreen={false} />
+        <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
       </div>
     );
   }
@@ -180,9 +207,8 @@ const Page = () => {
               setDateFilter("today");
               setSelectedDate(new Date());
             }}
-            className={`hover:text-[#4B0082] transition-colors ${
-              dateFilter === "today" ? "text-[#4B0082]" : ""
-            }`}
+            className={`hover:text-[#4B0082] transition-colors ${dateFilter === "today" ? "text-[#4B0082]" : ""
+              }`}
           >
             Today
           </div>
@@ -193,9 +219,8 @@ const Page = () => {
               setDateFilter("yesterday");
               setSelectedDate(yesterday);
             }}
-            className={`hover:text-[#4B0082] transition-colors ${
-              dateFilter === "yesterday" ? "text-[#4B0082]" : ""
-            }`}
+            className={`hover:text-[#4B0082] transition-colors ${dateFilter === "yesterday" ? "text-[#4B0082]" : ""
+              }`}
           >
             Yesterday
           </div>
@@ -203,9 +228,8 @@ const Page = () => {
             <div
               id="custom-date-button"
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${
-                dateFilter === "custom" ? "text-[#4B0082]" : ""
-              }`}
+              className={`hover:text-[#4B0082] transition-colors flex items-center gap-1 ${dateFilter === "custom" ? "text-[#4B0082]" : ""
+                }`}
             >
               Custom Date
               <CiCalendar size={18} />
@@ -227,23 +251,8 @@ const Page = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center">
-            <div className="rounded-xl mr-2">
-              <Image
-                src="/rupeeBillSummary.svg"
-                alt="ruppee icon"
-                width={45}
-                height={32}
-              />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Net Sales</p>
-              <p className="text-xl text-gray-800">
-                ₹{formatNumber((summaryData?.paidTotalAmount || 0) + (summaryData?.unpaidTotalAmount || 0))}
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {/* Net Bill Count Card */}
           <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center">
             <div className="rounded-xl mr-2">
               <Image
@@ -257,6 +266,77 @@ const Page = () => {
               <p className="text-sm text-gray-500">Net Bill Count</p>
               <p className="text-xl text-gray-800">
                 {(summaryData?.paidTotalBills || 0) + (summaryData?.unpaidTotalBills || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Total Sales Card */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center">
+            <div className="rounded-xl mr-2">
+              <Image
+                src="/reportbillsummary.svg"
+                alt="ruppee icon"
+                width={45}
+                height={32}
+              />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Sales</p>
+              <p className="text-xl text-gray-800">
+                ₹{formatNumber((summaryData?.paidTotalAmount || 0) + (summaryData?.unpaidTotalAmount || 0))}
+              </p>
+            </div>
+          </div>
+
+
+
+          {/* Total Return Amount Card */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center">
+            <div className="rounded-xl mr-2">
+              <Image
+                src="/salesreturn.svg"
+                alt="return icon"
+                width={45}
+                height={32}
+              />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Return </p>
+              <p className="text-xl text-gray-800">
+                ₹{formatNumber(summaryData?.totalReturnAmount || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Net Sales Card */}
+          <div className="bg-white p-6 rounded-lg border border-gray-200 flex items-center">
+            <div className="rounded-xl mr-2">
+              <Image
+                src="/rupeeBillSummary.svg"
+                alt="net sales icon"
+                width={45}
+                height={32}
+              />
+            </div>
+            <div className="flex items-baseline">
+              <p className="text-sm text-gray-500">Net Sales</p>
+              <p className="text-xl text-gray-800 ml-2">
+                ₹{formatNumber(
+                  Math.max(
+                    0,
+                    ((summaryData?.paidTotalAmount || 0) + (summaryData?.unpaidTotalAmount || 0)) -
+                    (summaryData?.totalReturnAmount || 0)
+                  )
+                )}
+                {((summaryData?.paidTotalAmount || 0) + (summaryData?.unpaidTotalAmount || 0)) -
+                  (summaryData?.totalReturnAmount || 0) < 0 && (
+                    <span className=" ml-1">
+                      (-{formatNumber(Math.abs(
+                        ((summaryData?.paidTotalAmount || 0) + (summaryData?.unpaidTotalAmount || 0)) -
+                        (summaryData?.totalReturnAmount || 0)
+                      ))})
+                    </span>
+                  )}
               </p>
             </div>
           </div>
@@ -274,14 +354,27 @@ const Page = () => {
           </div>
           <hr className="mb-4 border-gray-200" />
           <div className="space-y-4 text-gray-700">
-            <div className="flex justify-between items-center">
+            <div
+              className={`flex justify-between items-center ${(dateFilter === 'today' || dateFilter === 'yesterday')
+                ? 'cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors'
+                : ''
+                }`}
+              onClick={dateFilter === 'today' || dateFilter === 'yesterday' ? handlePaidBillsClick : undefined}
+            >
               <p>Paid Bills</p>
               <div className="flex w-1/2 justify-between">
                 <p>{summaryData?.paidTotalBills || 0}</p>
                 <p>₹{formatNumber(summaryData?.paidTotalAmount)}</p>
               </div>
             </div>
-            <div className="flex justify-between items-center">
+
+            <div
+              className={`flex justify-between items-center ${(dateFilter === 'today' || dateFilter === 'yesterday')
+                ? 'cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors'
+                : ''
+                }`}
+              onClick={dateFilter === 'today' || dateFilter === 'yesterday' ? handleUnpaidBillsClick : undefined}
+            >
               <p>Unpaid Bills</p>
               <div className="flex w-1/2 justify-between">
                 <p>{summaryData?.unpaidTotalBills || 0}</p>

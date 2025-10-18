@@ -2,16 +2,17 @@
 
 import { useParams } from "next/navigation";
 import { getItemById } from "@/app/services/ItemService";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getPurchase } from "@/app/services/PurchaseEntryService";
-import { getExpiredStock, getInventory } from "@/app/services/InventoryService";
+import { getExpiredStock, getInventory, getInventoryDetails, updateStockItem  } from "@/app/services/InventoryService";
 import PaginationTable from "@/app/components/common/PaginationTable";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import Button from "@/app/components/common/Button";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import Loader from "@/app/components/common/Loader";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 interface PurchaseEntryItem {
   itemId: string;
@@ -20,6 +21,8 @@ interface PurchaseEntryItem {
   expiryDate: string;
   createdDate: string;
   invId: string;
+   purchasePricePerUnit: number;
+  mrpSalePricePerUnit: number;
 }
 
 interface PurchaseEntryData {
@@ -78,6 +81,29 @@ export default function Page() {
   const [expiredStock, setExpiredStock] = useState<number>(0);
   const [currentStock, setCurrentStock] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>("");
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+const [editingRow, setEditingRow] = useState<string | null>(null);
+const [editFormData, setEditFormData] = useState<{
+  mrpSalePricePerUnit: number;
+  purchasePricePerUnit: number;
+   expiryDate: string;
+}>({ mrpSalePricePerUnit: 0, purchasePricePerUnit: 0, expiryDate: "" });
+const toggleMenu = (uniqueId: string) => {
+  setOpenMenuId((prev) => (prev === uniqueId ? null : uniqueId));
+};
+
+  useEffect(() => {
+    const handleStockUpdated = () => {
+      setRefreshTrigger(prev => prev + 1);
+    };
+
+    window.addEventListener('stockUpdated', handleStockUpdated as EventListener);
+    
+    return () => {
+      window.removeEventListener('stockUpdated', handleStockUpdated as EventListener);
+    };
+  }, []);
 
   const filteredRecords = purchaseRecords.filter((record) => {
     const search = searchText.toLowerCase();
@@ -106,6 +132,7 @@ export default function Page() {
           direction: prev.direction === "asc" ? "desc" : "asc",
         };
       }
+      
       return { key, direction: "asc" };
     });
   };
@@ -148,6 +175,50 @@ export default function Page() {
     return sorted;
   };
 
+  const handleEditClick = (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+  const uniqueId = `${row.invId}-${row.itemId}-${row.batchNo}`;
+  setEditingRow(uniqueId);
+  setEditFormData({
+    mrpSalePricePerUnit: row.mrpSalePricePerUnit || 0,
+    purchasePricePerUnit: row.purchasePricePerUnit || 0,
+    expiryDate: row.expiryDate || "",
+  });
+  setOpenMenuId(null);
+};
+
+const handleSave = async (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+if (editFormData.mrpSalePricePerUnit <= editFormData.purchasePricePerUnit) {
+    toast.error("MRP per unit must be greater than Purchase price per unit");
+    return;
+  }
+  try {
+    await updateStockItem(row.invId, row.itemId, row.batchNo, editFormData);
+    
+    setPurchaseRecords(prev => prev.map(record => 
+      record.invId === row.invId && 
+      record.itemId === row.itemId && 
+      record.batchNo === row.batchNo
+        ? { ...record,
+           mrpSalePricePerUnit: editFormData.mrpSalePricePerUnit,
+            purchasePricePerUnit: editFormData.purchasePricePerUnit,
+            expiryDate: editFormData.expiryDate
+        }
+        : record
+    ));
+    
+    setEditingRow(null);
+    setEditFormData({ mrpSalePricePerUnit: 0, purchasePricePerUnit: 0, expiryDate: "" });
+    toast.success("Stock updated successfully");
+  } catch (error) {
+    console.error("Error updating stock:", error);
+    toast.error("Failed to update stock");
+  }
+};
+
+const handleCancel = () => {
+  setEditingRow(null);
+  setEditFormData({ mrpSalePricePerUnit: 0, purchasePricePerUnit: 0, expiryDate: "" });
+};
   const columns = [
     {
       header: (
@@ -205,7 +276,7 @@ export default function Page() {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => handleSort("createdDate")}
         >
-          <span>Date Added</span>
+          <span>Bill Date</span>
           {sortConfig.key === "createdDate" ? (
             sortConfig.direction === "asc" ? (
               <FaArrowUp />
@@ -240,125 +311,282 @@ export default function Page() {
       accessor: (row: PurchaseEntryItem) =>
         row.packageQuantity?.toLocaleString() || "0",
     },
+{
+  header: "MRP per unit",
+  accessor: (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+    const uniqueId = `${row.invId}-${row.itemId}-${row.batchNo}`;
+    if (editingRow === uniqueId) {
+      return (
+        <input
+          inputMode="decimal"
+          type="text"
+          value={editFormData.mrpSalePricePerUnit === 0 ? "" : editFormData.mrpSalePricePerUnit.toString()}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9.]/g, '');
+            
+            const newValue = value === "" ? 0 : parseFloat(value);
+            
+            if (!isNaN(newValue)) {
+              setEditFormData(prev => ({
+                ...prev,
+                mrpSalePricePerUnit: newValue,
+              }));
+            }
+          }}
+          onBlur={(e) => {
+            const value = e.target.value;
+            if (value === "" || value === "0") {
+              setEditFormData(prev => ({
+                ...prev,
+                mrpSalePricePerUnit: 0,
+              }));
+            }
+          }}
+          className="w-20 border rounded p-1"
+          placeholder="0.00"
+        />
+      );
+    }
+    return row.mrpSalePricePerUnit?.toFixed(2) || "0.00";
+  },
+},
+{
+  header: "Purchase price per unit",
+  accessor: (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+    const uniqueId = `${row.invId}-${row.itemId}-${row.batchNo}`;
+    if (editingRow === uniqueId) {
+      return (
+        <input
+          inputMode="decimal"
+          type="text"
+          value={editFormData.purchasePricePerUnit === 0 ? "" : editFormData.purchasePricePerUnit.toString()}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9.]/g, '');
+            
+            const newValue = value === "" ? 0 : parseFloat(value);
+            
+            if (!isNaN(newValue)) {
+              setEditFormData(prev => ({
+                ...prev,
+                purchasePricePerUnit: newValue,
+              }));
+            }
+          }}
+          onBlur={(e) => {
+            const value = e.target.value;
+            if (value === "" || value === "0") {
+              setEditFormData(prev => ({
+                ...prev,
+                purchasePricePerUnit: 0,
+              }));
+            }
+          }}
+          className="w-20 border rounded p-1"
+          placeholder="0.00"
+        />
+      );
+    }
+    return row.purchasePricePerUnit?.toFixed(2) || "0.00";
+  },
+},
     {
-      header: (
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => handleSort("expiryDate")}
-        >
-          <span>Expiry Date</span>
-          {sortConfig.key === "expiryDate" ? (
-            sortConfig.direction === "asc" ? (
-              <FaArrowUp />
-            ) : (
-              <FaArrowDown />
-            )
-          ) : (
-            <FaArrowDown />
-          )}
-        </div>
-      ),
-      accessor: (row: PurchaseEntryItem) => {
-        const expiryDate = new Date(row.expiryDate || "");
-        const isValidDate = !isNaN(expiryDate.getTime());
-        const isExpired = isValidDate && expiryDate < new Date();
+  header: (
+    <div
+      className="flex items-center gap-2 cursor-pointer"
+      onClick={() => handleSort("expiryDate")}
+    >
+      <span>Expiry Date</span>
+      {sortConfig.key === "expiryDate" ? (
+        sortConfig.direction === "asc" ? (
+          <FaArrowUp />
+        ) : (
+          <FaArrowDown />
+        )
+      ) : (
+        <FaArrowDown />
+      )}
+    </div>
+  ),
+  accessor: (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+    const uniqueId = `${row.invId}-${row.itemId}-${row.batchNo}`;
+    
+    if (editingRow === uniqueId) {
+      return (
+        <input
+          type="date"
+          value={editFormData.expiryDate}
+          onChange={(e) => setEditFormData(prev => ({
+            ...prev,
+            expiryDate: e.target.value
+          }))}
+          className="w-32 border rounded p-1"
+        />
+      );
+    }
+    
+    const expiryDate = new Date(row.expiryDate || "");
+    const isValidDate = !isNaN(expiryDate.getTime());
+    const isExpired = isValidDate && expiryDate < new Date();
 
+    return (
+      <div className="flex items-center gap-1">
+        {isValidDate && (
+          <svg
+            width="9"
+            height="9"
+            viewBox="0 0 9 9"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="shrink-0"
+          >
+            <circle
+              cx="4.5"
+              cy="4.5"
+              r="4"
+              fill={isExpired ? "#FF0000" : "#28A745"}
+            />
+          </svg>
+        )}
+        <span className={isExpired ? "text-black" : ""}>
+          {formatDate(row.expiryDate || "")}
+        </span>
+      </div>
+    );
+  },
+},
+    {
+    header: "Actions",
+    accessor: (row: PurchaseEntryItem & { purchaseBillNo: string; invId: string }) => {
+      const uniqueId = `${row.invId}-${row.itemId}-${row.batchNo}`;
+      
+      if (editingRow === uniqueId) {
         return (
-          <div className="flex items-center gap-1">
-            {isValidDate && (
-              <svg
-                width="9"
-                height="9"
-                viewBox="0 0 9 9"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="shrink-0"
-              >
-                <circle
-                  cx="4.5"
-                  cy="4.5"
-                  r="4"
-                  fill={isExpired ? "#FF0000" : "#28A745"}
-                />
-              </svg>
-            )}
-            <span className={isExpired ? "text-black" : ""}>
-              {formatDate(row.expiryDate || "")}
-            </span>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => handleSave(row)}
+              className="px-2 py-1 bg-darkPurple text-white rounded"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-2 py-1 bg-gray-500 text-white rounded"
+            >
+              Cancel
+            </button>
           </div>
         );
-      },
+      }
+      return (
+        <div className="relative menu-container">
+          <button
+            className="p-2 rounded-full hover:bg-gray-200 cursor-pointer"
+            onClick={() => toggleMenu(uniqueId)}
+          >
+            <BsThreeDotsVertical size={18} />
+          </button>
+
+          {openMenuId === uniqueId && (
+            <div className="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-lg z-10 border border-gray-200">
+              <button
+                onClick={() => handleEditClick(row)}
+                className="block w-full px-4 py-3 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg transition-colors duration-150"
+              >
+                Edit
+              </button>
+            </div>
+          )}
+        </div>
+      );
     },
+  }
+    
   ];
 
-   useEffect(() => {
-    const fetchStockData = async () => {
-      if (!itemId) return;
+     const fetchStockData = useCallback(async () => {
+    if (!itemId) return;
 
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch item details
-        const itemData = await getItemById(itemId);
-        setItem(itemData);
+      const itemData = await getItemById(itemId);
+      setItem(itemData);
 
-        // Fetch purchase records for the table
-        const res = await getPurchase();
-        const purchases: PurchaseEntryData[] = res.data;
+      const res = await getPurchase();
+      const purchases: PurchaseEntryData[] = res.data;
 
-        const records = purchases.flatMap((entry) =>
-          entry.stockItemDtos
-            .filter((item) => item.itemId === itemId)
-            .map((item) => ({
-              ...item,
-              purchaseBillNo: entry.purchaseBillNo,
-              invId: entry.invId,
-            }))
-        );
-        setPurchaseRecords(records);
+      const records = purchases.flatMap((entry) =>
+        entry.stockItemDtos
+          .filter((item) => item.itemId === itemId)
+          .map((item) => ({
+            ...item,
+            purchaseBillNo: entry.purchaseBillNo,
+            invId: entry.invId,
+          }))
+      );
+      setPurchaseRecords(records);
 
-        // Fetch inventory and expired stock data (using main page approach)
         const inventoryResponseRaw = await getInventory();
         const expiredStockResponseRaw = await getExpiredStock();
+         const inventoryDetailsResponse = await getInventoryDetails();
         
         const inventoryResponse = inventoryResponseRaw.data;
         const expiredStockResponse = expiredStockResponseRaw.data;
+         const inventoryDetails = inventoryDetailsResponse.data;
         
-        if (!Array.isArray(inventoryResponse) || !Array.isArray(expiredStockResponse)) {
-          throw new Error("Invalid data format from API");
-        }
+        if (!Array.isArray(inventoryResponse) || !Array.isArray(expiredStockResponse) || !Array.isArray(inventoryDetails)) {
+        throw new Error("Invalid data format from API");
+      }
         
-        // Create map of expired stock by itemId
         const expiredStockMap = new Map(
-          expiredStockResponse.map((item) => [item.itemId, item.packageQuantity])
-        );
+        expiredStockResponse.map((item: { itemId: string; packageQuantity: number }) => [
+          item.itemId,
+          item.packageQuantity,
+        ])
+      );
+
+      const inventoryDetailsMap = new Map();
+      interface InventoryDetail {
+        itemId: string;
+        packageQuantity: number;
+      }
+
+      inventoryDetails.forEach((detail: InventoryDetail) => {
+        if (inventoryDetailsMap.has(detail.itemId)) {
+          inventoryDetailsMap.set(
+            detail.itemId, 
+            inventoryDetailsMap.get(detail.itemId) + (detail.packageQuantity || 0)
+          );
+        } else {
+          inventoryDetailsMap.set(detail.itemId, detail.packageQuantity || 0);
+        }
+      });
         
-        // Find inventory data for this specific item
         const inventoryItem = inventoryResponse.find(item => item.itemId === itemId);
         
         if (inventoryItem) {
-          const itemExpiredStock = expiredStockMap.get(itemId) || 0;
-          setTotalStock(inventoryItem.packageQuantity);
-          setExpiredStock(itemExpiredStock);
-          setCurrentStock(inventoryItem.packageQuantity - itemExpiredStock);
-        } else {
-          // Item not found in inventory
-          setTotalStock(0);
-          setExpiredStock(0);
-          setCurrentStock(0);
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load data. Please try again later.");
-        toast.error("Failed to load stock details");
-      } finally {
-        setLoading(false);
+        const itemExpiredStock = expiredStockMap.get(itemId) || 0;
+        const totalPackageQuantity = inventoryDetailsMap.get(itemId) || inventoryItem.packageQuantity || 0;
+        setTotalStock(totalPackageQuantity);
+        setExpiredStock(itemExpiredStock);
+        setCurrentStock(totalPackageQuantity - itemExpiredStock);
+      } else {
+        setTotalStock(0);
+        setExpiredStock(0);
+        setCurrentStock(0);
       }
-    };
-
-    fetchStockData();
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data. Please try again later.");
+      toast.error("Failed to load stock details");
+    } finally {
+      setLoading(false);
+    }
   }, [itemId]);
+  useEffect(() => {
+    fetchStockData();
+  }, [fetchStockData, refreshTrigger]);
 
   if (loading)
     return (

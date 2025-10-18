@@ -1,17 +1,19 @@
 "use client";
+import Drawer from "@/app/components/common/Drawer";
 import Input from "@/app/components/common/Input";
 import PaginationTable from "@/app/components/common/PaginationTable";
-import { getExpiredStock, getInventory } from "@/app/services/InventoryService";
+import { getExpiredStock, getInventory, getInventoryDetails } from "@/app/services/InventoryService";
 import { getItemById } from "@/app/services/ItemService";
 import { InventoryData } from "@/app/types/InventoryData";
 import { ItemData } from "@/app/types/ItemData";
 import { Search } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
 import Loader from "@/app/components/common/Loader";
+import EditStock from "./component/EditStock";
 
 interface ExtendedInventoryData extends InventoryData {
   genericName: string;
@@ -39,6 +41,9 @@ const Page = () => {
   }>({ key: null, direction: "asc" });
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [showEditDrawer, setShowEditDrawer] = useState<boolean>(false);
+  const [currentItem, setCurrentItem] = useState<ExtendedInventoryData | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   const toggleMenu = (itemId?: string) => {
     setOpenMenuId((prev) => (prev === itemId ? null : itemId || null));
@@ -57,6 +62,22 @@ const Page = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleEditStock = (item: ExtendedInventoryData) => {
+    setCurrentItem(item);
+    setShowEditDrawer(true);
+    setOpenMenuId(null);
+  };
+
+  const handleCloseDrawer = () => {
+    setShowEditDrawer(false);
+    setCurrentItem(null);
+  };
+
+  const handleStockUpdateSuccess = () => {
+    setRefreshTrigger(prev => prev + 1);
+    toast.success("Stock updated Successfully");
+  }
 
   const handleSort = (key: keyof ExtendedInventoryData) => {
     setSortConfig((prev) => {
@@ -306,6 +327,12 @@ const Page = () => {
               >
                 View
               </Link>
+              <button
+                onClick={() => handleEditStock(row)}
+                className="block w-full px-4 py-3 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg transition-colors duration-150"
+              >
+                Edit Stock
+              </button>
             </div>
           )}
         </div>
@@ -359,58 +386,88 @@ const Page = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchInventory = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const inventoryResponseRaw = await getInventory();
-        const expiredStockResponseRaw = await getExpiredStock();
-        const inventoryResponse = inventoryResponseRaw.data;
-        const expiredStockResponse = expiredStockResponseRaw.data;
-        if (
-          !Array.isArray(inventoryResponse) ||
-          !Array.isArray(expiredStockResponse)
-        ) {
-          throw new Error("Invalid data format from API");
-        }
-        const expiredStockMap = new Map(
-          expiredStockResponse.map((item) => [
-            item.itemId,
-            item.packageQuantity,
-          ])
-        );
+  const fetchInventory = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const inventoryResponseRaw = await getInventory();
+      const expiredStockResponseRaw = await getExpiredStock();
+      const inventoryDetailsResponse = await getInventoryDetails();
+      const inventoryResponse = inventoryResponseRaw?.data || [];
+      const expiredStockResponse = expiredStockResponseRaw?.data || [];
+      const inventoryDetails = inventoryDetailsResponse?.data || [];
 
-        const inventoryWithData = await Promise.all(
-          inventoryResponse.map(async (inventory) => {
-            const { name, manufacturer, genericName, variantName, unitName } =
-              await fetchItem(inventory.itemId);
-            const expiredStock = expiredStockMap.get(inventory.itemId) || 0;
-            return {
-              ...inventory,
-              itemName: name,
-              manufacturer,
-              genericName,
-              variantName,
-              unitName,
-              expiredStock,
-              currentStock: inventory.packageQuantity - expiredStock,
-            } as ExtendedInventoryData;
-          })
-        );
-        setInventoryData(inventoryWithData);
-      } catch (error) {
-        console.error("Error fetching inventory:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
+      console.log("API Responses:", {
+        inventory: inventoryResponse,
+        expiredStock: expiredStockResponse,
+        inventoryDetails: inventoryDetails
+      });
+
+      if (
+        !Array.isArray(inventoryResponse) ||
+        !Array.isArray(expiredStockResponse) ||
+        !Array.isArray(inventoryDetails)
+      ) {
+        throw new Error("Invalid data format from API");
       }
-    };
 
-    fetchInventory();
+      const expiredStockMap = new Map(
+        expiredStockResponse.map((item: { itemId: string; packageQuantity: number }) => [
+          item.itemId,
+          item.packageQuantity,
+        ])
+      );
+
+      const inventoryDetailsMap = new Map();
+      interface InventoryDetail {
+        itemId: string;
+        packageQuantity?: number;
+      }
+
+      inventoryDetails.forEach((detail: InventoryDetail) => {
+        if (inventoryDetailsMap.has(detail.itemId)) {
+          inventoryDetailsMap.set(
+            detail.itemId,
+            inventoryDetailsMap.get(detail.itemId) + (detail.packageQuantity || 0)
+          );
+        } else {
+          inventoryDetailsMap.set(detail.itemId, detail.packageQuantity || 0);
+        }
+      });
+
+      const inventoryWithData = await Promise.all(
+        inventoryResponse.map(async (inventory) => {
+          const { name, manufacturer, genericName, variantName, unitName } =
+            await fetchItem(inventory.itemId);
+          const expiredStock = expiredStockMap.get(inventory.itemId) || 0;
+          const totalPackageQuantity = inventoryDetailsMap.get(inventory.itemId) || inventory.packageQuantity || 0;
+          return {
+            ...inventory,
+            packageQuantity: totalPackageQuantity,
+            itemName: name,
+            manufacturer,
+            genericName,
+            variantName,
+            unitName,
+            expiredStock,
+            currentStock: totalPackageQuantity - expiredStock,
+          } as ExtendedInventoryData;
+        })
+      );
+      setInventoryData(inventoryWithData);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory, refreshTrigger]);
 
   return (
     <div className="w-full">
@@ -450,6 +507,17 @@ const Page = () => {
             />
           )}
         </main>
+      )}
+
+      {/* Edit Stock Drawer */}
+      {showEditDrawer && currentItem && (
+        <Drawer setShowDrawer={handleCloseDrawer} title="Edit Stock Qty.">
+          <EditStock
+            setShowDrawer={handleCloseDrawer}
+            item={currentItem}
+            onSuccess={handleStockUpdateSuccess}
+          />
+        </Drawer>
       )}
     </div>
   );
