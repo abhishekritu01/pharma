@@ -167,7 +167,7 @@ const BillingSummary: React.FC<BillingSummaryProps> = ({ billId, onClose }) => {
       <div ref={printRef}>
         <main className="space-y-10 px-4 py-4">
           <div className="justify-start text-darkPurple text-3xl font-medium leading-10 print-hidden">
-            Bill Summary
+            Sales Summary
           </div>
 
           <div className="border border-Gray">

@@ -698,12 +698,12 @@ const SalesReturn: React.FC<SalesReturnProps> = ({
       )}
       <div className="flex justify-between items-center">
         <h1 className="justify-start text-darkPurple text-3xl font-medium leading-10">
-          Bill Return
+          Sales Return
         </h1>
         <div>
           <Button
             onClick={() => setShowCreateReturn(false)}
-            label="Bill Return List"
+            label="Sales Return List"
             value=""
             className="w-48 bg-darkPurple text-white h-11"
             icon={<ClipboardList size={15} />}

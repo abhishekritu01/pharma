@@ -164,7 +164,7 @@ const Page = () => {
       <div className="print:hidden">
         <main className="space-y-6 p-4">
           <h1 className="justify-start text-darkPurple text-3xl font-medium leading-10">
-            Bill Return Summary
+            Sales Return Summary
           </h1>
 
           <div className="bg-white rounded-lg shadow p-6 w-full">

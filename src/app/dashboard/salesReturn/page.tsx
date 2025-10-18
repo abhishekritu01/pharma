@@ -365,7 +365,7 @@ const Page = () => {
         <main className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-darkPurple text-3xl font-medium">
-              Bill Return List
+              Sales Return List
             </h1>
             <div className="flex space-x-4">
               <div>
@@ -381,8 +381,8 @@ const Page = () => {
               <div>
                 <Button
                   onClick={handleCreateReturn}
-                  label="New Return"
-                  className="w-40 bg-darkPurple text-white h-11"
+                  label="New Sales Return"
+                  className="w-44 bg-darkPurple text-white h-11"
                   icon={<Plus size={15} />}
                 />
               </div>

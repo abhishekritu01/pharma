@@ -374,7 +374,7 @@ const Page = () => {
         <main className="space-y-10">
           <div className="flex justify-between">
             <div className="justify-start text-darkPurple text-3xl font-medium leading-10">
-              Billing List
+              Sales List
             </div>
 
             <div>
@@ -400,7 +400,7 @@ const Page = () => {
                 <div>
                   <Button
                     onClick={() => handleBilling()}
-                    label="Generate Bill"
+                    label="Generate Sale"
                     value=""
                     className="w-40 bg-darkPurple text-white h-11 "
                     icon={<Plus size={15} />}

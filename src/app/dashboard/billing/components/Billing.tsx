@@ -862,13 +862,13 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
       <main className="space-y-6">
         <div className="flex justify-between">
           <div className="justify-start text-darkPurple text-3xl font-medium leading-10 ">
-            Generate Bill
+            Generate Sale
           </div>
 
           <div>
             <Button
               onClick={() => handleBillingList()}
-              label="Billing List"
+              label="Sales List"
               value=""
               className="w-48 bg-darkPurple text-white h-11"
               icon={<ClipboardList size={15} />}

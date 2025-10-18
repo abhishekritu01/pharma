@@ -7,7 +7,7 @@ import { RiMedicineBottleFill } from "react-icons/ri";
 import { FaHouseChimneyMedical, FaNotesMedical } from "react-icons/fa6";
 import { PiKeyReturnFill, PiReceiptFill } from "react-icons/pi";
 import { FaChartArea, FaListAlt, FaUsers, FaWindowRestore } from 'react-icons/fa';
-import { TbCreditCardFilled } from "react-icons/tb";
+import { TbCreditCardFilled, TbReportMoney } from "react-icons/tb";
 import { RiWaterPercentFill } from "react-icons/ri";
 import { ClockAlert } from 'lucide-react';
 import { BsCashStack } from 'react-icons/bs';
@@ -35,12 +35,12 @@ export const navigation: NavigationItem[] = [
 
 
   {
-    name: "Bill",
+    name: "Sales",
     icon: PiReceiptFill,
     current: false,
     children: [
-      { name: "Billing", href: "/dashboard/billing", icon: IoMdListBox, current: true },
-      { name: "Bill Return", href: "/dashboard/salesReturn", icon: PiKeyReturnFill, current: true },
+      { name: "Sale", href: "/dashboard/billing", icon: IoMdListBox, current: true },
+      { name: "Sales Return", href: "/dashboard/salesReturn", icon: PiKeyReturnFill, current: true },
 
 
     ],
@@ -54,25 +54,20 @@ export const navigation: NavigationItem[] = [
     children: [
 
       { name: "Purchase Summary", href: "/dashboard/purchaseDetails", icon: FaListAlt, current: true },
-      { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled, current: true },
+      { name: "Supplier Payment", href: "/dashboard/supplierPayment", icon: TbCreditCardFilled , current: true },
       { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill, current: true },
       { name: "Expiry Stock", href: "/dashboard/expiryReport", icon: ClockAlert, current: true } ,
-
-      { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
-      { name: "Supplier Payment New", href: "/dashboard/supplierPayment", icon: TbCreditCardFilled , current: true },
-      { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true },
-      { name: "Expired Stock", href: "/dashboard/expiryReport", icon: ClockAlert , current: true } 
     ],
   },
 
 
   {
-    name: "Bill Summary",
+    name: "Sales Statistics",
     icon: FaChartArea,
     current: false,
     children: [
       { name: "Daily Closing Report", href: "/dashboard/billingSummary", icon: BsCashStack, current: true },
-      { name: "Sales Report", href: "/dashboard/salesReport", icon: FaFileInvoice, current: true },
+      { name: "Sales Report", href: "/dashboard/salesReport", icon: TbReportMoney, current: true },
       { name: "Sales GST Report", href: "/dashboard/salesGstReport", icon: FaFileInvoice, current: true },
     ],
   },
