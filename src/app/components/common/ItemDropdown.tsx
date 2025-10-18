@@ -15,7 +15,7 @@ export type OptionType = {
   supplierName?: string;
   billOnlyLabel?: string;
   supplierId?: string;
-
+  invId?: string;
 };
 
 

@@ -44,6 +44,10 @@ export const purchaseReturnSchema = z.object({
                 discrepancy: z
                     .string()
                     .nonempty({ message: "Discrepancy is Mandatory" }),
+
+                invId: z
+                    .string()
+                    .optional(),
             })
         )
         .min(1, { message: "At least one return item is required" }),

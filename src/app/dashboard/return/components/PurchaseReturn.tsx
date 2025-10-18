@@ -76,6 +76,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         returnType: "",
         discrepancyIn: "",
         discrepancy: "",
+        invId: "",
       },
     ],
   });
@@ -273,24 +274,33 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
   };
 
   const addPurchaseReturn = () => {
-   try {
-    purchaseReturnSchema.parse({
-      purchaseReturnItemDtos: formData.purchaseReturnItemDtos,
-    });
-  } catch (err) {
-    if (err instanceof ZodError) {
-      err.errors.forEach((e: ZodIssue) => {
-        toast.error(e.message, {
-          position: "top-right",
-          autoClose: 2000,
-          pauseOnHover: false,
-        });
+    try {
+      purchaseReturnSchema.parse({
+        purchaseReturnItemDtos: formData.purchaseReturnItemDtos,
       });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        err.errors.forEach((e: ZodIssue) => {
+          toast.error(e.message, {
+            position: "top-right",
+            autoClose: 2000,
+            pauseOnHover: false,
+          });
+        });
+      }
+      return;
     }
-    return; 
-  }
 
     const firstItem = formData.purchaseReturnItemDtos[0] || {};
+
+    console.log(
+      "🔍 FINAL CHECK - All items with invId:",
+      formData.purchaseReturnItemDtos.map((item) => ({
+        itemName: item.itemName,
+        invId: item.invId,
+        purchaseBillNo: item.purchaseBillNo,
+      }))
+    );
 
     const purchaseReturnData: PurchaseReturnData = {
       returnId: formData.returnId,
@@ -319,6 +329,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         returnType: item.returnType,
         discrepancyIn: item.discrepancyIn,
         discrepancy: item.discrepancy,
+        invId: item.invId,
       })),
     };
 
@@ -401,12 +412,16 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           ? supplierMap[bill.supplierId]
           : "Unknown Supplier";
 
+        // Try multiple possible field names for invoice ID
+        const billInvId = bill.invId;
+
         return {
           label: `${bill.purchaseBillNo} - ${supplierName}`,
           value: bill.purchaseBillNo,
           supplierId: bill.supplierId,
           supplierName,
           billOnlyLabel: bill.purchaseBillNo,
+          invId: billInvId,
         };
       });
 
@@ -424,6 +439,12 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         }
       }
 
+      // Get the first matching bill's invId as default
+      const firstBill = matchingBills.length > 0 ? matchingBills[0] : null;
+      const firstBillInvId = firstBill
+        ? firstBill.invId 
+        : "";
+
       setFormData((prev) => {
         const updatedItems = [...prev.purchaseReturnItemDtos];
         updatedItems[idx] = {
@@ -437,6 +458,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
           purchasePrice,
           gstPercentage,
           availableQuantity: selected?.packageQty ?? 0,
+          invId: firstBillInvId,
         };
 
         return {
@@ -465,6 +487,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         returnQuantity: 0,
         discrepancy: "",
         discrepancyIn: "",
+        invId: "",
       };
 
       return {
@@ -536,9 +559,10 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                 <div className="relative w-full">
                   <ItemDropdown
                     selectedOption={row.selectedItem || null}
-                    onChange={(selected) =>
-                      handleItemDropdownChange(selected, idx)
-                    }
+                    onChange={(selected) => {
+                      handleItemDropdownChange(selected, idx);
+                      console.log("Selected Bill:", selected);
+                    }}
                   />
                 </div>
 
@@ -596,6 +620,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                       onChange={(selected) => {
                         const billNo = selected?.value || "";
                         const supplierId = selected?.supplierId || "";
+                        const invId = selected?.invId || "";
 
                         setFormData((prev) => {
                           const updated = [...prev.purchaseReturnItemDtos];
@@ -603,6 +628,7 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                             ...updated[idx],
                             purchaseBillNo: billNo,
                             supplierId,
+                            invId,
                           };
                           return { ...prev, purchaseReturnItemDtos: updated };
                         });

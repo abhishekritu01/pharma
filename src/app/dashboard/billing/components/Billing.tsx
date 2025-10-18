@@ -620,7 +620,6 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
         typeof parsedValue === "number"
       ) {
         updatedData.balanceAmount = parseFloat(
-          // (parsedValue - prev.grandTotal).toFixed(2)
           (prev.grandTotal - parsedValue).toFixed(2)
 
         );
@@ -1079,7 +1078,8 @@ const Billing: React.FC<BillingProps> = ({ setShowBilling }) => {
                     >
                       <option value="">Select Status</option>
                       <option value="paid">Paid</option>
-                      <option value="pending">Not Paid</option>
+                      <option value="pending">Partial</option>
+                      <option value="pending">Credit</option>
                     </select>
                   </>
                 )}

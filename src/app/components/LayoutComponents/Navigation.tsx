@@ -53,6 +53,7 @@ export const navigation: NavigationItem[] = [
     current: false,
     children: [
       { name: "Supplier Payment", href: "/dashboard/spaymentsummary", icon: TbCreditCardFilled , current: true },
+      { name: "Supplier Payment New", href: "/dashboard/supplierPayment", icon: TbCreditCardFilled , current: true },
       { name: "GST Summary", href: "/dashboard/gstsummary", icon: RiWaterPercentFill , current: true },
       { name: "Expired Stock", href: "/dashboard/expiryReport", icon: ClockAlert , current: true } 
     ],

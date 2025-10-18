@@ -18,7 +18,7 @@ import {
   getPurchaseOrderById,
 } from "@/app/services/PurchaseOrderService";
 import { PurchaseOrderData } from "@/app/types/PurchaseOrderData";
-import { createPurchase } from "@/app/services/PurchaseEntryService";
+import { checkBillNoExists, createPurchase } from "@/app/services/PurchaseEntryService";
 import { getPharmacy } from "@/app/services/PharmacyService";
 import { getSupplier, getSupplierById } from "@/app/services/SupplierService";
 import { toast } from "react-toastify";
@@ -289,6 +289,7 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
         purchasePrice: itemDetails.purchasePrice,
         mrpSalePrice: itemDetails.mrpSalePrice,
         purchasePricePerUnit: itemDetails.purchasePricePerUnit,
+        mrpSalePricePerUnit: itemDetails.mrpSalePricePerUnit,
         gstPercentage: itemDetails.gstPercentage,
         // gstAmount: itemDetails.gstAmount,
         // discount: itemDetails.discount,
@@ -803,13 +804,31 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
     setShowModal(false);
   };
 
-  const addPurchase = () => {
+  const addPurchase = async () => {
     if (Number(formData.invoiceAmount) !== grandTotal) {
       toast.error(
         "Invoice amount must match the grand total before confirming."
       );
       return;
     }
+
+     try {
+    const billExists = await checkBillNoExists(
+      formData.supplierId,
+      formData.purchaseBillNo
+    );
+
+    if (billExists) {
+      toast.error("This Bill No. already exists for the supplier in the current year.");
+      return;
+    }
+  } catch (error) {
+    toast.error("Unable to verify bill number. Please try again.");
+    console.error("Bill check failed:", error);
+    return;
+  }
+
+
 
     const purchaseData: PurchaseEntryData = {
       orderId: formData.orderId,
@@ -956,12 +975,6 @@ const PurchaseEntry: React.FC<PurchaseEntryProps> = ({
           onClick={handleCloseDrawer}
         />
       )}
-
-      {/* {showItem && (
-        <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
-          <AddItem setShowDrawer={handleCloseDrawer} itemId={currentItemId} />
-        </Drawer>
-      )} */}
 
       {showItem && (
         <Drawer setShowDrawer={handleCloseDrawer} title={"Add New Item"}>
