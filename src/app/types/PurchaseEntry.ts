@@ -36,7 +36,7 @@ export interface PurchaseEntryData {
   supplierId: string;
   invoiceAmount?: number;
   paymentStatus: string;
-  goodStatus: string;
+  goodStatus?: string;
   totalAmount?: number;
   totalCgst: number;
   totalSgst: number;

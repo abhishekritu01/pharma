@@ -65,7 +65,7 @@ export const getPurchaseById = async (invId: string) => {
   }
 };
   
-export const checkBillNoExists = async (supplierId: number,purchaseBillNo:string): Promise<boolean> => {
+export const checkBillNoExists = async (supplierId: string,purchaseBillNo:string): Promise<boolean> => {
   try {
     const currentYear = new Date().getFullYear();
     const response = await api.get("pharma/stock/checkBillNo", {
@@ -124,3 +124,23 @@ export const confirmPurchasePayment = async (invId: string) => {
     }
   }
 };
+
+export const supplierPayment = async (paymentStatus: string, supplierId: string) => {
+  try {
+    const response = await api.get(
+      `pharma/stock/paymentStatusAndSupplierFilter`,
+      {
+        params: { paymentStatus, supplierId },
+      }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    console.error("Error fetching supplier payment:", error);
+    if (error instanceof Error) {
+      throw new Error(`Error fetching supplier payment: ${error.message}`);
+    } else {
+      throw new Error("An unknown error occurred while fetching supplier payment.");
+    }
+  }
+};
+

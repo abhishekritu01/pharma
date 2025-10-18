@@ -14,7 +14,7 @@ type OptionType = {
 interface SelectFieldProps {
   value: OptionType | null;
   onChange: (value: OptionType | null) => void;
-  label: string;
+  label: React.ReactNode;
   loadOptions: (
     inputValue: string,
     callback: (options: OptionType[]) => void
@@ -41,6 +41,14 @@ const customStyles: StylesConfig<OptionType, false> = {
     "&:hover": {
       borderColor: "#4B0082",
     },
+  }),
+  menu: (base) => ({
+    ...base,
+    overflowX: "hidden",
+  }),
+  menuList: (base) => ({
+    ...base,
+    overflowX: "hidden",
   }),
   placeholder: (base) => ({
     ...base,

@@ -43,7 +43,7 @@ const Modal: React.FC<ModalProps> = ({ message, onConfirm, onCancel, secondaryMe
         <div className="flex justify-end space-x-4">
           <Button
             onClick={onCancel}
-            label="Cancle"
+            label="Cancel"
             value=""
             className="w-40 h-11"
           ></Button>

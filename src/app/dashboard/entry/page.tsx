@@ -8,7 +8,6 @@ import PurchaseEntry from "./components/PurchaseEntry";
 import { PurchaseEntryData } from "@/app/types/PurchaseEntry";
 import PaginationTable from "@/app/components/common/PaginationTable";
 import {
-  confirmPurchasePayment,
   getPurchase,
 } from "@/app/services/PurchaseEntryService";
 import { getSupplierById } from "@/app/services/SupplierService";
@@ -16,7 +15,6 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import Link from "next/link";
 import { format } from "date-fns";
 import { FaArrowDown, FaArrowUp } from "react-icons/fa";
-import { toast } from "react-toastify";
 import Loader from "@/app/components/common/Loader";
 
 const Page = () => {
@@ -175,22 +173,22 @@ const Page = () => {
     return sorted;
   };
 
-  const handleConfirmPayment = async (invId: string) => {
-    try {
-      await confirmPurchasePayment(invId);
-      toast.success("Payment status updated to Paid", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      window.location.reload();
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to update payment status", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
+  // const handleConfirmPayment = async (invId: string) => {
+  //   try {
+  //     await confirmPurchasePayment(invId);
+  //     toast.success("Payment status updated to Paid", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
+  //     window.location.reload();
+  //   } catch (error) {
+  //     console.log(error);
+  //     toast.error("Failed to update payment status", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
+  //   }
+  // };
 
   const columns = [
     {
@@ -326,14 +324,6 @@ const Page = () => {
               >
                 View
               </Link>
-              {row.paymentStatus?.toLowerCase() === "pending" && (
-                <button
-                  onClick={() => handleConfirmPayment(row.invId!)}
-                  className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-                >
-                  Confirm Payment
-                </button>
-              )}
 
               <button className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg">
                 Edit
@@ -421,7 +411,6 @@ const Page = () => {
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
-              {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div> */}
               <Loader type="spinner" size="md" text="Loading ..." fullScreen={false} />
             </div>
           ) : error ? (

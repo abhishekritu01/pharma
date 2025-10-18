@@ -5,13 +5,21 @@ import { PurchaseReturnData } from '../types/PurchaseReturnData';
 
 export const createPurchaseReturn = async (formData: PurchaseReturnData): Promise<PurchaseReturnData> => {
     try {
+      console.log("🔍 BACKEND - Sending data to API:", formData);
+      console.log("🔍 BACKEND - Items with invId:", formData.purchaseReturnItemDtos.map(item => ({
+        itemName: item.itemName,
+        invId: item.invId,
+        purchaseBillNo: item.purchaseBillNo
+      })));
+      
       const response = await api.post<{ data: PurchaseReturnData; message: string; status: string }>(
         'pharma/purchaseReturn/save',
         formData
       );
-      console.log("API Response:", response.data); // Debug response
+      console.log("🔍 BACKEND - API Response:", response.data);
       return response.data.data;
     } catch (error: unknown) {
+      console.log("🔍 BACKEND - Error occurred:", error);
       if (error instanceof AxiosError) {
         const message = error.response?.data?.message || 'An error occurred while creating the purchase return.';
         throw new Error(message);
@@ -46,5 +54,20 @@ export const createPurchaseReturn = async (formData: PurchaseReturnData): Promis
     } catch (error) {
         console.error('Error fetching Purchase Return:', error);
         throw new Error('Failed to fetch Purchase Return data');
+    }
+};
+
+
+  export const getCreditNote = async (supplierId: string) => {
+    try {
+        const token = localStorage.getItem("authToken");
+        const response = await api.get(`pharma/purchaseReturn/creditNote/${supplierId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        return response.data.data;
+    } catch (error) {
+        console.error('Error fetching Credit Note:', error);
+        throw new Error('Failed to fetch Credit Note data');
     }
 };

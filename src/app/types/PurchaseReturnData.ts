@@ -17,6 +17,7 @@ export interface PurchaseReturnItem {
   purchaseBillOptions?: OptionType[];
   supplierName?: string;
   supplierId?: string;
+  invId?: string;
 }
 
 export interface PurchaseReturnData {

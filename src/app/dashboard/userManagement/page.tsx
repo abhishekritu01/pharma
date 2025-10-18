@@ -77,7 +77,7 @@ const Page = () => {
       accessor: (row: UserData) => {
         const isActive = row.enabled === true;
 
-        const bgClass = isActive ? "bg-green" : "bg-danger";
+        const bgClass = isActive ? "bg-green" : "bg-secondaryRed";
         const textClass = isActive ? "text-green" : "text-danger";
 
         return (
@@ -137,23 +137,9 @@ const Page = () => {
     fetchPharmacies();
   }, []);
 
-  // const fetchUser = async (pharmacyId?: number) => {
-  //   try {
-  //     const response = await getUserOfPharmacy(pharmacyId);
-
-  //     const users = response?.data || response?.users || [];
-  //     setUser(users);
-  //   } catch (error) {
-  //     toast.error("Failed to fetch members");
-  //     console.error("Failed to fetch users:", error);
-  //     setError("Failed to load user data");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const fetchUser = async (pharmacyId?: number) => {
-    if (!pharmacyId) return; // prevent call if no pharmacyId
+    if (!pharmacyId) return; 
 
     try {
       const response = await getUserOfPharmacy(pharmacyId);
