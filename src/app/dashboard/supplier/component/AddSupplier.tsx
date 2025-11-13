@@ -30,17 +30,24 @@ const AddSupplier: React.FC<SupplierProps> = ({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-  
+
   const [formData, setFormData] = useState<SupplierData>({
     supplierId: "",
     supplierName: "",
+    contactPerson: "",
     supplierMobile: 0,
     supplierEmail: "",
     supplierGstinNo: "",
     supplierGstType: "",
+    supplierDlno: "",
     supplierAddress: "",
+    supplierStreet: "",
+    supplierCity: "",
+    supplierZip: "",
+    supplierState: "",
+    supplierStatus: "",
+    pharmacy_id: "",
   });
-
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -147,69 +154,68 @@ const AddSupplier: React.FC<SupplierProps> = ({
   // };
 
   const addSupplier = async (e: React.MouseEvent<HTMLButtonElement>) => {
-  e.preventDefault();
-  setValidationErrors({});
+    e.preventDefault();
+    setValidationErrors({});
 
-  try {
-    supplierSchema.parse(formData);
+    try {
+      supplierSchema.parse(formData);
 
-    if (formData.supplierId) {
-      // 🔹 Update supplier (skip duplicate check)
-      await updateSupplier(formData.supplierId, formData);
-      toast.success("Supplier updated successfully", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    } else {
-      // 🔹 Create supplier (run duplicate check here)
-      const exists = await checkSupplierDuplicate({
-        supplierName: formData.supplierName,
-        supplierMobile: String(formData.supplierMobile),
-        supplierGstinNo: formData.supplierGstinNo,
-      });
+      if (formData.supplierId) {
+        // 🔹 Update supplier (skip duplicate check)
+        await updateSupplier(formData.supplierId, formData);
+        toast.success("Supplier updated successfully", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } else {
+        // 🔹 Create supplier (run duplicate check here)
+        const exists = await checkSupplierDuplicate({
+          supplierName: formData.supplierName,
+          supplierMobile: String(formData.supplierMobile),
+          supplierGstinNo: formData.supplierGstinNo,
+        });
 
-      if (
-        exists.supplierName ||
-        exists.supplierMobile ||
-        exists.supplierGstinNo
-      ) {
-        const newErrors: Record<string, string> = {};
-        if (exists.supplierName)
-          newErrors.supplierName = "Supplier name already exists";
-        if (exists.supplierMobile)
-          newErrors.supplierMobile = "Mobile number already exists";
-        if (exists.supplierGstinNo)
-          newErrors.supplierGstinNo = "GSTIN number already exists";
-        setValidationErrors(newErrors);
-        return;
+        if (
+          exists.supplierName ||
+          exists.supplierMobile ||
+          exists.supplierGstinNo
+        ) {
+          const newErrors: Record<string, string> = {};
+          if (exists.supplierName)
+            newErrors.supplierName = "Supplier name already exists";
+          if (exists.supplierMobile)
+            newErrors.supplierMobile = "Mobile number already exists";
+          if (exists.supplierGstinNo)
+            newErrors.supplierGstinNo = "GSTIN number already exists";
+          setValidationErrors(newErrors);
+          return;
+        }
+
+        await createSupplier(formData);
+        toast.success("Supplier created successfully", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
 
-      await createSupplier(formData);
-      toast.success("Supplier created successfully", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      setShowDrawer(false);
+      onSuccess?.();
+    } catch (error) {
+      console.error("Error:", error);
+      if (error instanceof ZodError) {
+        const formattedErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as string;
+          formattedErrors[field] = err.message;
+        });
+        setValidationErrors(formattedErrors);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Unknown error occurred");
+      }
     }
-
-    setShowDrawer(false);
-    onSuccess?.();
-  } catch (error) {
-    console.error("Error:", error);
-    if (error instanceof ZodError) {
-      const formattedErrors: Record<string, string> = {};
-      error.errors.forEach((err) => {
-        const field = err.path[0] as string;
-        formattedErrors[field] = err.message;
-      });
-      setValidationErrors(formattedErrors);
-    } else if (error instanceof Error) {
-      toast.error(error.message);
-    } else {
-      toast.error("Unknown error occurred");
-    }
-  }
-};
-
+  };
 
   useEffect(() => {
     const fetchSupplier = async () => {
@@ -257,15 +263,52 @@ const AddSupplier: React.FC<SupplierProps> = ({
             {[
               {
                 id: "supplierName",
-                label: "Supplier Name",
+                label: "Supplier",
                 type: "text",
                 maxLength: 50,
               },
+              {
+                id: "contactPerson",
+                label: "Contact Person Name",
+                type: "text",
+                maxLength: 50,
+              },
+            ].map(({ id, label, type, maxLength }) => (
+              <div key={id} className="flex flex-col">
+                <InputField
+                  type={type}
+                  id={id}
+                  label={
+                    <>
+                      {label} <span className="text-tertiaryRed">*</span>
+                    </>
+                  }
+                  maxLength={maxLength}
+                  value={String(formData[id as keyof SupplierData] ?? "")}
+                  onChange={(e) => handleChange(e)}
+                />
+                {validationErrors[id] && (
+                  <span className="text-tertiaryRed text-sm">
+                    {validationErrors[id]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="relative mt-4 grid grid-cols-2 gap-4">
+            {[
               {
                 id: "supplierMobile",
                 label: "Mobile Number",
                 type: "text",
                 maxLength: 10,
+              },
+              {
+                id: "supplierEmail",
+                label: "Email",
+                type: "text",
+                maxLength: 50,
               },
             ].map(({ id, label, type, maxLength }) => (
               <div key={id} className="flex flex-col">
@@ -293,7 +336,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               { id: "supplierGstinNo", label: "GSTIN Number", maxLength: 15 },
-              { id: "supplierGstType", label: "GST Type", type: "select" }, 
+              { id: "supplierGstType", label: "GST Type", type: "select" },
             ].map(({ id, label, maxLength }) => (
               <div key={id} className="relative w-72">
                 {id === "supplierGstType" ? (
@@ -315,9 +358,8 @@ const AddSupplier: React.FC<SupplierProps> = ({
                       <option value="" disabled>
                         Select
                       </option>
-                      <option value="CGST">CGST</option>
-                      <option value="SGST">SGST</option>
                       <option value="CGST+SGST">CGST+SGST</option>
+                      <option value="IGST">IGST</option>
                     </select>
                   </>
                 ) : (
@@ -342,8 +384,125 @@ const AddSupplier: React.FC<SupplierProps> = ({
             ))}
           </div>
 
-          
-          <div className="relative mt-8 grid grid-cols-2 gap-4">
+          <div className="relative mt-4 grid grid-cols-2 gap-4">
+            {[
+              {
+                id: "supplierDlno",
+                label: "DL Number",
+                type: "text",
+                maxLength: 20,
+              },
+              {
+                id: "supplierAddress",
+                label: "Address",
+                type: "text",
+                maxLength: 50,
+              },
+            ].map(({ id, label, type, maxLength }) => (
+              <div key={id} className="flex flex-col">
+                <InputField
+                  type={type}
+                  id={id}
+                  label={
+                    <>
+                      {label} 
+                      {id === "supplierDlno" && (
+                      <span className="text-tertiaryRed">*</span>
+                       )}
+                    </>
+                  }
+                  maxLength={maxLength}
+                  value={String(formData[id as keyof SupplierData] ?? "")}
+                  onChange={(e) => handleChange(e)}
+                />
+                {validationErrors[id] && (
+                  <span className="text-tertiaryRed text-sm">
+                    {validationErrors[id]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+             <div className="relative mt-4 grid grid-cols-2 gap-4">
+            {[
+              {
+                id: "supplierStreet",
+                label: "Street",
+                type: "text",
+                maxLength: 50,
+              },
+              {
+                id: "supplierZip",
+                label: "ZIP Code",
+                type: "text",
+                maxLength: 6,
+              },
+            ].map(({ id, label, type, maxLength }) => (
+              <div key={id} className="flex flex-col">
+                <InputField
+                  type={type}
+                  id={id}
+                  label={
+                    <>
+                      {label} 
+                      {id === "supplierZip" && (
+                      <span className="text-tertiaryRed">*</span>
+                      )}
+                    </>
+                  }
+                  maxLength={maxLength}
+                  value={String(formData[id as keyof SupplierData] ?? "")}
+                  onChange={(e) => handleChange(e)}
+                />
+                {validationErrors[id] && (
+                  <span className="text-tertiaryRed text-sm">
+                    {validationErrors[id]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+               <div className="relative mt-4 grid grid-cols-2 gap-4">
+            {[
+              {
+                id: "supplierCity",
+                label: "City",
+                type: "text",
+                maxLength: 50,
+              },
+              {
+                id: "supplierState",
+                label: "State",
+                type: "text",
+                maxLength: 50,
+              },
+            ].map(({ id, label, type, maxLength }) => (
+              <div key={id} className="flex flex-col">
+                <InputField
+                  type={type}
+                  id={id}
+                  label={
+                    <>
+                      {label} <span className="text-tertiaryRed">*</span>
+                    </>
+                  }
+                  maxLength={maxLength}
+                  value={String(formData[id as keyof SupplierData] ?? "")}
+                  onChange={(e) => handleChange(e)}
+                />
+                {validationErrors[id] && (
+                  <span className="text-tertiaryRed text-sm">
+                    {validationErrors[id]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+
+          {/* <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[{ id: "supplierEmail", label: "Email" }].map(({ id, label }) => (
               <div key={id} className="relative w-72">
                 <InputField
@@ -364,6 +523,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
               </div>
             ))}
           </div>
+          
 
           <div className="mt-8">
             <TextareaField
@@ -374,7 +534,7 @@ const AddSupplier: React.FC<SupplierProps> = ({
               cols={40}
               onChange={(e) => handleChange(e)}
             />
-          </div>
+          </div> */}
         </div>
 
         <div>

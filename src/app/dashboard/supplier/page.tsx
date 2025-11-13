@@ -47,8 +47,12 @@ const Page = () => {
 
   const columns = [
     {
-      header: "Supplier Name",
+      header: "Supplier",
       accessor: "supplierName" as keyof SupplierData,
+    },
+      {
+      header: "Contact Person",
+      accessor: "contactPerson" as keyof SupplierData,
     },
     {
       header: "Contact No.",
@@ -57,6 +61,10 @@ const Page = () => {
     {
       header: "Email ID",
       accessor: "supplierEmail" as keyof SupplierData,
+    },
+    {
+      header: "DL Number",
+      accessor: "supplierDlno" as keyof SupplierData,
     },
     {
       header: "Action",

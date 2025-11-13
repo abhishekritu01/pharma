@@ -14,6 +14,9 @@ import { VariantData } from "@/app/types/VariantData";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { z, ZodError } from "zod";
+import Select, { components } from "react-select";
+import { customSelectStyles } from "@/app/components/common/DropdownStyle";
+import { dropdown } from "@/app/components/common/Dropdown";
 
 interface ItemProps {
   setShowDrawer: (value: boolean) => void;
@@ -31,6 +34,14 @@ const AddItem: React.FC<ItemProps> = ({
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+
+  const gstOptions = [
+    { label: "0%", value: "0" },
+    { label: "5%", value: "5" },
+    { label: "12%", value: "12" },
+    { label: "18%", value: "18" },
+    { label: "28%", value: "28" },
+  ];
 
   const [variant, setVariant] = useState<VariantData[]>([]);
 
@@ -157,70 +168,6 @@ const AddItem: React.FC<ItemProps> = ({
     }
   };
 
-  // const addItem = async (e: { preventDefault: () => void }) => {
-  //   e.preventDefault();
-  //   setValidationErrors({});
-
-  //   try {
-  //     itemSchema.parse(formData);
-
-  //     if (formData.mrpSalePrice <= formData.purchasePrice) {
-  //       toast.error("MRP must be greater than Purchase Price", {
-  //         position: "top-right",
-  //         autoClose: 3000,
-  //       });
-  //       return;
-  //     }
-
-  //     if (!itemId) {
-  //       const duplicateCheck = await checkDuplicateItem({
-  //         itemName: formData.itemName,
-  //         manufacturer: formData.manufacturer,
-  //       });
-
-  //       if (duplicateCheck.duplicate) {
-  //         setValidationErrors({
-  //           itemName:
-  //             "Item with the same name and manufacturer already exists.",
-  //         });
-  //         return;
-  //       }
-  //     }
-
-  //     if (itemId) {
-  //       await updateItem(itemId, formData);
-  //       toast.success("Item updated successfully", {
-  //         position: "top-right",
-  //         autoClose: 3000,
-  //       });
-  //     } else {
-  //       await createItem(formData);
-  //       toast.success("Item created successfully", {
-  //         position: "top-right",
-  //         autoClose: 3000,
-  //       });
-  //     }
-
-  //     setShowDrawer(false);
-  //     onSuccess?.();
-  //   } catch (error) {
-  //     console.error("Error:", error);
-
-  //     if (error instanceof ZodError) {
-  //       const formattedErrors: Record<string, string> = {};
-  //       error.errors.forEach((err) => {
-  //         const field = err.path[0] as string;
-  //         formattedErrors[field] = err.message;
-  //       });
-  //       setValidationErrors(formattedErrors);
-  //     } else if (error instanceof Error) {
-  //       console.error("Unexpected Error:", error.message);
-  //     } else {
-  //       console.error("Unknown error occurred", error);
-  //     }
-  //   }
-  // };
-
   const addItem = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setValidationErrors({});
@@ -254,11 +201,11 @@ const AddItem: React.FC<ItemProps> = ({
       let savedItem;
       if (itemId) {
         await updateItem(itemId, formData);
-        savedItem = await getItemById(itemId); // ✅ fresh data from backend
+        savedItem = await getItemById(itemId);
         toast.success("Item updated successfully", { autoClose: 3000 });
       } else {
         const newItem = await createItem(formData);
-        savedItem = await getItemById(newItem.itemId); // ✅ fetch new item
+        savedItem = await getItemById(newItem.itemId);
         toast.success("Item created successfully", { autoClose: 3000 });
       }
       setShowDrawer(false);
@@ -495,7 +442,7 @@ const AddItem: React.FC<ItemProps> = ({
             ))}
           </div>
 
-          <div className="relative mt-8 grid grid-cols-2 gap-4">
+          {/* <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               {
                 id: "gstPercentage",
@@ -520,6 +467,69 @@ const AddItem: React.FC<ItemProps> = ({
                   value={String(formData[id as keyof ItemData] ?? "")}
                   onChange={(e) => handleChange(e)}
                 />
+                {validationErrors[id] && (
+                  <span className="text-tertiaryRed text-sm">
+                    {validationErrors[id]}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div> */}
+
+          <div className="relative mt-8 grid grid-cols-2 gap-4">
+            {[
+              { id: "gstPercentage", label: "GST Percentage", type: "select" },
+              { id: "hsnNo", label: "HSN Number", type: "text" },
+            ].map(({ id, label, type }) => (
+              <div key={id} className="flex flex-col w-full relative">
+                {id === "gstPercentage" ? (
+                  <div className="relative">
+                    <Select
+                      id={id}
+                      options={gstOptions}
+                      value={gstOptions.find(
+                        (opt) =>
+                          opt.value === String(formData[id as keyof ItemData])
+                      )}
+                      onChange={(option) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          [id]: Number((option as any)?.value ?? 0), 
+                        }))
+                      }
+                      placeholder="Select GST %"
+                      className="w-full"
+                      classNamePrefix="react-select"
+                      styles={dropdown()}
+                      components={{
+                        SingleValue: (props) => (
+                          <components.SingleValue {...props}>
+                            {props.data.label}
+                          </components.SingleValue>
+                        ),
+                      }}
+                    />
+                    <label
+                      htmlFor={id}
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      {label} <span className="text-tertiaryRed">*</span>
+                    </label>
+                  </div>
+                ) : (
+                  <InputField
+                    type={type}
+                    id={id}
+                    label={
+                      <>
+                        {label} <span className="text-tertiaryRed">*</span>
+                      </>
+                    }
+                    value={String(formData[id as keyof ItemData] ?? "")}
+                    onChange={(e) => handleChange(e)}
+                  />
+                )}
+
                 {validationErrors[id] && (
                   <span className="text-tertiaryRed text-sm">
                     {validationErrors[id]}

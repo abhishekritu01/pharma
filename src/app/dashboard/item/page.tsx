@@ -15,7 +15,6 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 
-
 // Interface for validation errors from CSV upload
 interface ValidationError {
   row?: number;
@@ -39,103 +38,119 @@ const Page = () => {
   const [action, setAction] = useState<Action | undefined>(undefined);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    []
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropAreaRef = useRef<HTMLDivElement>(null);
 
   // Handle CSV file upload with minimum loading time
-  const handleFileUpload = useCallback(async (file: File) => {
-    setUploadLoading(true);
-    setShowLoader(true);
+  const handleFileUpload = useCallback(
+    async (file: File) => {
+      setUploadLoading(true);
+      setShowLoader(true);
 
-    const startTime = Date.now();
-    const MIN_LOADING_TIME = 5000; // 5 seconds
+      const startTime = Date.now();
+      const MIN_LOADING_TIME = 5000; // 5 seconds
 
-    try {
-      const response = await uploadItemsCsv(file);
+      try {
+        const response = await uploadItemsCsv(file);
 
-      // Calculate remaining time to ensure minimum 5 seconds loading
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
+        // Calculate remaining time to ensure minimum 5 seconds loading
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
 
-      if (remainingTime > 0) {
-        await new Promise(resolve => setTimeout(resolve, remainingTime));
-      }
-
-      toast.success(response.message || 'CSV file uploaded successfully!', { autoClose: 3000 });
-
-      setShowUploadModal(false);
-      setValidationErrors([]);
-
-      setTimeout(() => {
-        fetchItemsWithVariants();
-      }, 2000);
-
-    } catch (error: unknown) {
-      console.error('Upload error:', error);
-
-
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
-
-      if (remainingTime > 0) {
-        await new Promise(resolve => setTimeout(resolve, remainingTime));
-      }
-
-      if (error instanceof Error) {
-
-        try {
-          const errorData = JSON.parse(error.message);
-          if (errorData.validationErrors && Array.isArray(errorData.validationErrors)) {
-            const parsedErrors: ValidationError[] = errorData.validationErrors.map((err: string) => {
-
-              const rowMatch = err.match(/Row (\d+)/);
-              const columnMatch = err.match(/Column '([^']+)'/);
-              const messageMatch = err.match(/: (.+)$/);
-
-              return {
-                row: rowMatch ? parseInt(rowMatch[1]) : undefined,
-                column: columnMatch ? columnMatch[1] : undefined,
-                message: messageMatch ? messageMatch[1] : err
-              };
-            });
-
-            setValidationErrors(parsedErrors);
-          } else {
-            toast.error(errorData.message || 'An error occurred while uploading the file.');
-          }
-        } catch {
-
-          toast.error(error.message || 'An error occurred while uploading the file.');
+        if (remainingTime > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingTime));
         }
-      } else {
-        toast.error('An unknown error occurred while uploading the file.');
-      }
-    } finally {
-      setUploadLoading(false);
-      setShowLoader(false);
 
-      if (fileInputRef.current && validationErrors.length === 0) {
-        fileInputRef.current.value = '';
+        toast.success(response.message || "CSV file uploaded successfully!", {
+          autoClose: 3000,
+        });
+
+        setShowUploadModal(false);
+        setValidationErrors([]);
+
+        setTimeout(() => {
+          fetchItemsWithVariants();
+        }, 2000);
+      } catch (error: unknown) {
+        console.error("Upload error:", error);
+
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
+
+        if (remainingTime > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingTime));
+        }
+
+        if (error instanceof Error) {
+          try {
+            const errorData = JSON.parse(error.message);
+            if (
+              errorData.validationErrors &&
+              Array.isArray(errorData.validationErrors)
+            ) {
+              const parsedErrors: ValidationError[] =
+                errorData.validationErrors.map((err: string) => {
+                  const rowMatch = err.match(/Row (\d+)/);
+                  const columnMatch = err.match(/Column '([^']+)'/);
+                  const messageMatch = err.match(/: (.+)$/);
+
+                  return {
+                    row: rowMatch ? parseInt(rowMatch[1]) : undefined,
+                    column: columnMatch ? columnMatch[1] : undefined,
+                    message: messageMatch ? messageMatch[1] : err,
+                  };
+                });
+
+              setValidationErrors(parsedErrors);
+            } else {
+              toast.error(
+                errorData.message ||
+                  "An error occurred while uploading the file."
+              );
+            }
+          } catch {
+            toast.error(
+              error.message || "An error occurred while uploading the file."
+            );
+          }
+        } else {
+          toast.error("An unknown error occurred while uploading the file.");
+        }
+      } finally {
+        setUploadLoading(false);
+        setShowLoader(false);
+
+        if (fileInputRef.current && validationErrors.length === 0) {
+          fileInputRef.current.value = "";
+        }
       }
-    }
-  }, [validationErrors.length]);
+    },
+    [validationErrors.length]
+  );
 
   // Handle file selection with validation
-  const handleFileSelect = useCallback((file: File) => {
-    if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
-      handleFileUpload(file);
-    } else {
-      toast.error('Please upload a valid CSV file');
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (
+        file.type === "text/csv" ||
+        file.name.toLowerCase().endsWith(".csv")
+      ) {
+        handleFileUpload(file);
+      } else {
+        toast.error("Please upload a valid CSV file");
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
-    }
-  }, [handleFileUpload]);
-
+    },
+    [handleFileUpload]
+  );
 
   // Drag and drop event handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -158,17 +173,20 @@ const Page = () => {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      handleFileSelect(file);
-    }
-  }, [handleFileSelect]);
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const file = files[0];
+        handleFileSelect(file);
+      }
+    },
+    [handleFileSelect]
+  );
 
   // Download CSV template with required headers
   const downloadCSVTemplate = () => {
@@ -184,9 +202,8 @@ const Page = () => {
       "purchase_price_per_unit",
       "purchase_unit",
       "unit_name",
-      "variant_name"
+      "variant_name",
     ];
-
 
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(",");
 
@@ -199,13 +216,15 @@ const Page = () => {
     link.click();
     document.body.removeChild(link);
 
-
     toast.info(
       <div>
         <p>Template downloaded with required columns:</p>
         <ul className="list-disc pl-5 mt-2 text-sm">
           <li>All fields are required</li>
-          <li>Numeric fields must contain only numbers (gst_percentage, prices, purchase_unit)</li>
+          <li>
+            Numeric fields must contain only numbers (gst_percentage, prices,
+            purchase_unit)
+          </li>
           <li>Do not modify the column names</li>
         </ul>
       </div>,
@@ -240,8 +259,8 @@ const Page = () => {
       accessor: "itemName" as keyof ItemData,
     },
     {
-      header: "Manufacturer",
-      accessor: "manufacturer" as keyof ItemData,
+      header: "HSN No.",
+      accessor: "hsnNo" as keyof ItemData,
     },
     {
       header: "Variant Name",
@@ -250,6 +269,14 @@ const Page = () => {
     {
       header: "Unit Name",
       accessor: "unitName" as keyof ItemData,
+    },
+    {
+      header: "Purchase Price",
+      accessor: "purchasePrice" as keyof ItemData,
+    },
+    {
+      header: "MRP",
+      accessor: "mrpSalePrice" as keyof ItemData,
     },
     {
       header: "Action",
@@ -374,7 +401,6 @@ const Page = () => {
 
   // Handle click on drop area to trigger file input
   const handleDropAreaClick = (e: React.MouseEvent) => {
-
     if (e.target === e.currentTarget) {
       fileInputRef.current?.click();
     }
@@ -402,33 +428,57 @@ const Page = () => {
             {/* Loading state */}
             {showLoader ? (
               <div className="flex flex-col items-center justify-center py-8">
-                <Loader type="spinner" size="md" text="Uploading CSV file..." fullScreen={false} />
-                <p className="mt-4 text-sm text-gray-500">Please wait while we process your file.</p>
+                <Loader
+                  type="spinner"
+                  size="md"
+                  text="Uploading CSV file..."
+                  fullScreen={false}
+                />
+                <p className="mt-4 text-sm text-gray-500">
+                  Please wait while we process your file.
+                </p>
               </div>
             ) : validationErrors.length > 0 ? (
               // Validation errors display
               <div className="flex flex-col h-full">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-red-600">Upload Failed</h2>
-                  <button onClick={() => setShowUploadModal(false)} className="text-gray-500 hover:text-gray-700">
+                  <h2 className="text-xl font-semibold text-red-600">
+                    Upload Failed
+                  </h2>
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
                     <X size={20} />
                   </button>
                 </div>
-                <p className="text-gray-700 mb-4">Please correct the following errors and try again:</p>
+                <p className="text-gray-700 mb-4">
+                  Please correct the following errors and try again:
+                </p>
                 <div className="overflow-y-auto flex-grow mb-4 max-h-96">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Row</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Column</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Error</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Row
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Column
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Error
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {validationErrors.map((error, index) => (
                         <tr key={index}>
-                          <td className="px-4 py-2 whitespace-nowrap">{error.row || 'N/A'}</td>
-                          <td className="px-4 py-2 whitespace-nowrap">{error.column || 'N/A'}</td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {error.row || "N/A"}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {error.column || "N/A"}
+                          </td>
                           <td className="px-4 py-2">{error.message}</td>
                         </tr>
                       ))}
@@ -450,7 +500,7 @@ const Page = () => {
                     onClick={() => {
                       setValidationErrors([]);
                       if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
+                        fileInputRef.current.value = "";
                       }
                     }}
                   >
@@ -465,35 +515,41 @@ const Page = () => {
                   <h1 className="text-xl font-semibold text-gray-700">
                     Upload CSV File
                   </h1>
-                  <button onClick={() => setShowUploadModal(false)} className="text-gray-500 hover:text-gray-700">
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
                     <X size={20} />
                   </button>
                 </div>
-                <div className="flex justify-between text-gray-500 text-sm mb-6" >
+                <div className="flex justify-between text-gray-500 text-sm mb-6">
                   <p className=" text-sm mb-6 ">
                     Supported Format: CSV file only
                   </p>
-                  <p className=" text-sm mb-6">
-                    Max size: 5 MB
-                  </p>
+                  <p className=" text-sm mb-6">Max size: 5 MB</p>
                 </div>
-
 
                 <div
                   ref={dropAreaRef}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging
-                    ? 'border-darkPurple bg-purple-50'
-                    : 'border-gray-300 hover:border-darkPurple hover:bg-purple-50'
-                    }`}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                    isDragging
+                      ? "border-darkPurple bg-purple-50"
+                      : "border-gray-300 hover:border-darkPurple hover:bg-purple-50"
+                  }`}
                   onDragEnter={handleDragEnter}
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                   onClick={handleDropAreaClick}
                 >
-                  <FaCloudUploadAlt size={48} className="mx-auto text-darkPurple mb-4" />
+                  <FaCloudUploadAlt
+                    size={48}
+                    className="mx-auto text-darkPurple mb-4"
+                  />
                   <p className="text-lg font-medium text-gray-700 mb-2">
-                    {isDragging ? 'Drop your CSV file here' : 'Drag & Drop your CSV file here'}
+                    {isDragging
+                      ? "Drop your CSV file here"
+                      : "Drag & Drop your CSV file here"}
                   </p>
                   <p className="text-sm text-gray-500 mb-4">or</p>
 
@@ -517,10 +573,15 @@ const Page = () => {
                 </div>
 
                 <div className="bg-primaryPurple border border-darkPurple rounded-md p-4 mt-6">
-                  <h3 className="text-sm font-medium text-grey mb-2">Important Notes:</h3>
+                  <h3 className="text-sm font-medium text-grey mb-2">
+                    Important Notes:
+                  </h3>
                   <ul className="text-xs text-grey list-disc pl-5">
                     <li>All fields are required</li>
-                    <li>Numeric fields (gst_percentage, prices, purchase_unit) must contain only numbers</li>
+                    <li>
+                      Numeric fields (gst_percentage, prices, purchase_unit)
+                      must contain only numbers
+                    </li>
                     <li>Download the template to ensure correct format</li>
                   </ul>
                 </div>
@@ -580,7 +641,12 @@ const Page = () => {
         {/* Loading, error, or data display */}
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <Loader type="spinner" size="md" text="Item List is loading ..." fullScreen={false} />
+            <Loader
+              type="spinner"
+              size="md"
+              text="Item List is loading ..."
+              fullScreen={false}
+            />
           </div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">

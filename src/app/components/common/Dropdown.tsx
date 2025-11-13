@@ -1,12 +1,13 @@
 import { StylesConfig, GroupBase } from "react-select";
 
-export const customSelectStyles = <
+export const dropdown = <
   T extends { label: string; value: string }
 >(): StylesConfig<T, false, GroupBase<T>> => ({
   control: (provided, state) => ({
     ...provided,
     width: 288,
-    borderColor: state.isFocused ? "#4B0082" : "#D1D5DB",
+    height: 50,
+    borderColor: state.isFocused ? "#4B0082" : "#9CA3AF",
     boxShadow: "none",
     borderRadius: "0.5rem",
     "&:hover": {
@@ -18,18 +19,14 @@ export const customSelectStyles = <
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected
-      ? "#F3F4F6"
+      ? "#4B0082" // selected option bg
       : state.isFocused
-      ? "#4B0082"
+      ? "#4B0082" // hover bg
       : "white",
-    color: state.isSelected
-      ? "#111827"
-      : state.isFocused
-      ? "white"
-      : "#111827",
+    color: state.isSelected || state.isFocused ? "white" : "#111827",
     cursor: "pointer",
     borderRadius: "0.375rem",
-    margin: "2px 8px",
+    padding: "8px 12px",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -39,9 +36,10 @@ export const customSelectStyles = <
     },
   }),
 
-  singleValue: (provided) => ({
+  singleValue: (provided, state) => ({
     ...provided,
-    color: "#111827",
+    color: "#111827", // keep control text black
+    fontWeight: 500,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -64,12 +62,13 @@ export const customSelectStyles = <
     zIndex: 20,
     width: 288,
     borderRadius: "0.5rem",
-    overflowX: "hidden", 
+    overflowX: "hidden",
     marginTop: "4px",
   }),
 
   menuList: (provided) => ({
     ...provided,
     padding: 0,
+    overflowX: "hidden",
   }),
 });
