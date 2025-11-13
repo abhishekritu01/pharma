@@ -14,8 +14,7 @@ import { VariantData } from "@/app/types/VariantData";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { z, ZodError } from "zod";
-import Select, { components } from "react-select";
-import { customSelectStyles } from "@/app/components/common/DropdownStyle";
+import Select, { components, SingleValue } from "react-select";
 import { dropdown } from "@/app/components/common/Dropdown";
 
 interface ItemProps {
@@ -35,7 +34,12 @@ const AddItem: React.FC<ItemProps> = ({
     Record<string, string>
   >({});
 
-  const gstOptions = [
+  type GstOption = {
+    value: string;
+    label: string;
+  };
+
+  const gstOptions: GstOption[] = [
     { label: "0%", value: "0" },
     { label: "5%", value: "5" },
     { label: "12%", value: "12" },
@@ -491,10 +495,16 @@ const AddItem: React.FC<ItemProps> = ({
                         (opt) =>
                           opt.value === String(formData[id as keyof ItemData])
                       )}
-                      onChange={(option) =>
+                      // onChange={(option) =>
+                      //   setFormData((prev) => ({
+                      //     ...prev,
+                      //     [id]: Number((option as any)?.value ?? 0),
+                      //   }))
+                      // }
+                      onChange={(option: SingleValue<GstOption>) =>
                         setFormData((prev) => ({
                           ...prev,
-                          [id]: Number((option as any)?.value ?? 0), 
+                          [id]: Number(option?.value ?? 0),
                         }))
                       }
                       placeholder="Select GST %"

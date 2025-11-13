@@ -1,6 +1,5 @@
 import Button from "@/app/components/common/Button";
 import InputField from "@/app/components/common/InputField";
-import TextareaField from "@/app/components/common/TextareaFeild";
 import { supplierSchema } from "@/app/schema/SupplierSchema";
 import {
   checkSupplierDuplicate,

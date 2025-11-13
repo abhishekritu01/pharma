@@ -36,7 +36,7 @@ export const dropdown = <
     },
   }),
 
-  singleValue: (provided, state) => ({
+  singleValue: (provided) => ({
     ...provided,
     color: "#111827", // keep control text black
     fontWeight: 500,
