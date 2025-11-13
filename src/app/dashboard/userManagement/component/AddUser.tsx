@@ -30,11 +30,15 @@ interface Option {
   label: string;
 }
 
-const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, }) => {
+const AddUser: React.FC<UserProps> = ({
+  setShowDrawer,
+  id,
+  action,
+  onSuccess,
+}) => {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
-
   const [, setPharmacies] = useState<PharmacyData[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<Option[]>([]);
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -68,7 +72,12 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
   ) => {
     const { id, value } = e.target;
 
-    const updatedValue: string | number = value;
+    let updatedValue: string | number = value;
+
+    if (id === "phone") {
+      const digitsOnly = value.replace(/\D/g, "");
+      updatedValue = digitsOnly.slice(0, 15);
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -91,8 +100,8 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
         }));
       } else {
         setValidationErrors((prev) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { [id]: _, ...rest } = prev;
+          const rest = { ...prev };
+          delete rest[id];
           return rest;
         });
       }
@@ -142,7 +151,6 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
             roles: userData.roles || [],
           }));
 
-          // Set selected roles for multi-select
           const roleOptionsFormatted = (userData.roles || []).map(
             (role: string) => ({
               value: role,
@@ -167,9 +175,18 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
     setValidationErrors({});
 
     try {
+      //       if (action === "edit") {
+      // const { password: _password, ...rest } = formData;
+      //         userSchema.omit({ password: true }).parse(rest);
+      //       } else {
+      //         userSchema.parse(formData);
+      //     }
+
       if (action === "edit") {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password, ...rest } = formData;
+        const rest: Omit<UserData, "password"> & { password?: string } = {
+          ...formData,
+        };
+        delete rest.password;
         userSchema.omit({ password: true }).parse(rest);
       } else {
         userSchema.parse(formData);
@@ -192,7 +209,7 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
       }
 
       setShowDrawer(false);
-       onSuccess?.(formData.pharmacyId!);
+      onSuccess?.(formData.pharmacyId!);
     } catch (error) {
       console.error("Error:", error);
       if (error instanceof ZodError) {
@@ -428,8 +445,8 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
               {
                 id: "phone",
                 label: "Phone",
-                type: "text",
-                maxLength: 10,
+                type: "tel",
+                maxLength: 15,
               },
               {
                 id: "city",
@@ -442,7 +459,11 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
                 <InputField
                   type={type}
                   id={id}
-                  label={<>{label}</>}
+                  label={
+                    <>
+                      {label} <span className="text-tertiaryRed">*</span>
+                    </>
+                  }
                   maxLength={maxLength}
                   value={String(formData[id as keyof UserData] ?? "")}
                   onChange={(e) => handleChange(e)}
@@ -456,7 +477,9 @@ const AddUser: React.FC<UserProps> = ({ setShowDrawer, id, action, onSuccess, })
             ))}
           </div>
         </div>
-        {action === "edit" && <ToggleButton isEnabled={isEnabled} setIsEnabled={setIsEnabled} />}
+        {action === "edit" && (
+          <ToggleButton isEnabled={isEnabled} setIsEnabled={setIsEnabled} />
+        )}
 
         <div>
           <Button
