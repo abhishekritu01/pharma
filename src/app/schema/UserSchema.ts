@@ -10,6 +10,7 @@ export const userSchema = z.object({
     phone: z.string()
         .min(10, "Phone number must be at least 10 digits")
         .max(15, "Phone number must be at most 15 digits")
+        .regex(/^[0-9]+$/, "Phone must contain only numbers")
         .optional(),
     email: z.string().email("Invalid email address").min(1, "Email is required"),
     city: z.string().min(2, "City must be at least 2 characters").max(50, "City must be at most 50 characters").optional(),
