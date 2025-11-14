@@ -328,6 +328,7 @@ const AddUser: React.FC<UserProps> = ({
                 type: "text",
                 maxLength: 10,
               },
+
             ].map(({ id, label, type, maxLength }) => (
               <div key={id} className="flex flex-col">
                 {id === "roles" ? (
