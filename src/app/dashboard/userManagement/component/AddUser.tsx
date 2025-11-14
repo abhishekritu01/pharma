@@ -86,11 +86,9 @@ const AddUser: React.FC<UserProps> = ({
 
     if (id in userSchema.shape) {
       const fieldKey = id as keyof typeof userSchema.shape;
-
       const singleFieldSchema = z.object({
         [fieldKey]: userSchema.shape[fieldKey],
       });
-
       const result = singleFieldSchema.safeParse({ [fieldKey]: updatedValue });
 
       if (!result.success) {
@@ -135,7 +133,6 @@ const AddUser: React.FC<UserProps> = ({
     const fetchUser = async () => {
       try {
         if (!id) return;
-
         if (!formData.pharmacyId) return;
 
         const userId = Number(id);
@@ -167,6 +164,7 @@ const AddUser: React.FC<UserProps> = ({
     };
 
     fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, formData.pharmacyId]);
 
   const addUser = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -175,13 +173,6 @@ const AddUser: React.FC<UserProps> = ({
     setValidationErrors({});
 
     try {
-      //       if (action === "edit") {
-      // const { password: _password, ...rest } = formData;
-      //         userSchema.omit({ password: true }).parse(rest);
-      //       } else {
-      //         userSchema.parse(formData);
-      //     }
-
       if (action === "edit") {
         const rest: Omit<UserData, "password"> & { password?: string } = {
           ...formData,
@@ -235,6 +226,9 @@ const AddUser: React.FC<UserProps> = ({
     setFormData({ ...formData, roles });
   };
 
+  // const borderColorDefault = "#B5B3B3";
+  // const focusColor = "#4B0082";
+
   return (
     <>
       <main className="space-y-4">
@@ -277,6 +271,7 @@ const AddUser: React.FC<UserProps> = ({
               ))}
             </div>
           )}
+
           <div className="relative mt-4 grid grid-cols-2 gap-4">
             {[
               {
@@ -328,87 +323,94 @@ const AddUser: React.FC<UserProps> = ({
                 type: "text",
                 maxLength: 10,
               },
-
             ].map(({ id, label, type, maxLength }) => (
-              <div key={id} className="flex flex-col">
+              <div key={id} className="flex flex-col relative">
                 {id === "roles" ? (
-                  <div className="relative w-full z-50">
+                  <div className="relative w-full">
                     <label
                       htmlFor={id}
-                      className={`absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all ${
-                        selectedRoles && selectedRoles.length
-                          ? "text-purple-950"
-                          : "peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2"
-                      }`}
+                      style={{
+                        position: "absolute",
+                        left: 12,
+                        top: -8,
+                        background: "#ffffff",
+                        padding: "0 6px",
+                        fontSize: 12,
+                        color: "#6B7280",
+                        zIndex: 40,
+                        pointerEvents: "none",
+                      }}
                     >
                       {label} <span className="text-tertiaryRed">*</span>
                     </label>
 
-                    <Select
-                      isMulti
-                      options={roleOptions}
-                      value={selectedRoles}
-                      onChange={handleRoleChange}
-                      placeholder=" "
-                      classNamePrefix="react-select"
-                      className={`peer react-select-container mt-2 ${
-                        validationErrors.roles
-                          ? "border border-red-500 rounded-lg"
-                          : ""
-                      }`}
-                      styles={{
-                        control: (base, state) => ({
-                          ...base,
-                          height: "49px",
-                          padding: "0.375rem 0.75rem",
-                          borderRadius: "0.5rem",
-                          borderColor: state.isFocused ? "#6B21A8" : "#B5B3B3",
-                          boxShadow: state.isFocused ? "#6B21A8" : "none",
-                          backgroundColor: "transparent",
-                          "&:hover": {
-                            borderColor: "#4B0082",
-                          },
-                        }),
-                        placeholder: (base) => ({
-                          ...base,
-                          color: "#6B7280",
-                          fontSize: "0.875rem",
-                        }),
-                        input: (base) => ({
-                          ...base,
-                          color: "#000",
-                        }),
-                        singleValue: (base) => ({
-                          ...base,
-                          color: "#000",
-                        }),
-                        option: (base, state) => ({
-                          ...base,
-                          backgroundColor:
-                            state.isSelected || state.isFocused
-                              ? "#4B0082"
-                              : "#fff",
-                          color:
-                            state.isSelected || state.isFocused
-                              ? "#fff"
-                              : "#000",
-                          cursor: "pointer",
-                          borderRadius: "0.5rem",
-                          margin: "2px",
-                          ":active": {
-                            backgroundColor: "#4B0082",
-                            color: "#fff",
-                          },
-                        }),
-                        menuPortal: (base) => ({
-                          ...base,
-                          zIndex: 9999,
-                        }),
-                      }}
-                      menuPortalTarget={
-                        typeof window !== "undefined" ? document.body : null
-                      }
-                    />
+                    <div className="mt-1">
+                      <Select
+                        isMulti
+                        options={roleOptions}
+                        value={selectedRoles}
+                        onChange={handleRoleChange}
+                        placeholder=" "
+                        classNamePrefix="react-select"
+                        className={`peer react-select-container mt-2 ${
+                          validationErrors.roles
+                            ? "border border-red-500 rounded-lg"
+                            : ""
+                        }`}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            height: "49px",
+                            padding: "0.375rem 0.75rem",
+                            borderRadius: "0.5rem",
+                            borderColor: state.isFocused ? "#6B21A8" : "#B5B3B3",
+                            boxShadow: state.isFocused ? "#6B21A8" : "none",
+                            backgroundColor: "transparent",
+                            "&:hover": {
+                              borderColor: "#4B0082",
+                            },
+                          }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: "#6B7280",
+                            fontSize: "0.875rem",
+                          }),
+                          input: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor:
+                              state.isSelected || state.isFocused
+                                ? "#4B0082"
+                                : "#fff",
+                            color:
+                              state.isSelected || state.isFocused
+                                ? "#fff"
+                                : "#000",
+                            cursor: "pointer",
+                            borderRadius: "0.5rem",
+                            margin: "2px",
+                            ":active": {
+                              backgroundColor: "#4B0082",
+                              color: "#fff",
+                            },
+                          }),
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+                        }}
+                        menuPortalTarget={
+                          typeof window !== "undefined" ? document.body : null
+                        }
+                      />
+                    </div>
 
                     {validationErrors.roles && (
                       <span className="text-tertiaryRed text-sm mt-1">
@@ -478,6 +480,7 @@ const AddUser: React.FC<UserProps> = ({
             ))}
           </div>
         </div>
+
         {action === "edit" && (
           <ToggleButton isEnabled={isEnabled} setIsEnabled={setIsEnabled} />
         )}
@@ -487,9 +490,7 @@ const AddUser: React.FC<UserProps> = ({
             onClick={addUser}
             label={action === "edit" ? "Save" : id ? "Save" : "Add User"}
             value=""
-            className={`w-36 h-11 text-white ${
-              action === "edit" ? "bg-darkPurple" : "bg-darkPurple"
-            }`}
+            className={`w-36 h-11 text-white bg-darkPurple`}
           />
         </div>
       </main>
