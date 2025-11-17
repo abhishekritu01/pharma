@@ -20,11 +20,17 @@ import { ClipboardList, Plus } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import AsyncSelect from "react-select/async";
-import { BsThreeDotsVertical } from "react-icons/bs";
 import { getPharmacy } from "@/app/services/PharmacyService";
 import { PharmacyData } from "@/app/types/PharmacyData";
 import { purchaseReturnSchema } from "@/app/schema/PurchaseReturnSchema";
 import { ZodError, ZodIssue } from "zod";
+
+// ADDED imports for react-select + dropdown styles
+import Select, { components, SingleValue } from "react-select";
+import { dropdown } from "@/app/components/common/Dropdown";
+
+// ADDED delete icon import as requested
+import { MdDelete } from "react-icons/md";
 
 interface PurchaseReturnProps {
   setShowPurchaseReturn: (value: boolean) => void;
@@ -73,13 +79,21 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         availableQuantity: 0,
         gstPercentage: 0,
         purchasePrice: 0,
-        returnType: "",
+        returnType: "Store Credit Returns",
         discrepancyIn: "",
         discrepancy: "",
         invId: "",
       },
     ],
   });
+
+  // Return type options (matches your options)
+  type ReturnOption = { value: string; label: string };
+  const returnOptions: ReturnOption[] = [
+    { value: "Exchange product", label: "Exchange product" },
+    { value: "Refund", label: "Refund" },
+    { value: "Store Credit Returns", label: "Store Credit Returns" },
+  ];
 
   const handleDeleteRow = (index: number) => {
     if (formData.purchaseReturnItemDtos.length === 1) {
@@ -137,42 +151,19 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
         />
       ),
     },
-    // {
-    //   header: "Action",
-    //   accessor: (row: PurchaseReturnItem, index: number) => (
-    //     <div className="relative group">
-    //       <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
-    //         <BsThreeDotsVertical size={18} />
-    //       </button>
-
-    //       <div className="absolute right-0 mt-2 w-32 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-    //         <button
-    //           onClick={() => handleDeleteRow(index)}
-    //           className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-    //         >
-    //           Delete
-    //         </button>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
-
     {
       header: "Action",
       accessor: () => (
-        <div className="relative group">
-          <button className="p-2 rounded-full hover:bg-gray-200 cursor-pointer">
-            <BsThreeDotsVertical size={18} />
-          </button>
-
-          <div className="absolute right-0 mt-2 w-32 bg-white shadow-xl rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-            <button
-              onClick={() => handleDeleteRow(rowIndex)} // ✅ use rowIndex from outer scope
-              className="block w-full px-4 py-2 text-left text-gray-700 cursor-pointer hover:bg-purple-950 hover:text-white hover:rounded-lg"
-            >
-              Delete
-            </button>
-          </div>
+        // REPLACED 3-dots menu with direct delete icon as requested.
+        <div className="relative">
+          <MdDelete
+            size={18}
+            className="cursor-pointer"
+            style={{ color: "#FF0000" }}
+            onClick={() => handleDeleteRow(rowIndex)}
+            aria-label="Delete row"
+            title="Delete"
+          />
         </div>
       ),
     },
@@ -441,12 +432,12 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
 
       // Get the first matching bill's invId as default
       const firstBill = matchingBills.length > 0 ? matchingBills[0] : null;
-      const firstBillInvId = firstBill
-        ? firstBill.invId 
-        : "";
+      const firstBillInvId = firstBill ? firstBill.invId : "";
 
       setFormData((prev) => {
         const updatedItems = [...prev.purchaseReturnItemDtos];
+
+        // <--- FIX: use updatedItems consistently (was using `updated` causing the error)
         updatedItems[idx] = {
           ...updatedItems[idx],
           itemId: selected.itemId ?? "",
@@ -714,26 +705,49 @@ const PurchaseReturn: React.FC<PurchaseReturnProps> = ({
                 </div>
 
                 <div className="relative w-full min-w-0">
-                  <label
-                    htmlFor={`returnType-${idx}`}
-                    className="absolute left-2 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                  >
-                    Return Type
-                  </label>
-                  <select
-                    id={`returnType-${idx}`}
-                    name={`returnType-${idx}`}
-                    value={row.returnType}
-                    onChange={handleInputChange}
-                    className="peer w-full px-3 pl-4 py-3 border border-gray-400 rounded-md bg-white text-black outline-none focus:border-purple-900 focus:ring-0"
-                  >
-                    <option value="">Select Return Type</option>
-                    <option value="Exchange product">Exchange product</option>
-                    <option value="Refund">Refund</option>
-                    <option value="Store Credit Returns">
-                      Store Credit Returns
-                    </option>
-                  </select>
+                  {/* REPLACED native select with react-select using dropdown() */}
+                  <div className="relative">
+                    <Select<ReturnOption>
+                      id={`returnType-${idx}`}
+                      options={returnOptions}
+                      value={
+                        returnOptions.find((opt) => opt.value === row.returnType) ??
+                        null
+                      }
+                      onChange={(
+                        option: SingleValue<ReturnOption | null>
+                      ) => {
+                        const selected = option as ReturnOption | null;
+                        setFormData((prev) => {
+                          const updated = [...prev.purchaseReturnItemDtos];
+                          updated[idx] = {
+                            ...updated[idx],
+                            returnType: selected?.value ?? "",
+                          };
+                          return { ...prev, purchaseReturnItemDtos: updated };
+                        });
+                      }}
+                      placeholder="Select Return Type"
+                      className="w-full"
+                      classNamePrefix="react-select"
+                      styles={dropdown()}
+                      components={{
+                        SingleValue: (props) => (
+                          <components.SingleValue {...props}>
+                            {props.data.label}
+                          </components.SingleValue>
+                        ),
+                      }}
+                      isClearable
+                    />
+
+                    <label
+                      htmlFor={`returnType-${idx}`}
+                      className="absolute left-2 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                    >
+                      Return Type
+                    </label>
+                  </div>
                 </div>
 
                 <div className="relative w-full">
