@@ -1,3 +1,4 @@
+// additem.tsx
 import Button from "@/app/components/common/Button";
 import InputField from "@/app/components/common/InputField";
 import { itemSchema } from "@/app/schema/ItemSchema";
@@ -11,7 +12,7 @@ import {
 import { getVariant } from "@/app/services/VariantService";
 import { ItemData } from "@/app/types/ItemData";
 import { VariantData } from "@/app/types/VariantData";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { z, ZodError } from "zod";
 import Select, { components, SingleValue } from "react-select";
@@ -80,7 +81,7 @@ const AddItem: React.FC<ItemProps> = ({
     fetch();
   }, []);
 
-  const unitOptions = React.useMemo(() => {
+  const unitOptions = useMemo(() => {
     const chosen = variant.find((v) => v.variantId === formData.variantId);
     return chosen
       ? chosen.unitDtos.map((u) => ({ id: u.unitId, name: u.unitName }))
@@ -289,6 +290,22 @@ const AddItem: React.FC<ItemProps> = ({
     }
   };
 
+  // react-select option types for variant & unit
+  type VariantOption = { value: string; label: string };
+  type UnitOption = { value: string; label: string };
+
+  // map variant data -> select options
+  const variantOptions: VariantOption[] = variant.map((v) => ({
+    value: v.variantId,
+    label: v.variantName,
+  }));
+
+  // map unitOptions -> select options
+  const unitSelectOptions: UnitOption[] = unitOptions.map((u) => ({
+    value: u.id,
+    label: u.name,
+  }));
+
   return (
     <>
       <main className="space-y-6">
@@ -335,43 +352,120 @@ const AddItem: React.FC<ItemProps> = ({
                 id: "variantId",
                 label: "Variant Type",
                 type: "select" as const,
-                options: variant.map((v) => ({
-                  id: v.variantId,
-                  name: v.variantName,
-                })),
+                options: variantOptions,
               },
               {
                 id: "unitId",
                 label: "Unit Type",
                 type: "select" as const,
-                options: unitOptions,
+                options: unitSelectOptions,
               },
-            ].map(({ id, label, type, options }) => (
+            ].map(({ id, label, type }) => (
               <div key={id} className="flex flex-col w-full relative">
                 {type === "select" ? (
                   <>
-                    <label
-                      htmlFor={id}
-                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
-                    >
-                      {label} <span className="text-tertiaryRed">*</span>
-                    </label>
+                    <div className="relative">
+                      {id === "variantId" ? (
+                        <Select<VariantOption>
+                          id={id}
+                          options={variantOptions}
+                          value={
+                            variantOptions.find(
+                              (opt) =>
+                                opt.value ===
+                                String(formData[id as keyof ItemData] ?? "")
+                            ) ?? null
+                          }
+                          onChange={(
+                            option: SingleValue<VariantOption | null>
+                          ) => {
+                            const selected = option as VariantOption | null;
+                            if (selected) {
+                              const chosenVariant = variant.find(
+                                (v) => v.variantId === selected.value
+                              );
+                              setFormData((prev) => {
+                                const next = { ...prev };
+                                next.variantId = selected.value;
+                                next.variantName = selected.label;
+                                const firstUnit = chosenVariant?.unitDtos?.[0];
+                                if (firstUnit) {
+                                  next.unitId = firstUnit.unitId;
+                                  next.unitName = firstUnit.unitName;
+                                } else {
+                                  next.unitId = "";
+                                  next.unitName = "";
+                                }
+                                return next;
+                              });
+                            } else {
+                              setFormData((prev) => ({
+                                ...prev,
+                                variantId: "",
+                                variantName: "",
+                              }));
+                            }
+                          }}
+                          placeholder={`Select ${label}`}
+                          className="w-full"
+                          classNamePrefix="react-select"
+                          styles={dropdown()}
+                          components={{
+                            SingleValue: (props) => (
+                              <components.SingleValue {...props}>
+                                {props.data.label}
+                              </components.SingleValue>
+                            ),
+                          }}
+                        />
+                      ) : (
+                        <Select<UnitOption>
+                          id={id}
+                          options={unitSelectOptions}
+                          value={
+                            unitSelectOptions.find(
+                              (opt) =>
+                                opt.value ===
+                                String(formData[id as keyof ItemData] ?? "")
+                            ) ?? null
+                          }
+                          onChange={(option: SingleValue<UnitOption | null>) => {
+                            const selectedUnit = option as UnitOption | null;
+                            if (selectedUnit) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                unitId: selectedUnit.value,
+                                unitName: selectedUnit.label,
+                              }));
+                            } else {
+                              setFormData((prev) => ({
+                                ...prev,
+                                unitId: "",
+                                unitName: "",
+                              }));
+                            }
+                          }}
+                          placeholder={`Select ${label}`}
+                          className="w-full"
+                          classNamePrefix="react-select"
+                          styles={dropdown()}
+                          components={{
+                            SingleValue: (props) => (
+                              <components.SingleValue {...props}>
+                                {props.data.label}
+                              </components.SingleValue>
+                            ),
+                          }}
+                        />
+                      )}
 
-                    <select
-                      id={id}
-                      value={String(formData[id as keyof ItemData] ?? "")}
-                      onChange={handleChange}
-                      className="peer w-full px-3 py-3 border border-gray-400 rounded-md bg-transparent text-black outline-none focus:border-purple-900 focus:ring-0"
-                    >
-                      <option value="" disabled>
-                        Select {label}
-                      </option>
-                      {options.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.name}
-                        </option>
-                      ))}
-                    </select>
+                      <label
+                        htmlFor={id}
+                        className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all z-10"
+                      >
+                        {label} <span className="text-tertiaryRed">*</span>
+                      </label>
+                    </div>
                   </>
                 ) : (
                   <InputField
@@ -426,10 +520,8 @@ const AddItem: React.FC<ItemProps> = ({
           </div>
 
           <div className="relative mt-8 grid grid-cols-2 gap-4">
-            {[
-              { id: "purchasePricePerUnit", label: "Purchase Price Per Unit" },
-              { id: "mrpSalePricePerUnit", label: "MRP Per Unit" },
-            ].map(({ id, label }) => (
+            {[{ id: "purchasePricePerUnit", label: "Purchase Price Per Unit" },
+              { id: "mrpSalePricePerUnit", label: "MRP Per Unit" }].map(({ id, label }) => (
               <InputField
                 type={"number"}
                 key={id}
@@ -446,40 +538,6 @@ const AddItem: React.FC<ItemProps> = ({
             ))}
           </div>
 
-          {/* <div className="relative mt-8 grid grid-cols-2 gap-4">
-            {[
-              {
-                id: "gstPercentage",
-                label: "GST Percentage",
-                type: "text",
-              },
-              {
-                id: "hsnNo",
-                label: "HSN Number",
-                type: "text",
-              },
-            ].map(({ id, label, type }) => (
-              <div key={id} className="flex flex-col w-full relative">
-                <InputField
-                  type={type}
-                  id={id}
-                  label={
-                    <>
-                      {label} <span className="text-tertiaryRed">*</span>
-                    </>
-                  }
-                  value={String(formData[id as keyof ItemData] ?? "")}
-                  onChange={(e) => handleChange(e)}
-                />
-                {validationErrors[id] && (
-                  <span className="text-tertiaryRed text-sm">
-                    {validationErrors[id]}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div> */}
-
           <div className="relative mt-8 grid grid-cols-2 gap-4">
             {[
               { id: "gstPercentage", label: "GST Percentage", type: "select" },
@@ -488,19 +546,15 @@ const AddItem: React.FC<ItemProps> = ({
               <div key={id} className="flex flex-col w-full relative">
                 {id === "gstPercentage" ? (
                   <div className="relative">
-                    <Select
+                    <Select<GstOption>
                       id={id}
                       options={gstOptions}
-                      value={gstOptions.find(
-                        (opt) =>
-                          opt.value === String(formData[id as keyof ItemData])
-                      )}
-                      // onChange={(option) =>
-                      //   setFormData((prev) => ({
-                      //     ...prev,
-                      //     [id]: Number((option as any)?.value ?? 0),
-                      //   }))
-                      // }
+                      value={
+                        gstOptions.find(
+                          (opt) =>
+                            opt.value === String(formData[id as keyof ItemData])
+                        ) ?? null
+                      }
                       onChange={(option: SingleValue<GstOption>) =>
                         setFormData((prev) => ({
                           ...prev,
@@ -521,7 +575,7 @@ const AddItem: React.FC<ItemProps> = ({
                     />
                     <label
                       htmlFor={id}
-                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all"
+                      className="absolute left-3 top-0 -translate-y-1/2 bg-white px-1 text-gray-500 text-xs transition-all z-10"
                     >
                       {label} <span className="text-tertiaryRed">*</span>
                     </label>
@@ -550,10 +604,8 @@ const AddItem: React.FC<ItemProps> = ({
           </div>
 
           <div className="relative mt-8 grid grid-cols-2 gap-4">
-            {[
-              { id: "genericName", label: "Generic Name", type: "text" },
-              { id: "manufacturer", label: "Manufacturer", type: "text" },
-            ].map(({ id, label, type }) => (
+            {[{ id: "genericName", label: "Generic Name", type: "text" },
+              { id: "manufacturer", label: "Manufacturer", type: "text" }].map(({ id, label, type }) => (
               <div key={id} className="flex flex-col w-full relative">
                 <InputField
                   type={type}
@@ -575,9 +627,7 @@ const AddItem: React.FC<ItemProps> = ({
         <div>
           <Button
             onClick={action === "delete" ? handleDeleteItem : addItem}
-            label={
-              action === "delete" ? "Delete" : itemId ? "Save" : "Add Item"
-            }
+            label={action === "delete" ? "Delete" : itemId ? "Save" : "Add Item"}
             value=""
             className={`w-36 h-11 text-white ${
               action === "delete" ? "bg-darkRed" : "bg-darkPurple"

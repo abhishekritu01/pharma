@@ -224,7 +224,7 @@ const AddUser: React.FC<UserProps> = ({
       : [];
     setSelectedRoles(selectedOptions as Option[]);
     setFormData({ ...formData, roles });
-  };
+  };  
 
   // const borderColorDefault = "#B5B3B3";
   // const focusColor = "#4B0082";
